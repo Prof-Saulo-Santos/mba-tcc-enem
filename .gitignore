@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+data/
+.ipynb_checkpoints/
+*.docx  # Opcional: Se não quiser versionar o arquivo Word pesado, use apenas o .md

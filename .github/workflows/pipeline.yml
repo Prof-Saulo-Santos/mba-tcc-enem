@@ -1,0 +1,126 @@
+name: Pipeline ENEM — CI/CD MLOps
+
+# Gatilhos: quando este pipeline é executado automaticamente
+on:
+  push:
+    branches:
+      - main          # Qualquer push na branch principal
+    paths:
+      - 'src/**'      # Só roda se arquivos em src/ forem alterados
+      - 'tests/**'
+      - 'requirements.txt'
+  schedule:
+    # Executa todo dia 1 às 03:00 (UTC) para dados incrementais
+    - cron: '0 3 1 * *'
+  workflow_dispatch:  # Permite disparar manualmente pela interface do GitHub
+
+jobs:
+
+  # ============================================================
+  # JOB 1: Testes Unitários Automatizados (CI — Integração Contínua)
+  # ============================================================
+  test:
+    name: "🧪 Testes Unitários (pytest)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "📥 Checkout do código"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Configurar Python 3.13"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: "📦 Instalar dependências"
+        run: |
+          pip install uv
+          uv pip install -r requirements.txt --system
+
+      - name: "🧪 Rodar os testes com pytest"
+        run: |
+          pytest tests/ -v --tb=short
+        # Se qualquer teste falhar, o pipeline para aqui.
+        # O código NÃO avança para o treino. Isso é o "fail-fast".
+
+  # ============================================================
+  # JOB 2: Validação dos Contratos de Dados (Pandera)
+  # ============================================================
+  validate-data-contracts:
+    name: "🛡️ Validação de Contratos (Pandera)"
+    runs-on: ubuntu-latest
+    needs: test  # Só roda se os testes passarem
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: "📦 Instalar dependências"
+        run: pip install uv && uv pip install -r requirements.txt --system
+
+      - name: "🛡️ Rodar validação de contrato com amostra"
+        run: |
+          # Roda o pipeline em modo de teste (nrows=1000) para validar
+          # os schemas do Pandera sem precisar dos dados completos
+          python src/pipeline.py --year 2023 --nrows 1000
+
+  # ============================================================
+  # JOB 3: Retreino do Modelo (CD — Entrega Contínua)
+  # ============================================================
+  train-and-register:
+    name: "🏋️ Retreino e Registro no MLflow"
+    runs-on: ubuntu-latest
+    needs: validate-data-contracts  # Só roda se os contratos passarem
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: "📦 Instalar dependências"
+        run: pip install uv && uv pip install -r requirements.txt --system
+
+      - name: "🏋️ Treinar o modelo"
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        run: |
+          # Este script treina o HistGradientBoosting, calcula RMSE e R²,
+          # e registra automaticamente no MLflow Model Registry
+          python src/train.py --year 2023
+
+      - name: "📊 Publicar relatório de métricas"
+        # Exibe o RMSE e R² diretamente na interface do GitHub
+        run: |
+          echo "### Métricas do Modelo Treinado 🏆" >> $GITHUB_STEP_SUMMARY
+          echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          cat metrics.json | python -c "
+          import json, sys
+          m = json.load(sys.stdin)
+          print(f'| RMSE | {m[\"rmse\"]:.2f} pontos |')
+          print(f'| R²   | {m[\"r2\"]:.4f} |')
+          " >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================
+  # JOB 4: Deploy da API (Opcional — Pós-TCC)
+  # ============================================================
+  deploy-api:
+    name: "🚀 Deploy da API (FastAPI)"
+    runs-on: ubuntu-latest
+    needs: train-and-register
+    if: github.ref == 'refs/heads/main'  # Deploy só na branch main
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "🐳 Build da imagem Docker"
+        run: |
+          docker build -t enem-api:latest -f docker/Dockerfile.api .
+
+      - name: "🚀 Deploy no servidor"
+        # Em produção real, aqui iria o push para AWS ECR, GCP, etc.
+        run: |
+          echo "API deployada com sucesso com o modelo mais recente!"
