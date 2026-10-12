@@ -1,0 +1,15 @@
+# 1. Encerra processos antigos do Antigravity
+pkill -f antigravity-ide-server 2>/dev/null || true
+
+# 2. Remove PID e log da versão atual
+rm -f ~/.antigravity-ide-server/.ecfbad74d93962fc8ca485d93ab9b4f3d4cb6cf8.pid
+rm -f ~/.antigravity-ide-server/.ecfbad74d93962fc8ca485d93ab9b4f3d4cb6cf8.log
+
+# 3. Remove o lock de instalação
+rm -f ~/.antigravity-ide-server/.installation_lock
+
+# 4. Verifica se ficou algum processo
+ps aux | grep '[a]ntigravity-ide-server'
+
+# 5. Verifica se a porta 8000 está livre
+ss -ltnp | grep 8000 || true

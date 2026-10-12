@@ -24,3 +24,7 @@ Se o Airflow for programado usando "hardcode" (regras fixas baseadas em chaves),
 - Computar a similaridade de cosseno (Cosine Similarity) para cada feature base (2023) contra todas as do ano atual no loop.
 - Extrair a 'feature campeã' (maior score).
 - Consolidar os resultados em um DataFrame mestre mostrando o Drift Semântico de cada coluna ao longo da história.
+
+
+## Big Data ETL (Era de Ouro: 2015-2023)
+Foi criado o script `scripts/etl_parquet.py` para processar a janela histórica monolítica (2015 a 2023). O script implementa os filtros metodológicos definidos no Notebook 02: (1) remoção de candidatos ausentes via `TP_PRESENCA == 1` e (2) eliminação de colunas com mais de 30% de nulos (`thresh=70%`). A conversão ocorre lendo o CSV original em pedaços (chunks) e salvando em Apache Parquet (arquivos particionados `enem_201X_gold.parquet` com compressão `snappy`), contornando restrições de RAM (OOM) e preparando a base otimizada para o Machine Learning.

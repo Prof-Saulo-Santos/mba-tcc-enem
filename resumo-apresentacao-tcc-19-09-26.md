@@ -34,13 +34,15 @@ O INEP não entrega os dados "prontos para ML". Entre 2017 e 2025, ocorreram tr�
 
 ---
 
-## 📓 Slide 3 — A Jornada de Descoberta: Os Três Notebooks
+## 📓 Slide 3 — A Jornada de Descoberta: Os Três Notebooks (esse texto esta desatualizado, agora sao 4 notebooks)
 
 Antes da construção do pipeline de produção automatizado, o projeto passou por uma fase laboratorial dividida em três frentes de investigação:
 
 - **`01_analise_anomalias_estruturais.ipynb`:** Atuou como o explorador inicial da "Camada Bronze", focado em investigar os dados brutos de todos os 9 anos para mapear inconsistências históricas (como a extinção de colunas socioeconômicas e a divisão de arquivos em 2024). Suas descobertas forneceram os requisitos técnicos exatos para a construção da Camada Anticorrupção.
 - **`02_selecao_features.ipynb`:** Responsável por destilar o mar de dados, este notebook filtra o dicionário do INEP para selecionar apenas as variáveis relevantes para a modelagem, além de tratar dados ausentes e criar variáveis derivadas (como as faixas de desempenho). O resultado gerou o "schema" definitivo de 78 colunas da nossa "Camada Gold".
-- **`03_eda_modelagem.ipynb`:** O laboratório principal onde os dados consolidados são postos à prova. Ele realiza a Análise Exploratória (EDA) — comprovando visualmente a correlação entre renda familiar e nota escolar — e executa a "Arena de Algoritmos", treinando modelos como o *HistGradientBoosting* para prever matematicamente o desempenho dos candidatos.
+- **`03_dicionario.ipynb`:** Este notebook faz apenas 1 operacao atomica: abre o notebook 2 para obter quais sao as features selecionadas.
+
+- **`04_analise_harmonizacao_historica.ipynb`:** Neste notebook, extraímos as features selecionadas do notebook 02 e buscamos suas respectivas definições no dicionário oficial do INEP atraves do uso de busca semantica com NLP. isto se deve porque algumas questoes mudam de nome, por exemplo, ate 2023 `Q024` trabalhava com a quantidade de computadores em casa, mas essa pergunta tornou-se a questao Q021 em `2025`. Entao, usamos o NLP para encontrar a melhor correspondencia entre as questoes dos diferentes anos.
 
 ---
 
