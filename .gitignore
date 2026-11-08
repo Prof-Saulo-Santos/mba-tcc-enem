@@ -1,5 +1,6 @@
 .venv/
 __pycache__/
+.pytest_cache/
 data/
 .ipynb_checkpoints/
 mlruns/

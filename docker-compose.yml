@@ -1,0 +1,14 @@
+services:
+  enem-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: enem-target-m4-api:v1
+    container_name: enem-target-m4-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_PATH=/app/models/enem.pkl
+      - MODEL_CARD_PATH=/app/models/enem_model_card.json
+    restart: unless-stopped
+

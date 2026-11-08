@@ -1,0 +1,25 @@
+# Controle de versão e ambientes locais
+.git/
+.github/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Dados brutos e processados (Big Data - dezenas de GBs)
+data/
+notebooks/
+mlruns/
+mlflow.db
+media/
+scratch/
+scripts/
+
+# Documentação e relatórios pesados do laboratório (Etapa 1)
+*.md
+*.docx
+models/*.csv
+models/*.ubj
+
