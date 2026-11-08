@@ -134,46 +134,37 @@ A Etapa 1 representa o laboratório analítico e a preparação de dados, tendo 
 
 ---
 
-## 4. Detalhamento da Etapa 2: Produtização, CI/CD e Deploy na AWS
+## 4. Detalhamento da Etapa 2: Produtização, CI/CD e Deploy na AWS - *Homologada*
 
-Baseada no diagrama `media/pipeline-2.jpg` e `diagrama_deploy_aws.md`:
+Baseada no diagrama `media/pipeline-2.jpg`, `diagrama_deploy_aws.md`, `passo-a-passo-07-api-docker.md` e `slides-07.md`:
 
-1. **Encapsulamento com FastAPI:**
-   * Criação do serviço Python `src/api/` que carrega o modelo serializado `enem.pkl`.
-   * Endpoints REST:
-     * `POST /predict`: Recebe os 6 atributos do candidato via JSON e retorna a nota prevista (`TARGET_M4`).
-     * `GET /health`: Checagem de integridade e liveness do serviço.
-     * `GET /docs`: Documentação interativa Swagger/OpenAPI.
-2. **Containerização com Docker:**
-   * Criação de `Dockerfile` otimizado (multi-stage build) e `docker-compose.yml`.
-   * Empacotamento hermético de dependências, modelo e runtime.
-3. **Automação CI/CD com GitHub Actions:**
-   * Workflow `.github/workflows/deploy.yml` disparado por push ou tag na branch principal.
-   * Execução de testes de contrato e integração (`pytest`).
-   * Build automatizado da imagem Docker e envio (*push*) para o **Amazon ECR** (*Elastic Container Registry*).
-4. **Deploy e Consumo na AWS:**
-   * Orquestração e subida do contêiner no **AWS App Runner** ou **AWS ECS (Fargate)**.
-   * Exposição de endpoint HTTPS público para consumo live de predições.
+1. **Encapsulamento com FastAPI (`src/api/`):**
+   * Serviço Python modular (`src/api/main.py`, `src/api/model_loader.py` e `src/api/schemas.py`) carregando `models/enem.pkl` e `models/enem_model_card.json` via padrão *Singleton* no `lifespan`.
+   * Validação estrita em Pydantic v2 com `extra="forbid"` (bloqueio automático `HTTP 422` contra variáveis proibidas como `NU_ANO`).
+   * Endpoints REST homologados: `GET /health` (SHA-256), `GET /info` (linhagem MLflow), `POST /predict` (individual), `POST /predict/batch` (vetorial em lote, `6,49 ms`) e `GET /docs` (Swagger UI).
+2. **Suíte Automatizada de Testes (`tests/`):**
+   * `25/25 PASSED` no `pytest` (`tests/test_api_contract.py` e `tests/test_model_inference.py`), validando contrato HTTP, fronteiras psicométricas, paridade matemática bit-a-bit com o estimador puro, direcionalidade sociológica de Bourdieu e SLA de latência.
+3. **Containerização Multi-Stage FinOps (`Dockerfile` & `docker-compose.yml`):**
+   * Manifesto enxuto `requirements-api.txt` (apenas os 8 pacotes de *serving* nas versões exatas do treino) e `.dockerignore` reduzindo o contexto para `~2 MB`.
+   * Imagem OCI `enem-target-m4-api:v1` com **`515 MB` Content Size** (`1,47 GB` em disco), biblioteca OpenMP `libgomp1`, usuário não-root (`appuser`, UID 1000) e `HEALTHCHECK` nativo.
+4. **Automação CI/CD com GitHub Actions (`.github/workflows/deploy.yml`):**
+   * Pipeline em 3 Jobs encadeados: `quality-gate-ci` (SHA-256 + Pytest) $\rightarrow$ `docker-smoke-test` (build e teste HTTP E2E no runner) $\rightarrow$ `deploy-aws` (Amazon ECR + AWS App Runner com trava condicional FinOps).
 
 ---
 
-## 5. Detalhamento da Etapa 3: Orquestração Big Data e Validação Out-of-Time (2024)
+## 5. Detalhamento da Etapa 3: Orquestração Local em Docker e Governança Autônoma (2024/2025)
 
 Baseada no diagrama `media/pipeline-3.jpg` e `diagrama_producao_2024.md`:
 
-1. **Premissa de "Viagem no Tempo" (Out-of-Time Validation):**
-   * O modelo foi treinado com o passado consolidado (2014–2023).
-   * A edição do **ENEM de 2024** atua como o "futuro cego" para testar o comportamento do pipeline em ambiente de produção real.
-2. **Orquestração com Apache Airflow:**
-   * Criação de DAGs para:
-     1. Ingestão/Download automático dos microdados brutos do ENEM 2024;
-     2. Filtragem de dados brutos e seleção do escopo de features;
-     3. Acionamento do nó de **NLP/SBERT** para harmonização dinâmica do dicionário de 2024;
-     4. Limpeza e persistência da safra 2024 purificada em Parquet no **Amazon S3**;
-     5. Integração dos dados de 2024 à base consolidada (**2014 a 2023 $\longrightarrow$ 2014 a 2024**).
-3. **Auditoria de Drift no MLflow:**
-   * Envio da base de 2024 purificada para o modelo `enem.pkl` em produção.
-   * Registro e comparação das métricas de inferência no MLflow para auditar estabilidade e resiliência temporal (*Data Drift* e *Concept Drift*).
+1. **Arquitetura FinOps (Plano Pesado Local Containerizado):**
+   * Airflow + SBERT + XGBoost + MLflow rodam localmente containerizados, evitando custos ociosos de processamento pesado em nuvem.
+2. **Fluxo Ordenado da DAG Autônoma (4 Estágios):**
+   * **(1) Ingestão:** Recepção e inspeção estrutural dos microdados e dicionário da nova edição (`2024` ou `2025`).
+   * **(2) NLP/SBERT no Dicionário ANTES da Seleção:** Execução do `paraphrase-multilingual-MiniLM-L12-v2` sobre o dicionário para descobrir dinamicamente quais colunas equivalem às 6 variáveis do Esquadrão de Elite antes do corte colunar.
+   * **(3) Seleção + Harmonização + Downcasting:** Extração das 6 features mapeadas, deflação da `RENDA_PER_CAPITA` em Salários Mínimos do respectivo ano, harmonização de escalas e compactação para `15 bytes/linha` em Parquet.
+   * **(4) Bifurcação Automática (`BranchPythonOperator`):**
+     * **Cenário A — Safra com Notas Homologadas (`2024`):** Passa pelo **Gatekeeper Out-of-Time** avaliando `enem.pkl v1`; se aprovado no SLA, concatena a base histórica (`2014–2024`), retreina o `XGBRegressor` e aciona o **MLflow como Juiz Champion vs. Challenger** para promover `enem.pkl v2`.
+     * **Cenário B — Safra sem Notas / Pré-Prova (`2025`):** Desvia para **Modo Inferência em Lote (*Batch Scoring*)** + **Auditoria de Data Drift de $X$** (*Population Stability Index* — PSI e teste KS).
 
 ---
 
@@ -190,7 +181,8 @@ Baseada no diagrama `media/pipeline-3.jpg` e `diagrama_producao_2024.md`:
    * Nunca use a nota de uma prova para prever outra prova (evitar data leakage inter-target).
    * Manter sempre a explicabilidade por meio de valores SHAP.
 5. **Estado Atual e Próxima Tarefa:**
-   * **Etapa 1 Integralmente Concluída e Homologada:** Todos os notebooks da esteira analítica — `01_investigacao_estrutural.ipynb`, `02_eda.ipynb`, `03_engenharia_features.ipynb`, `04_varredura_semantica.ipynb`, `05_consolidacao_historica.ipynb` e `06_treinamento_modelo.ipynb` — estão 100% executados, auditados e homologados (com roteiros de defesa `slides-03.md`, `slides-04.md` e `slides-06.md`).
+   * **Etapa 1 Integralmente Concluída e Homologada:** Todos os notebooks da esteira analítica — `01_investigacao_estrutural.ipynb`, `02_eda.ipynb`, `03_engenharia_features.ipynb`, `04_varredura_semantica.ipynb`, `05_consolidacao_historica.ipynb` e `06_treinamento_modelo.ipynb` — estão 100% executados, auditados e homologados (com guias `passo-a-passo-05.md`, `passo-a-passo-06.md` e roteiros de defesa `slides-03.md`, `slides-04.md`, `slides-05.md` e `slides-06.md`).
+   * **Etapa 2 Integralmente Concluída e Homologada:** Microserviço FastAPI (`src/api/`), suíte de 25 testes `pytest` (`tests/`), containerização multi-stage enxuta (`Dockerfile`, `docker-compose.yml`, `requirements-api.txt`, `515 MB` OCI) e esteira CI/CD GitHub Actions (`.github/workflows/deploy.yml`) 100% implementados, testados e documentados em `passo-a-passo-07-api-docker.md` e `slides-07.md`.
    * **Artefatos Canônicos Exportados:**
      * `data/processed/enem_2023_features_modelagem.parquet` (212.386 concluintes $\times$ 8 colunas: `NU_INSCRICAO`, `TARGET_M4` e as 6 features do Esquadrão de Elite);
      * `data/processed/schema_mapping_historico.json` (Contrato canônico de mapeamento semântico 2014–2024 para ETL e Airflow);
@@ -199,7 +191,7 @@ Baseada no diagrama `media/pipeline-3.jpg` e `diagrama_producao_2024.md`:
      * `models/enem.pkl` (`XGBRegressor` campeão puro, `1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`, Holdout `7,52M` $R^2 = 0.33780$, $\text{RMSE} = 57.7439$ pts; OOT `2023` $R^2 = 0.31842$) + `models/enem_xgboost.ubj` + `models/enem_model_card.json` + `models/auditoria_holdout_por_ano_2014_2023.csv` + Model Registry MLflow `enem_target_m4_producao` v1 (`sqlite:///mlflow.db`).
    * **Alvo Oficial Definido:** `TARGET_M4` (Média das 4 provas objetivas da TRI: MT, LC, CN, CH), com $R^2 = 0.3467$ (ano-base 2023) / $R^2 = 0.33780$ (censo decenal 2014–2023) e Alfa de Cronbach = 0.865.
    * **Próximo Passo (Avançar com Saulo):**
-     * Iniciar a **Etapa 2: Produtização, Containerização, CI/CD e Deploy na AWS** (`src/api/` em FastAPI consumindo `models/enem.pkl` e `models/enem_model_card.json`, suíte de testes de contrato `pytest`, `Dockerfile` multi-stage, `docker-compose.yml`, workflow GitHub Actions `.github/workflows/deploy.yml` e publicação no Amazon ECR / AWS App Runner).
+     * Iniciar a **Etapa 3: Orquestração Local em Docker com Apache Airflow Autônomo (2024/2025)** (`Ingestão -> NLP/SBERT no dicionário ANTES da seleção -> Seleção + Harmonização + Downcasting -> Bifurcação 2024 [Gatekeeper OOT + Retreino XGBoost + MLflow Champion vs. Challenger] vs. 2025 [Inferência em Lote + Data Drift de X]`).
 6. **Modo de Colaboração (Regra Mandatória):**
    * O trabalho é feito **em conjunto com o Saulo**, passo a passo. O agente **não** deve agir de forma autônoma.
    * **Toda tomada de decisão** (metodológica, de código, de dados ou de arquitetura) só pode ser aplicada **após o aval explícito do Saulo**.

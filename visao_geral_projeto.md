@@ -4,6 +4,22 @@ Este documento tem como objetivo apresentar à banca avaliadora a arquitetura po
 
 ---
 
+## 🗺️ Mapa Completo de Documentação e Slides por Etapa do TCC
+
+A tabela abaixo consolida a correspondência exata entre as **3 Grandes Etapas Arquiteturais** do projeto, os **Capítulos Sequenciais (`01` a `08`)**, os guias técnicos de execução (`passo-a-passo`) e os roteiros de slides para a defesa perante a banca (`slides`):
+
+| Grande Etapa do Projeto | Capítulo / Escopo Técnico | Guia Técnico (`passo-a-passo`) | Roteiro de Slides para a Banca (`slides`) | Status |
+| :--- | :--- | :--- | :--- | :---: |
+| **ETAPA 1**<br>*(Laboratório, Seleção, NLP, Big Data 2014–2023 e Treino MLflow)* | **Cap. 01 e 02:** Ingestão e Análise Exploratória (EDA 2023) | Documentado no [`AGENT.md`](AGENT.md) (Seção 3.1/3.2) | [`resumo-apresentacao-tcc-19-09-26.md`](resumo-apresentacao-tcc-19-09-26.md) | ✅ Concluído |
+| **ETAPA 1** | **Cap. 03:** Engenharia de Features e Homologação do `TARGET_M4` | [`conclusoes_do_notebook_03.md`](conclusoes_do_notebook_03.md) | **[`slides-03.md`](slides-03.md)** | ✅ Concluído |
+| **ETAPA 1** | **Cap. 04:** Varredura Semântica Histórica com NLP/SBERT | Documentado no `04_varredura_semantica.ipynb` | **[`slides-04.md`](slides-04.md)** | ✅ Concluído |
+| **ETAPA 1** | **Cap. 05:** Consolidação 2014–2023 (37,59M) e Downcasting | **[`passo-a-passo-05.md`](passo-a-passo-05.md)** | **[`slides-05.md`](slides-05.md)** | ✅ Concluído |
+| **ETAPA 1** | **Cap. 06:** Treinamento Escalável XGBoost + MLflow + SHAP (`enem.pkl`) | **[`passo-a-passo-06.md`](passo-a-passo-06.md)** | **[`slides-06.md`](slides-06.md)** | ✅ Concluído |
+| **ETAPA 2**<br>*(API FastAPI, Pytest, Docker e CI/CD AWS)* | **Cap. 07:** Produtização da API REST, Testes de Contrato, Docker e GitHub Actions | **[`passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md)** | **[`slides-07.md`](slides-07.md)** | ✅ Concluído |
+| **ETAPA 3**<br>*(Airflow Autônomo 2024/2025 em Docker Local)* | **Cap. 08:** DAG Airflow Autônoma (NLP $\rightarrow$ Gatekeeper OOT 2024 / Drift 2025) | **`passo-a-passo-08-airflow-producao.md`** *(Etapa 3)* | **`slides-08.md`** *(Etapa 3)* | ⏳ Em execução |
+
+---
+
 ## 🔬 Etapa 1: A Fase de Pesquisa e Modelagem (Os Notebooks)
 Nesta primeira etapa, o ambiente interativo (Jupyter) é utilizado como laboratório para embasar as decisões sociológicas e estatísticas do projeto. 
 

@@ -199,3 +199,16 @@ saulo@LeCun:enem$ docker compose down
  ✔ Network enem_default         Removed                                                           0.7s
 ```
 
+---
+
+## 5. Esteira Automatizada de CI/CD e FinOps em Nuvem (Marco 2.4 — GitHub Actions & AWS)
+
+Para fechar o ciclo da **Etapa 2**, o arquivolegado `.github/workflows/pipeline.yml` foi removido via `git rm` e substituído pela esteira oficial [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), desenhada com **3 Jobs encadeados**:
+
+| Job do Workflow | Nome Técnico | O que Executa no Runner (`ubuntu-latest`) | Regra de Governança / FinOps |
+| :--- | :--- | :--- | :--- |
+| **Job 1** | `quality-gate-ci` | 1. Calcula o `sha256sum` de `models/enem.pkl` e confronta com o hash oficial (`114f51959492...`);<br>2. Instala `requirements-api.txt` via `astral-sh/setup-uv@v5` em ~5s;<br>3. Executa os 25 testes `pytest` e publica relatório no `$GITHUB_STEP_SUMMARY`. | **Fail-Fast:** Qualquer alteração acidental no binário do modelo ou quebra de contrato Pydantic bloqueia o pipeline imediatamente. |
+| **Job 2** | `docker-smoke-test` | 1. Depende do Job 1 (`needs: quality-gate-ci`);<br>2. Constrói a imagem Docker multi-stage;<br>3. Sobe o container e executa chamadas HTTP reais em `/health`, `/predict` (`547.12`) e teste de bloqueio `HTTP 422` (`NU_ANO`). | Garante que o `Dockerfile` nunca quebre silenciosamente e que o container responda perfeitamente antes de qualquer envio à nuvem. |
+| **Job 3** | `deploy-aws` | 1. Depende do Job 2 (`needs: docker-smoke-test`);<br>2. Autentica na AWS (OIDC `AWS_ROLE_TO_ASSUME` ou Access Keys);<br>3. Faz login no **Amazon ECR**, cria o repositório com *Scan on Push*, envia as tags `$GITHUB_SHA` e `latest`, e aciona `aws apprunner start-deployment`. | **Trava FinOps Inteligente:** Condicionado à presença dos *Secrets* da AWS. Enquanto a nuvem não é ativada para a demonstração final da banca, os Jobs 1 e 2 ficam **100% verdes (✅)** gratuitamente no GitHub e o Job 3 é marcado como *skipped* (custo zero). |
+
+
