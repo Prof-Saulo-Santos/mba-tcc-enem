@@ -1,0 +1,283 @@
+{
+  "nome_artefato": "enem.pkl",
+  "caminho_relativo": "models/enem.pkl",
+  "modelo_registrado_mlflow": "enem_target_m4_producao",
+  "mlflow_run_id_campeao": "8b4ed2c387044363968b6088078bdf2d",
+  "data_treinamento_utc": "2026-11-03T12:36:10Z",
+  "classe_modelo_campeao": "XGBRegressor",
+  "sha256_enem_pkl": "114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f",
+  "tamanho_disco_mb": 1.727,
+  "linhagem_dados": {
+    "parquet_origem": "data/processed/enem_2014_2023_consolidado.parquet",
+    "sha256_parquet_origem": "a7fbce7cd5f6e89244351c8712be588f53dbbdf4ff46e9d3b397157647438d3a",
+    "janela_historica": "2014-2023",
+    "n_total_censo": 37593629,
+    "n_holdout_cego": 7518726
+  },
+  "ambiente_treinamento": {
+    "python": "3.13.9",
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "scikit_learn": "1.9.0",
+    "xgboost": "3.4.1",
+    "mlflow": "3.17.2",
+    "shap": "0.54.1"
+  },
+  "contrato_inferencia_api": {
+    "alvo": "TARGET_M4",
+    "unidade_alvo": "pontos_escala_tri_0_a_1000",
+    "features_ordenadas": [
+      "RENDA_PER_CAPITA",
+      "Q024",
+      "TP_ANO_CONCLUIU",
+      "TP_LINGUA",
+      "TP_SEXO",
+      "Q002"
+    ],
+    "especificacao_campos": {
+      "RENDA_PER_CAPITA": {
+        "tipo": "float",
+        "min": 0.0,
+        "max": 25.0,
+        "descricao": "Renda Per Capita (SM/morador)"
+      },
+      "Q024": {
+        "tipo": "int",
+        "valores_validos": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "descricao": "Posse de Computador (0 a 3+)"
+      },
+      "TP_ANO_CONCLUIU": {
+        "tipo": "int",
+        "valores_validos": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "descricao": "Anos desde Conclusão EM (0 a 9+)"
+      },
+      "TP_LINGUA": {
+        "tipo": "int",
+        "valores_validos": [
+          0,
+          1
+        ],
+        "descricao": "Língua Estrangeira (0=Ing, 1=Esp)"
+      },
+      "TP_SEXO": {
+        "tipo": "int",
+        "valores_validos": [
+          0,
+          1
+        ],
+        "descricao": "Sexo (0=Fem, 1=Masc)"
+      },
+      "Q002": {
+        "tipo": "int",
+        "valores_validos": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "descricao": "Escolaridade Materna (0 a 7)"
+      }
+    }
+  },
+  "metricas_oficiais": {
+    "holdout_estratificado_7_52m": {
+      "r2": 0.3378,
+      "rmse": 57.7439,
+      "mae": 45.5904,
+      "erro_relativo_sigma": 0.81376
+    },
+    "out_of_time_interno_2014_2022_para_2023": {
+      "r2": 0.31842,
+      "rmse": 67.6232,
+      "mae": 52.8526,
+      "erro_relativo_sigma": 0.82558,
+      "vies_medio_pts": -5.516
+    },
+    "desempenho_por_ano_holdout": [
+      {
+        "ano": 2014,
+        "n_holdout": 1189582,
+        "r2": 0.32337,
+        "rmse": 55.2154,
+        "mae": 43.6748,
+        "erro_relativo_sigma": 0.82258,
+        "media_real_m4": 502.88,
+        "media_prevista_m4": 506.76,
+        "vies_medio_pts": 3.88
+      },
+      {
+        "ano": 2015,
+        "n_holdout": 1120829,
+        "r2": 0.31197,
+        "rmse": 55.3231,
+        "mae": 43.6841,
+        "erro_relativo_sigma": 0.82948,
+        "media_real_m4": 503.07,
+        "media_prevista_m4": 510.91,
+        "vies_medio_pts": 7.84
+      },
+      {
+        "ano": 2016,
+        "n_holdout": 1163652,
+        "r2": 0.33753,
+        "rmse": 53.5267,
+        "mae": 42.0634,
+        "erro_relativo_sigma": 0.81392,
+        "media_real_m4": 506.35,
+        "media_prevista_m4": 508.49,
+        "vies_medio_pts": 2.14
+      },
+      {
+        "ano": 2017,
+        "n_holdout": 885338,
+        "r2": 0.33691,
+        "rmse": 55.0361,
+        "mae": 43.6202,
+        "erro_relativo_sigma": 0.8143,
+        "media_real_m4": 515.91,
+        "media_prevista_m4": 511.11,
+        "vies_medio_pts": -4.81
+      },
+      {
+        "ano": 2018,
+        "n_holdout": 454443,
+        "r2": 0.22595,
+        "rmse": 60.4108,
+        "mae": 47.3885,
+        "erro_relativo_sigma": 0.8798,
+        "media_real_m4": 533.54,
+        "media_prevista_m4": 509.73,
+        "vies_medio_pts": -23.81
+      },
+      {
+        "ano": 2019,
+        "n_holdout": 740382,
+        "r2": 0.35907,
+        "rmse": 56.5617,
+        "mae": 45.3023,
+        "erro_relativo_sigma": 0.80058,
+        "media_real_m4": 508.44,
+        "media_prevista_m4": 511.7,
+        "vies_medio_pts": 3.26
+      },
+      {
+        "ano": 2020,
+        "n_holdout": 512261,
+        "r2": 0.36314,
+        "rmse": 63.2968,
+        "mae": 50.8302,
+        "erro_relativo_sigma": 0.79804,
+        "media_real_m4": 512.7,
+        "media_prevista_m4": 511.51,
+        "vies_medio_pts": -1.19
+      },
+      {
+        "ano": 2021,
+        "n_holdout": 447621,
+        "r2": 0.33906,
+        "rmse": 63.9227,
+        "mae": 51.3477,
+        "erro_relativo_sigma": 0.81298,
+        "media_real_m4": 513.8,
+        "media_prevista_m4": 519.6,
+        "vies_medio_pts": 5.8
+      },
+      {
+        "ano": 2022,
+        "n_holdout": 468965,
+        "r2": 0.33557,
+        "rmse": 59.352,
+        "mae": 46.7935,
+        "erro_relativo_sigma": 0.81512,
+        "media_real_m4": 522.22,
+        "media_prevista_m4": 516.53,
+        "vies_medio_pts": -5.69
+      },
+      {
+        "ano": 2023,
+        "n_holdout": 535653,
+        "r2": 0.32135,
+        "rmse": 67.4472,
+        "mae": 52.7483,
+        "erro_relativo_sigma": 0.8238,
+        "media_real_m4": 519.17,
+        "media_prevista_m4": 513.98,
+        "vies_medio_pts": -5.19
+      }
+    ]
+  },
+  "explicabilidade_shap": {
+    "valor_base_esperado_tri": 511.0407,
+    "n_amostras_holdout_shap": 10000,
+    "ranking_global": [
+      {
+        "Feature": "RENDA_PER_CAPITA",
+        "Descrição Sociológica": "Renda Per Capita (SM/morador)",
+        "|SHAP| Médio (pts TRI)": 18.483,
+        "Participação Relativa (%)": 30.1,
+        "Min SHAP (pts)": -41.93,
+        "Max SHAP (pts)": 85.96
+      },
+      {
+        "Feature": "TP_LINGUA",
+        "Descrição Sociológica": "Língua Estrangeira (0=Ing, 1=Esp)",
+        "|SHAP| Médio (pts TRI)": 10.895,
+        "Participação Relativa (%)": 17.74,
+        "Min SHAP (pts)": -24.82,
+        "Max SHAP (pts)": 18.22
+      },
+      {
+        "Feature": "Q024",
+        "Descrição Sociológica": "Posse de Computador (0 a 3+)",
+        "|SHAP| Médio (pts TRI)": 9.487,
+        "Participação Relativa (%)": 15.45,
+        "Min SHAP (pts)": -19.37,
+        "Max SHAP (pts)": 53.6
+      },
+      {
+        "Feature": "TP_ANO_CONCLUIU",
+        "Descrição Sociológica": "Anos desde Conclusão EM (0 a 9+)",
+        "|SHAP| Médio (pts TRI)": 8.958,
+        "Participação Relativa (%)": 14.59,
+        "Min SHAP (pts)": -15.26,
+        "Max SHAP (pts)": 29.29
+      },
+      {
+        "Feature": "Q002",
+        "Descrição Sociológica": "Escolaridade Materna (0 a 7)",
+        "|SHAP| Médio (pts TRI)": 8.642,
+        "Participação Relativa (%)": 14.07,
+        "Min SHAP (pts)": -42.82,
+        "Max SHAP (pts)": 27.64
+      },
+      {
+        "Feature": "TP_SEXO",
+        "Descrição Sociológica": "Sexo (0=Fem, 1=Masc)",
+        "|SHAP| Médio (pts TRI)": 4.946,
+        "Participação Relativa (%)": 8.05,
+        "Min SHAP (pts)": -13.06,
+        "Max SHAP (pts)": 12.46
+      }
+    ]
+  }
+}

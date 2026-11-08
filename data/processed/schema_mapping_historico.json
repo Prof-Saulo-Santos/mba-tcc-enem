@@ -1,0 +1,3328 @@
+{
+  "_metadata": {
+    "descricao": "Contrato Canônico de MLOps - Harmonização Semântica, Reprodutibilidade e Testes de Integridade ENEM",
+    "versao_contrato": "3.5 (Auditoria física amostral, integridade referencial e governança por testes)",
+    "data_auditoria": "2026-10-30",
+    "ambiente_reprodutibilidade": {
+      "python_version": "3.13.9",
+      "sistema_operacional": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+      "semente_aleatoria": 42,
+      "pythonhashseed_configurado_antes_kernel": false,
+      "dispositivo": "cpu",
+      "modelo_sbert": {
+        "identificador": "paraphrase-multilingual-MiniLM-L12-v2",
+        "hf_hub_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        "dimensao_embeddings": 384,
+        "pooling": "Mean Pooling com Normalização de Cosseno"
+      },
+      "bibliotecas": {
+        "torch": "2.14.0+cpu",
+        "transformers": "5.17.0",
+        "sentence_transformers": "6.1.0",
+        "pandas": "3.0.5",
+        "numpy": "2.5.3",
+        "openpyxl": "3.1.5"
+      }
+    },
+    "definicao_operacional_target_m4": {
+      "colunas_componentes": [
+        "NU_NOTA_CN",
+        "NU_NOTA_CH",
+        "NU_NOTA_LC",
+        "NU_NOTA_MT"
+      ],
+      "criterios_elegibilidade": "Presença confirmada nas quatro provas: TP_PRESENCA_* == 1",
+      "tratamento_notas_nulas": "Notas nulas ou fora de [0,1000] invalidam o participante.",
+      "formula_calculo": "TARGET_M4 = (NU_NOTA_CN + NU_NOTA_CH + NU_NOTA_LC + NU_NOTA_MT) / 4.0",
+      "observacao": "Média aritmética operacional das quatro notas objetivas; não implica invariância psicométrica."
+    },
+    "criterios_decisao": {
+      "limiar_minimo_similaridade": 0.7,
+      "preferencia_semantica_delta": 0.15,
+      "limiar_identidade_nominal": 0.6,
+      "limiar_identidade_socioeconomica": 0.65,
+      "restricao_injetividade": "Mapeamento 1-para-1; nenhuma coluna histórica pode atender a duas canônicas."
+    },
+    "insumos_dicionarios": {
+      "2009": {
+        "arquivo_relativo": "data/raw/enem_2009/microdados_enem_2009/DICIONÁRIO/Dicionário_Microdados_ENEM_2009.xlsx",
+        "tamanho_bytes": 68342,
+        "sha256": "db37d48f5659940654634ea57d7ee75ce63e0b172a7def88efda9b941feb53e4"
+      },
+      "2010": {
+        "arquivo_relativo": "data/raw/enem_2010/microdados_enem_2010/DICIONÁRIO/Dicionário_Microdados_Enem_2010.xlsx",
+        "tamanho_bytes": 35690,
+        "sha256": "5637b1073338b05cb3c9a8be2a04bc94e4c67eace7b35f1133abc7b8df1a44f8"
+      },
+      "2011": {
+        "arquivo_relativo": "data/raw/enem_2011/microdados_enem_2011/DICIONÁRIO/Dicionário_Microdados_Enem_2011.xlsx",
+        "tamanho_bytes": 39876,
+        "sha256": "e3c5bc26933a7d9003ea75d2299eba55d18aed7b5336bd20de7c9e18fc92a151"
+      },
+      "2012": {
+        "arquivo_relativo": "data/raw/enem_2012/microdados_enem_2012/DICIONÁRIO/Dicionário_Microdados_Enem_2012.xlsx",
+        "tamanho_bytes": 36018,
+        "sha256": "6a3a6f0cd1d1f7d96b1635cb88c061a715013dc877df3c0d3a294f255ead48ca"
+      },
+      "2013": {
+        "arquivo_relativo": "data/raw/enem_2013/microdados_enem_2013/DICIONÁRIO/Dicionário_Microdados_Enem_2013.xlsx",
+        "tamanho_bytes": 40445,
+        "sha256": "b030d7036ab8e377e4e06b0aa5c5a71bdc88a45e4ecf151ece197f4d3322e2dc"
+      },
+      "2014": {
+        "arquivo_relativo": "data/raw/enem_2014/microdados_enem_2014/DICIONÁRIO/Dicionário_Microdados_Enem_2014.xlsx",
+        "tamanho_bytes": 40008,
+        "sha256": "d9f5f6ca4de5ca3f104375c31340eac475203089ea668ebbd5af234aff20e21e"
+      },
+      "2015": {
+        "arquivo_relativo": "data/raw/enem_2015/microdados_enem_2015/DICIONÁRIO/Dicionário_Microdados_Enem_2015.xlsx",
+        "tamanho_bytes": 39634,
+        "sha256": "a2b36584e31df38a4ae8e67cc44a3dfa7c8cd4e16f75df90e169223bc1e04346"
+      },
+      "2016": {
+        "arquivo_relativo": "data/raw/enem_2016/microdados_enem_2016/DICIONÁRIO/Dicionário_Microdados_Enem_2016.xlsx",
+        "tamanho_bytes": 40427,
+        "sha256": "c4d650e79a59013e8d8c8edcdc7ce8ac1130e9699a336d0d620ad64188098b59"
+      },
+      "2017": {
+        "arquivo_relativo": "data/raw/enem_2017/microdados_enem_2017/DICIONÁRIO/Dicionário_Microdados_Enem_2017.xlsx",
+        "tamanho_bytes": 30215,
+        "sha256": "edda195b44ed3b4524cf6ebe5c5ac7e03541b984d3b9050865d92898b68f8edb"
+      },
+      "2018": {
+        "arquivo_relativo": "data/raw/enem_2018/microdados_enem_2018/DICIONÁRIO/Dicionário_Microdados_Enem_2018.xlsx",
+        "tamanho_bytes": 32373,
+        "sha256": "18178e9fe4e7b81c574f83219878a342dbd89dca09f9b21be967a78d368384e5"
+      },
+      "2019": {
+        "arquivo_relativo": "data/raw/enem_2019/microdados_enem_2019/DICIONÁRIO/Dicionário_Microdados_Enem_2019.xlsx",
+        "tamanho_bytes": 32125,
+        "sha256": "9a0aea4b5ce6316541b8b76101fc81ae4efea78d435b02fc75d518448eb8a707"
+      },
+      "2020": {
+        "arquivo_relativo": "data/raw/enem_2020/microdados_enem_2020/DICIONÁRIO/Dicionário_Microdados_Enem_2020.xlsx",
+        "tamanho_bytes": 34063,
+        "sha256": "b7d8ff22bb029c241d2192205191d5393b832b49199de90adf2d637645356e04"
+      },
+      "2021": {
+        "arquivo_relativo": "data/raw/enem_2021/microdados_enem_2021/DICIONÁRIO/Dicionário_Microdados_Enem_2021.xlsx",
+        "tamanho_bytes": 34534,
+        "sha256": "faed27b63ae8bcb1bde20b3e8cefb6bd72374935881af2163077bdd3e539775b"
+      },
+      "2022": {
+        "arquivo_relativo": "data/raw/enem_2022/microdados_enem_2022/DICIONÁRIO/Dicionário_Microdados_Enem_2022.xlsx",
+        "tamanho_bytes": 55513,
+        "sha256": "b3b19a4250b60388022808679f40d7d8737d379c520883209117fcb0fd5a0fcf"
+      },
+      "2023": {
+        "arquivo_relativo": "data/raw/enem_2023/microdados_enem_2023/DICIONÁRIO/Dicionário_Microdados_Enem_2023.xlsx",
+        "tamanho_bytes": 32897,
+        "sha256": "1411ad89784f7f960dc1c1fc13b0d22eee696e2613cb762072665fa547ae6cf6"
+      },
+      "2024": {
+        "arquivo_relativo": "data/raw/enem_2024/microdados_enem_2024/DICIONÁRIO/Dicionário_Microdados_Enem_2024.xlsx",
+        "tamanho_bytes": 35781,
+        "sha256": "b53dc519e8150f8af85639b33d9bffb130fc02c28deaad30ee1356f1401ca2a6"
+      },
+      "2025": {
+        "arquivo_relativo": "data/raw/enem_2025/microdados_enem_2025/DICIONÁRIO/Dicionário_Microdados_Enem_2025.xlsx",
+        "tamanho_bytes": 45516,
+        "sha256": "f0c1ec0bb29e39ce3808bf237b77b298b81eb33244e2ea993c0ec3178f9fdc02"
+      }
+    },
+    "politica_edicoes_anteriores": {
+      "2009-2010": {
+        "status": "REPROVADA",
+        "motivo": "Rupturas cadastrais documentadas no contrato 3.4; manter documentação de suporte."
+      },
+      "2011-2013": {
+        "status": "PENDENTE_HARMONIZACAO",
+        "motivo": "Descontinuidade de granularidade socioeconômica; fora do baseline até validação."
+      }
+    },
+    "classificacao_edicoes": {
+      "2014": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2015": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2016": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 1,
+          "taxa_flags_ausentes_amostra": 5e-05,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_COM_RESSALVA_TOLERADA",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2017": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2018": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2019": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2020": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2021": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2022": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2023": {
+        "situacao_base": "DEFINITIVA",
+        "status_governanca": "APROVADA_PARA_BASELINE",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Treinamento/benchmark; condicionado à auditoria física",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PASSOU",
+        "disponibilidade_target_m4": "CALCULAVEL_NA_AMOSTRA",
+        "conformidade_data_quality": {
+          "candidatos_flags_ausentes": 0,
+          "taxa_flags_ausentes_amostra": 0.0,
+          "tolerancia_maxima": 0.0005,
+          "status_sla": "CONFORME_SEM_OCORRENCIAS",
+          "mecanismo_expurgo": "Expurgo determinístico garantido via fillna(0) nas 4 flags de presença no etl_parquet.py"
+        }
+      },
+      "2024": {
+        "situacao_base": "DEFINITIVA_BIPARTIDA",
+        "status_governanca": "PENDENTE_CONFIRMACAO_ALINHAMENTO",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Validação temporal OOT; condicionada à integridade referencial",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "PENDENTE_CONFIRMACAO_ALINHAMENTO",
+        "disponibilidade_target_m4": "CALCULAVEL_APENAS_NA_AMOSTRA_DIAGNOSTICA"
+      },
+      "2025": {
+        "situacao_base": "PRELIMINAR_CADASTRO",
+        "status_governanca": "PRELIMINAR_SEM_NOTAS",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "finalidade_arquitetural": "Auditoria sintática de features; sem avaliação do target",
+        "justificativa": "Status provisório até a execução dos testes físicos correspondentes.",
+        "auditoria_fisica": "CADASTRO_PRELIMINAR",
+        "disponibilidade_target_m4": "SEM_NOTAS_FISICAS"
+      },
+      "2009": {
+        "status_governanca": "REPROVADA_DOCUMENTALMENTE",
+        "testes_schema": {
+          "cardinalidade_15": false,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": false
+        },
+        "auditoria_fisica": "NAO_AUDITADO_NESTE_NOTEBOOK",
+        "disponibilidade_target_m4": "NAO_HOMOLOGADO"
+      },
+      "2010": {
+        "status_governanca": "REPROVADA_DOCUMENTALMENTE",
+        "testes_schema": {
+          "cardinalidade_15": false,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": false
+        },
+        "auditoria_fisica": "NAO_AUDITADO_NESTE_NOTEBOOK",
+        "disponibilidade_target_m4": "NAO_HOMOLOGADO"
+      },
+      "2011": {
+        "status_governanca": "PENDENTE_HARMONIZACAO",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "auditoria_fisica": "NAO_AUDITADO_NESTE_NOTEBOOK",
+        "disponibilidade_target_m4": "NAO_HOMOLOGADO"
+      },
+      "2012": {
+        "status_governanca": "PENDENTE_HARMONIZACAO",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "auditoria_fisica": "NAO_AUDITADO_NESTE_NOTEBOOK",
+        "disponibilidade_target_m4": "NAO_HOMOLOGADO"
+      },
+      "2013": {
+        "status_governanca": "PENDENTE_HARMONIZACAO",
+        "testes_schema": {
+          "cardinalidade_15": true,
+          "injetividade_1_para_1": true,
+          "evidencias_completas_sem_rejeicao": true
+        },
+        "auditoria_fisica": "NAO_AUDITADO_NESTE_NOTEBOOK",
+        "disponibilidade_target_m4": "NAO_HOMOLOGADO"
+      }
+    },
+    "horizontes": {
+      "treinamento_benchmark": {
+        "periodo": "2014-2023",
+        "edicoes": [
+          "2014",
+          "2015",
+          "2016",
+          "2017",
+          "2018",
+          "2019",
+          "2020",
+          "2021",
+          "2022",
+          "2023"
+        ],
+        "status_homologacao": "CONDICIONADO_A_AUDITORIA_FISICA"
+      },
+      "reserva_validacao_oot": {
+        "periodo": "2024",
+        "edicoes": [
+          "2024"
+        ],
+        "status_homologacao": "PENDENTE_VALIDACAO_CHAVE"
+      },
+      "reserva_inferencia_sintatica": {
+        "periodo": "2025",
+        "edicoes": [
+          "2025"
+        ],
+        "status_homologacao": "PRELIMINAR_SEM_NOTAS"
+      }
+    },
+    "evidencias_decisao": {
+      "2014": {
+        "Q006": {
+          "coluna_eleita": "Q003",
+          "score_similaridade": 0.9947,
+          "tipo_correspondencia": "Semântica (Curadoria HITL)",
+          "status_homologacao": "HOMOLOGADO_HUMANO",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares)",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Manual Questionário 2014 (Item 3 - 17 faixas de Salário Mínimo A-Q)",
+          "justificativa_decisao": "Manual Questionário 2014 (Item 3 - 17 faixas de Salário Mínimo A-Q)"
+        },
+        "Q005": {
+          "coluna_eleita": "Q004",
+          "score_similaridade": 0.9295,
+          "tipo_correspondencia": "Semântica (Curadoria HITL)",
+          "status_homologacao": "HOMOLOGADO_HUMANO",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Quantas pessoas moram em sua casa (incluindo você)?",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Manual Questionário 2014 (Item 4 - Moradores no domicílio 1 a 20)",
+          "justificativa_decisao": "Manual Questionário 2014 (Item 4 - Moradores no domicílio 1 a 20)"
+        },
+        "Q024": {
+          "coluna_eleita": "Q010",
+          "score_similaridade": 0.8045,
+          "tipo_correspondencia": "Semântica (Curadoria HITL)",
+          "status_homologacao": "HOMOLOGADO_HUMANO",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Você tem em sua casa?\nMicrocomputador",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Manual Questionário 2014 (Item 10 - Posse de computador em casa)",
+          "justificativa_decisao": "Manual Questionário 2014 (Item 10 - Posse de computador em casa)"
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 0.8648,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até quando sua mãe estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.86 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2014",
+          "fonte_documental": "Dicionário_Microdados_Enem_2014.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2015": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8045,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Tipo de Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.80 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2015",
+          "fonte_documental": "Dicionário_Microdados_Enem_2015.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2016": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2016",
+          "fonte_documental": "Dicionário_Microdados_Enem_2016.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2017": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2017",
+          "fonte_documental": "Dicionário_Microdados_Enem_2017.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2018": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2018",
+          "fonte_documental": "Dicionário_Microdados_Enem_2018.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2019": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2019",
+          "fonte_documental": "Dicionário_Microdados_Enem_2019.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2020": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2020",
+          "fonte_documental": "Dicionário_Microdados_Enem_2020.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2021": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2021",
+          "fonte_documental": "Dicionário_Microdados_Enem_2021.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2022": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2022",
+          "fonte_documental": "Dicionário_Microdados_Enem_2022.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2023": {
+        "Q006": {
+          "coluna_eleita": "Q006",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q024",
+          "score_similaridade": 0.9187,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Na sua residência tem computador?",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 0.92 >= 0.65)."
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "MICRODADOS_ENEM_2023",
+          "fonte_documental": "Dicionário_Microdados_Enem_2023.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2024": {
+        "Q006": {
+          "coluna_eleita": "Q007",
+          "score_similaridade": 0.9641,
+          "tipo_correspondencia": "Semântica (Alinhamento SBERT)",
+          "status_homologacao": "SUGESTAO_ALGORITMICA",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Considere a sua renda com a das pessoas que moram com você.)",
+          "aba_origem": "PARTICIPANTES_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Mudança de código sugerida por embedding SBERT (score 0.96 > limiar + 0.15)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "PARTICIPANTES_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q021",
+          "score_similaridade": 0.907,
+          "tipo_correspondencia": "Semântica (Curadoria HITL)",
+          "status_homologacao": "HOMOLOGADO_HUMANO",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Em sua casa, existe computador/notebook?",
+          "aba_origem": "PARTICIPANTES_2024",
+          "fonte_documental": "Dicionário 2024 (Aba Questionário - Item 21 - Computador)",
+          "justificativa_decisao": "Dicionário 2024 (Aba Questionário - Item 21 - Computador)"
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "PARTICIPANTES_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "PARTICIPANTES_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "PARTICIPANTES_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "RESULTADOS_2024",
+          "fonte_documental": "Dicionário_Microdados_Enem_2024.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      },
+      "2025": {
+        "Q006": {
+          "coluna_eleita": "Q007",
+          "score_similaridade": 0.9735,
+          "tipo_correspondencia": "Semântica (Alinhamento SBERT)",
+          "status_homologacao": "SUGESTAO_ALGORITMICA",
+          "descricao_canonica": "Qual é a renda mensal de sua família? (Some a sua renda com a dos seus familiares.)",
+          "descricao_historica": "Qual é a renda mensal de sua família? (Considere a sua renda com a das pessoas que moram com você)",
+          "aba_origem": "PARTICIPANTES_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Mudança de código sugerida por embedding SBERT (score 0.97 > limiar + 0.15)."
+        },
+        "Q005": {
+          "coluna_eleita": "Q005",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "descricao_historica": "Incluindo você, quantas pessoas moram atualmente em sua residência?",
+          "aba_origem": "PARTICIPANTES_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "Q024": {
+          "coluna_eleita": "Q021",
+          "score_similaridade": 0.907,
+          "tipo_correspondencia": "Semântica (Curadoria HITL)",
+          "status_homologacao": "HOMOLOGADO_HUMANO",
+          "descricao_canonica": "Na sua residência tem computador? (computador de mesa, microcomputador ou notebook)",
+          "descricao_historica": "Em sua casa, existe computador/notebook?",
+          "aba_origem": "PARTICIPANTES_2025",
+          "fonte_documental": "Dicionário Preliminar 2025 (Item 21 - Computador)",
+          "justificativa_decisao": "Dicionário Preliminar 2025 (Item 21 - Computador)"
+        },
+        "Q002": {
+          "coluna_eleita": "Q002",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "descricao_historica": "Até que série sua mãe, ou a mulher responsável por você, estudou?",
+          "aba_origem": "PARTICIPANTES_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Enunciado socioeconômico e código estáveis em relação ao padrão 2023 (score 1.00 >= 0.65)."
+        },
+        "TP_ANO_CONCLUIU": {
+          "coluna_eleita": "TP_ANO_CONCLUIU",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Ano de Conclusão do Ensino Médio",
+          "descricao_historica": "Ano de Conclusão do Ensino Médio",
+          "aba_origem": "PARTICIPANTES_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_LINGUA": {
+          "coluna_eleita": "TP_LINGUA",
+          "score_similaridade": 0.8156,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Língua Estrangeira (Inglês ou Espanhol)",
+          "descricao_historica": "Língua Estrangeira",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.82 >= 0.60)."
+        },
+        "TP_SEXO": {
+          "coluna_eleita": "TP_SEXO",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Sexo",
+          "descricao_historica": "Sexo",
+          "aba_origem": "PARTICIPANTES_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CN": {
+          "coluna_eleita": "NU_NOTA_CN",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências da Natureza",
+          "descricao_historica": "Nota da prova de Ciências da Natureza",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_CH": {
+          "coluna_eleita": "NU_NOTA_CH",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Ciências Humanas",
+          "descricao_historica": "Nota da prova de Ciências Humanas",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_LC": {
+          "coluna_eleita": "NU_NOTA_LC",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Linguagens e Códigos",
+          "descricao_historica": "Nota da prova de Linguagens e Códigos",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "NU_NOTA_MT": {
+          "coluna_eleita": "NU_NOTA_MT",
+          "score_similaridade": 1.0,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Nota da prova de Matemática",
+          "descricao_historica": "Nota da prova de Matemática",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 1.00 >= 0.60)."
+        },
+        "TP_PRESENCA_CN": {
+          "coluna_eleita": "TP_PRESENCA_CN",
+          "score_similaridade": 0.97,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências da Natureza",
+          "descricao_historica": "Presença na prova objetiva de Ciências da Natureza",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.97 >= 0.60)."
+        },
+        "TP_PRESENCA_CH": {
+          "coluna_eleita": "TP_PRESENCA_CH",
+          "score_similaridade": 0.9543,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Ciências Humanas",
+          "descricao_historica": "Presença na prova objetiva de Ciências Humanas",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.95 >= 0.60)."
+        },
+        "TP_PRESENCA_LC": {
+          "coluna_eleita": "TP_PRESENCA_LC",
+          "score_similaridade": 0.9339,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Linguagens e Códigos",
+          "descricao_historica": "Presença na prova objetiva de Linguagens e Códigos",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.93 >= 0.60)."
+        },
+        "TP_PRESENCA_MT": {
+          "coluna_eleita": "TP_PRESENCA_MT",
+          "score_similaridade": 0.8884,
+          "tipo_correspondencia": "Exata (Identidade Nominal)",
+          "status_homologacao": "APROVADO_AUTOMATICO_IDENTIDADE",
+          "descricao_canonica": "Presença na prova de Matemática",
+          "descricao_historica": "Presença na prova objetiva de Matemática",
+          "aba_origem": "RESULTADOS_2025",
+          "fonte_documental": "Dicionário_Microdados_Enem_2025.xlsx",
+          "justificativa_decisao": "Identidade nominal de código confirmada com estabilidade semântica (score 0.89 >= 0.60)."
+        }
+      }
+    },
+    "relatorios_testes": {
+      "auditoria_fisica_2014_2023": {
+        "2014": {
+          "ano": "2014",
+          "arquivo": "MICRODADOS_ENEM_2014.csv",
+          "linhas_lidas_no_arquivo": 8722248,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 5915,
+            "NU_NOTA_CH": 5915,
+            "NU_NOTA_LC": 6337,
+            "NU_NOTA_MT": 6337
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 13584,
+          "taxa_elegibilidade_amostra": 0.6792,
+          "media_target_m4_amostra": 502.45650581566554
+        },
+        "2015": {
+          "ano": "2015",
+          "arquivo": "MICRODADOS_ENEM_2015.csv",
+          "linhas_lidas_no_arquivo": 7746427,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 5138,
+            "NU_NOTA_CH": 5138,
+            "NU_NOTA_LC": 5472,
+            "NU_NOTA_MT": 5472
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 14492,
+          "taxa_elegibilidade_amostra": 0.7246,
+          "media_target_m4_amostra": 503.5397857438586
+        },
+        "2016": {
+          "ano": "2016",
+          "arquivo": "microdados_enem_2016.csv",
+          "linhas_lidas_no_arquivo": 8627179,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 1,
+            "TP_PRESENCA_CH": 1,
+            "TP_PRESENCA_LC": 1,
+            "TP_PRESENCA_MT": 1
+          },
+          "candidatos_flags_ausentes": 1,
+          "taxa_candidatos_flags_ausentes": 5e-05,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 5940,
+            "NU_NOTA_CH": 5940,
+            "NU_NOTA_LC": 6322,
+            "NU_NOTA_MT": 6322
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 13608,
+          "taxa_elegibilidade_amostra": 0.6804,
+          "media_target_m4_amostra": 506.8314135067607
+        },
+        "2017": {
+          "ano": "2017",
+          "arquivo": "MICRODADOS_ENEM_2017.csv",
+          "linhas_lidas_no_arquivo": 6731278,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 6927,
+            "NU_NOTA_CH": 6172,
+            "NU_NOTA_LC": 6172,
+            "NU_NOTA_MT": 6927
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 13040,
+          "taxa_elegibilidade_amostra": 0.652,
+          "media_target_m4_amostra": 515.7777914110429
+        },
+        "2018": {
+          "ano": "2018",
+          "arquivo": "MICRODADOS_ENEM_2018.csv",
+          "linhas_lidas_no_arquivo": 3063481,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 5247,
+            "NU_NOTA_CH": 4419,
+            "NU_NOTA_LC": 4419,
+            "NU_NOTA_MT": 5247
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 14711,
+          "taxa_elegibilidade_amostra": 0.73555,
+          "media_target_m4_amostra": 534.5469155733805
+        },
+        "2019": {
+          "ano": "2019",
+          "arquivo": "MICRODADOS_ENEM_2019.csv",
+          "linhas_lidas_no_arquivo": 5095171,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 5437,
+            "NU_NOTA_CH": 4574,
+            "NU_NOTA_LC": 4574,
+            "NU_NOTA_MT": 5437
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 14536,
+          "taxa_elegibilidade_amostra": 0.7268,
+          "media_target_m4_amostra": 508.23199470280684
+        },
+        "2020": {
+          "ano": "2020",
+          "arquivo": "MICRODADOS_ENEM_2020.csv",
+          "linhas_lidas_no_arquivo": 5783109,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 11060,
+            "NU_NOTA_CH": 10498,
+            "NU_NOTA_LC": 10498,
+            "NU_NOTA_MT": 11060
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 8910,
+          "taxa_elegibilidade_amostra": 0.4455,
+          "media_target_m4_amostra": 512.8617227833895
+        },
+        "2021": {
+          "ano": "2021",
+          "arquivo": "MICRODADOS_ENEM_2021.csv",
+          "linhas_lidas_no_arquivo": 3389832,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 6947,
+            "NU_NOTA_CH": 6176,
+            "NU_NOTA_LC": 6176,
+            "NU_NOTA_MT": 6947
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 13005,
+          "taxa_elegibilidade_amostra": 0.65025,
+          "media_target_m4_amostra": 512.5618800461361
+        },
+        "2022": {
+          "ano": "2022",
+          "arquivo": "MICRODADOS_ENEM_2022.csv",
+          "linhas_lidas_no_arquivo": 3476105,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 6344,
+            "NU_NOTA_CH": 5542,
+            "NU_NOTA_LC": 5542,
+            "NU_NOTA_MT": 6344
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 13607,
+          "taxa_elegibilidade_amostra": 0.68035,
+          "media_target_m4_amostra": 522.0755622106269
+        },
+        "2023": {
+          "ano": "2023",
+          "arquivo": "MICRODADOS_ENEM_2023.csv",
+          "linhas_lidas_no_arquivo": 3933955,
+          "linhas_amostra": 20000,
+          "colunas_mapeadas_presentes": 15,
+          "colunas_mapeadas_esperadas": 15,
+          "flags_invalidas_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "flags_ausentes_por_coluna": {
+            "TP_PRESENCA_CN": 0,
+            "TP_PRESENCA_CH": 0,
+            "TP_PRESENCA_LC": 0,
+            "TP_PRESENCA_MT": 0
+          },
+          "candidatos_flags_ausentes": 0,
+          "taxa_candidatos_flags_ausentes": 0.0,
+          "notas_invalidas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_ausentes_esperadas_por_coluna": {
+            "NU_NOTA_CN": 6323,
+            "NU_NOTA_CH": 5654,
+            "NU_NOTA_LC": 5654,
+            "NU_NOTA_MT": 6323
+          },
+          "notas_ausentes_inconsistentes_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_nao_numericas_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "notas_fora_intervalo_por_coluna": {
+            "NU_NOTA_CN": 0,
+            "NU_NOTA_CH": 0,
+            "NU_NOTA_LC": 0,
+            "NU_NOTA_MT": 0
+          },
+          "participantes_elegiveis_amostra": 13602,
+          "taxa_elegibilidade_amostra": 0.6801,
+          "media_target_m4_amostra": 519.5472559182473
+        }
+      },
+      "integracao_horizontal_2024": {
+        "arquivo_participantes": "PARTICIPANTES_2024.csv",
+        "arquivo_resultados": "RESULTADOS_2024.csv",
+        "registros_participantes": 4332944,
+        "registros_resultados": 4332944,
+        "paridade_linhas": true,
+        "colunas_participantes": 6,
+        "colunas_resultados": 9,
+        "colunas_ausentes": [],
+        "colunas_ambiguas": [],
+        "colunas_target_ausentes": [],
+        "colunas_target_fora_resultados": [],
+        "concatenacao_horizontal_executada": true,
+        "alinhamento_posicional_documentado": false,
+        "integracao_2024_aprovada": false,
+        "target_m4_calculavel_amostra": true,
+        "target_m4_validado": false,
+        "participantes_elegiveis_amostra": 13821,
+        "media_target_m4_amostra": 515.0866923522177,
+        "metodo_integracao": "CONCATENACAO_HORIZONTAL_POSICIONAL_DIAGNOSTICA",
+        "observacao": "A paridade de registros e a concatenação por índice não comprovam, isoladamente, a correspondência entre participantes e resultados. A integração permanece pendente até comprovação documental independente."
+      },
+      "politica_data_quality": {
+        "tolerancia_taxa_flags_ausentes": 0.0005,
+        "descricao": "Tolerância de 0,05% para ruídos isolados de presença em bases de grande escala.",
+        "expurgo_producao_confirmado": true,
+        "script_etl_garantia": "scripts/etl_parquet.py aplica fillna(0) nas 4 flags de presenca e filtra por == 1"
+      }
+    },
+    "data_consolidacao_governanca": "2026-10-30"
+  },
+  "2014": {
+    "Q006": "Q003",
+    "Q005": "Q004",
+    "Q024": "Q010",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2015": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2016": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2017": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2018": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2019": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2020": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2021": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2022": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2023": {
+    "Q006": "Q006",
+    "Q005": "Q005",
+    "Q024": "Q024",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2024": {
+    "Q006": "Q007",
+    "Q005": "Q005",
+    "Q024": "Q021",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2025": {
+    "Q006": "Q007",
+    "Q005": "Q005",
+    "Q024": "Q021",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2009": {
+    "Q005": "Q15",
+    "Q002": "Q18",
+    "TP_ANO_CONCLUIU": "Q254",
+    "TP_LINGUA": "Q79",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2010": {
+    "Q006": "Q04",
+    "Q005": "Q01",
+    "TP_ANO_CONCLUIU": "TP_ST_CONCLUSAO",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2011": {
+    "Q006": "Q004",
+    "Q005": "Q001",
+    "Q024": "Q064",
+    "Q002": "Q003",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2012": {
+    "Q006": "Q3",
+    "Q005": "Q4",
+    "Q024": "Q10",
+    "Q002": "Q2",
+    "TP_ANO_CONCLUIU": "TP_ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  },
+  "2013": {
+    "Q006": "Q003",
+    "Q005": "Q004",
+    "Q024": "Q010",
+    "Q002": "Q002",
+    "TP_ANO_CONCLUIU": "ANO_CONCLUIU",
+    "TP_LINGUA": "TP_LINGUA",
+    "TP_SEXO": "TP_SEXO",
+    "NU_NOTA_CN": "NU_NOTA_CN",
+    "NU_NOTA_CH": "NU_NOTA_CH",
+    "NU_NOTA_LC": "NU_NOTA_LC",
+    "NU_NOTA_MT": "NU_NOTA_MT",
+    "TP_PRESENCA_CN": "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH": "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC": "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT": "TP_PRESENCA_MT"
+  }
+}

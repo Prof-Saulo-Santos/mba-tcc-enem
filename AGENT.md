@@ -32,7 +32,7 @@ A esteira de desenvolvimento do projeto está estruturada rigorosamente em **tr�
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ ETAPA 1: LABORATÓRIO DE DADOS, SELEÇÃO, NLP E MLFLOW (media/pipeline-1.jpg)            │
-│ [2023] ──> [02_eda] ──> [03_features] ──> [04_nlp] ──> [2014-2023] ──> [XGBoost+MLFlow] ──> enem.pkl│
+│ [2023] ─> [02_eda] ─> [03_features] ─> [04_nlp] ─> [05_consolidacao] ─> [06_xgboost+mlflow] ─> enem.pkl│
 └────────────────────────────────────────────────────────────────────────────────────────┘
                                             │
                                             ▼
@@ -111,14 +111,26 @@ A Etapa 1 representa o laboratório analítico e a preparação de dados, tendo 
 * **Veredito da Auditoria Histórica:**
   * 2009 a 2013: Descartados por ausência estrutural de perguntas essenciais no questionário.
   * **2014 a 2023 (10 Anos):** "Era de Ouro" aprovada com 100% de consistência semântica e integridade de variáveis.
-* **Big Data ETL:** Script `scripts/etl_parquet.py` lê os microdados CSV pesados em chunks e converte a década de ouro em arquivos colunares comprimidos **Apache Parquet (`snappy`)**, resolvendo restrições de memória RAM (evita OOM).
+* **Big Data ETL Homologado:** O script `scripts/etl_parquet.py` consome dinamicamente o contrato `data/processed/schema_mapping_historico.json`, processa os microdados CSV pesados em chunks de 500.000 linhas, aplica o filtro de presença integral, calcula o alvo oficial `TARGET_M4` e converte os dados em arquivos colunares **Apache Parquet (`snappy`)**. A safra do **ENEM 2014** foi processada e validada com sucesso, gerando `data/processed/enem_2014_gold.parquet` (5.947.909 candidatos purificados $\times$ 17 colunas, 95.91 MB, média TRI $502.98 \pm 67.13$).
 
-### 3.5 `notebooks/05_treinamento_modelo.ipynb` (Treinamento Oficial com MLflow) - *Próximo a Construir*
-* **Treinamento Escalável:** Treino do modelo campeão (**XGBoost**) alimentado pelo dataset histórico unificado de 10 anos (2014 a 2023).
-* **Rastreabilidade e MLOps com MLflow:**
-  * Servidor local do MLFlow para rastrear parâmetros (`learning_rate`, `max_depth`, `n_estimators`), métricas ($R^2$, RMSE, MAE) e curvas de aprendizado.
-  * Geração do artefato de produção serializado: **`enem.pkl`**.
-  * Interpretabilidade com **SHAP Values** para demonstrar a contribuição marginal de cada variável à banca.
+### 3.5 `notebooks/05_consolidacao_historica.ipynb` (Consolidação Censitária 2014–2023) - *Homologado*
+* **Consolidação Longitudinal da Década de Ouro:** Ingestão em *chunks* de 500.000 linhas dos 10 CSVs brutos (`2014` a `2023`, 25,45 GB, 56.568.785 inscritos brutos varridos) guiada estritamente pelo contrato `data/processed/schema_mapping_historico.json`.
+* **Harmonização de *Value Drift* e Deflação Estrutural:**
+  * Conversão de `RENDA_PER_CAPITA` diretamente em **múltiplos de Salários Mínimos por morador** (`float32`), neutralizando a inflação nominal da década;
+  * Harmonização documental de 2014/2015 nas variáveis `Q024` (`Q010` em 2014), `Q002` e `TP_ANO_CONCLUIU` (escala estacionária `{0..9}`).
+* **Compactação de Memória (*Downcasting*):** Redução de 64 bytes/linha para **15,00 bytes/linha** (`5 × int8 + 2 × float32 + 1 × int16`), consolidando **37.593.629 candidatos elegíveis** (zero nulos, zero duplicatas, `TARGET_M4` médio `511,05 ± 70,97`) em **537,78 MB de RAM** e **153,17 MB em disco** (`data/processed/enem_2014_2023_consolidado.parquet` + `data/processed/contrato_consolidacao_2014_2023.json`).
+
+### 3.6 `notebooks/06_treinamento_modelo.ipynb` (Treinamento Oficial com MLflow) - *Homologado*
+* **Particionamento Censitário Anti-Leakage em Baixa Memória:** Ingestão de `37.593.629` registros (`537,78 MB` RAM) e divisão estratificada por `NU_ANO` via máscara `uint8` (`8,74s`, pico de partições `552,09 MB` RAM): `df_fit` (`72%`, `27.067.413`), `df_val_es` dedicado a *Early Stopping* e Curva de Aprendizado (`8%`, `3.007.490`) e Holdout Cego intocável `df_test` (`20%`, `7.518.726`). Coluna `NU_ANO` estritamente bloqueada na matriz `X` para impedir *Temporal Leakage*.
+* **Treinamento Escalável em 3 Estágios:**
+  1. *Estágio 1 — Benchmark 5-Fold CV (`N = 1.000.000`) & Tuning (`3-Fold CV`, 11 Nested Runs):* `DummyRegressor` ($R^2 = 0.0000$, $\text{RMSE} = 71.00$) $\rightarrow$ `Ridge` ($R^2 = 0.2836$, $\text{RMSE} = 60.09$) $\rightarrow$ `RandomForestRegressor` ($R^2 = 0.3337$, $\text{RMSE} = 57.95$) $\rightarrow$ `XGBRegressor` ($R^2 = 0.3359$, $\text{RMSE} = 57.86$), provando ganho não linear de **+5,23 pp de $R^2$ (+19,1% de variância explicada relativa no Holdout)** sobre o baseline linear nas mesmas 6 features. Melhor configuração `XGB-01`: `max_depth=5`, `learning_rate=0.1`, `min_child_weight=30`, `subsample=0.8`, `colsample_bytree=0.8`, `reg_lambda=1.0`.
+  2. *Estágio 2 — Curva de Aprendizado Escalável (`50k` $\rightarrow$ `15M` avaliados em `3,01M`):* Fechamento assintótico do gap treino-validação (`57,76` vs. `57,73` pts em `15M`, $R^2 = 0.33716$), confirmando ausência de *overfitting*.
+  3. *Estágio 3 — Disputa Final no Holdout Cego (`7.518.726` alunos) & Validação Out-of-Time Interna:*
+     * **Campeão Homologado (`XGBRegressor` `hist`, `27,07M` Fit + `3,01M` ES, `best_iteration = 649`):** **$R^2 = 0.33780$**, **$\text{RMSE} = 57.7439$ pts**, **$\text{MAE} = 45.5904$ pts**, $\text{RMSE}/\sigma = 0.81376$ e latência de **`81,15 ms / 10k` amostras** (superando o `RandomForestRegressor` em `3,0M` com $R^2 = 0.33606$, $\text{RMSE} = 57.8198$ pts e `124,42 ms / 10k`, sendo **35% mais rápido** em inferência).
+     * **Estabilidade Longitudinal (`2014–2023`) e Caso TRI `2018`:** $R^2 \in [0.3120, 0.3631]$ em 9 das 10 edições (pico de $R^2 = 0.36314$ na pandemia de `2020`); queda pontual do $R^2$ não centrado em `2018` ($0.22595$, viés `-23,81 pts`) explicada pelo deslocamento histórico da média real da TRI do INEP em 2018 (`533,54 pts`), comprovando que o modelo não memoriza o ano da prova.
+     * **Validação *Out-of-Time* Interna (`Treino 2014–2022` $\rightarrow$ `Teste Cego 2023`, `N = 2.678.264`):** **$R^2 = 0.31842$**, **$\text{RMSE} = 67.6232$ pts**, **$\text{MAE} = 52.8526$ pts**, $\text{RMSE}/\sigma = 0.82558$ ($\Delta R^2 = -0.00293$ frente ao Holdout *in-sample* de 2023), atestando estacionariedade temporal para a Etapa 3 (ENEM 2024).
+* **Explicabilidade Sociológica Exata (TreeSHAP em `10.000` candidatos do Holdout):** Valor base $\mathbb{E}[f(X)] = 511.04$ pts (erro de aditividade de Shapley `1,26e-03` pts). Liderança isolada de `RENDA_PER_CAPITA` (**`18,483 pts`** de `|SHAP|` médio, **`30,10%`** do impacto total, amplitude de `127,89 pts` entre `-41,93` e `+85,96` pts com curva côncava de retorno marginal), seguida por `TP_LINGUA` (`10,895 pts` / `17,74%`), `Q024` (`9,487 pts` / `15,45%`), `TP_ANO_CONCLUIU` (`8,958 pts` / `14,59%`), `Q002` (`8,642 pts` / `14,07%`) e `TP_SEXO` (`4,946 pts` / `8,05%`).
+* **Rastreabilidade MLflow e Artefatos de Produção:** Backend **MLflow 3.17.2** (`sqlite:///mlflow.db` + `./mlruns`, **20/20 runs `FINISHED`**) com modelo registrado **`enem_target_m4_producao` Versão 1 (`READY`, `run_id = 8b4ed2c387044363968b6088078bdf2d`)**. Exportação do estimador puro em **`models/enem.pkl`** (`1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`), backup nativo `models/enem_xgboost.ubj` (`1,712 MB`), contrato `models/enem_model_card.json`, auditoria `models/auditoria_holdout_por_ano_2014_2023.csv`, 7 figuras em `media/nb06_figuras/`, guia `passo-a-passo-06.md` e roteiro de defesa `slides-06.md`.
 
 ---
 
@@ -129,7 +141,7 @@ Baseada no diagrama `media/pipeline-2.jpg` e `diagrama_deploy_aws.md`:
 1. **Encapsulamento com FastAPI:**
    * Criação do serviço Python `src/api/` que carrega o modelo serializado `enem.pkl`.
    * Endpoints REST:
-     * `POST /predict`: Recebe os 6 atributos do candidato via JSON e retorna a nota prevista (`TARGET_M2`).
+     * `POST /predict`: Recebe os 6 atributos do candidato via JSON e retorna a nota prevista (`TARGET_M4`).
      * `GET /health`: Checagem de integridade e liveness do serviço.
      * `GET /docs`: Documentação interativa Swagger/OpenAPI.
 2. **Containerização com Docker:**
@@ -172,18 +184,22 @@ Baseada no diagrama `media/pipeline-3.jpg` e `diagrama_producao_2024.md`:
 3. **Pilha Tecnológica do Repositório:**
    * Ambiente: Linux/WSL (`/home/saulo/mba/tcc/enem`).
    * Gerenciador de Pacotes: `uv` com ambiente virtual ativo em `.venv` (Python 3.12 / 3.13).
-   * Principais Pacotes: `pandas`, `numpy`, `scikit-learn`, `xgboost`, `sentence-transformers`, `torch`, `mlflow`, `fastapi`, `uvicorn`, `docker`, `openpyxl`, `pyarrow`.
+   * Principais Pacotes: `pandas`, `numpy`, `scikit-learn`, `xgboost`, `shap`, `sentence-transformers`, `torch`, `mlflow`, `fastapi`, `uvicorn`, `docker`, `openpyxl`, `pyarrow`.
 4. **Regra de Ouro da Modelagem:**
    * O Random Forest e o XGBoost são modelos concorrentes sob o mesmo protocolo de validação cruzada; o Random Forest não é apenas um seletor descartável, mas o benchmark de *Bagging*.
    * Nunca use a nota de uma prova para prever outra prova (evitar data leakage inter-target).
    * Manter sempre a explicabilidade por meio de valores SHAP.
 5. **Estado Atual e Próxima Tarefa:**
-   * **Notebook 02 (`02_eda.ipynb`) e Notebook 03 (`03_engenharia_features.ipynb`):** 100% concluídos, auditados e homologados.
-   * **Artefato Canônico Exportado:** `data/processed/enem_2023_features_modelagem.parquet` (212.386 concluintes $\times$ 8 colunas: `NU_INSCRICAO`, `TARGET_M4` e as 6 features do Esquadrão de Elite).
-   * **Alvo Oficial Definido:** `TARGET_M4` (Média das 4 provas objetivas da TRI: MT, LC, CN, CH), com $R^2 = 0.3467$ e Alfa de Cronbach = 0.865.
-   * **Próximos Passos (Avançar com Saulo):**
-     1. Revisar o Notebook `04_varredura_semantica.ipynb` para garantir o mapeamento do Esquadrão de Elite e do `TARGET_M4` ao longo dos 10 anos históricos (2014 a 2023);
-     2. Construir o Notebook `05_treinamento_modelo.ipynb` (Modelagem preditiva XGBoost / LightGBM, rastreabilidade completa no MLflow, análise de SHAP values e exportação do artefato `enem.pkl`).
+   * **Etapa 1 Integralmente Concluída e Homologada:** Todos os notebooks da esteira analítica — `01_investigacao_estrutural.ipynb`, `02_eda.ipynb`, `03_engenharia_features.ipynb`, `04_varredura_semantica.ipynb`, `05_consolidacao_historica.ipynb` e `06_treinamento_modelo.ipynb` — estão 100% executados, auditados e homologados (com roteiros de defesa `slides-03.md`, `slides-04.md` e `slides-06.md`).
+   * **Artefatos Canônicos Exportados:**
+     * `data/processed/enem_2023_features_modelagem.parquet` (212.386 concluintes $\times$ 8 colunas: `NU_INSCRICAO`, `TARGET_M4` e as 6 features do Esquadrão de Elite);
+     * `data/processed/schema_mapping_historico.json` (Contrato canônico de mapeamento semântico 2014–2024 para ETL e Airflow);
+     * `data/processed/enem_2014_gold.parquet` (5.947.909 candidatos purificados $\times$ 17 colunas, 95.91 MB, safra histórica inicial da Década de Ouro);
+     * `data/processed/enem_2014_2023_consolidado.parquet` + `data/processed/contrato_consolidacao_2014_2023.json` (37.593.629 candidatos $\times$ 8 colunas, 153,17 MB em disco, 537,78 MB em RAM);
+     * `models/enem.pkl` (`XGBRegressor` campeão puro, `1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`, Holdout `7,52M` $R^2 = 0.33780$, $\text{RMSE} = 57.7439$ pts; OOT `2023` $R^2 = 0.31842$) + `models/enem_xgboost.ubj` + `models/enem_model_card.json` + `models/auditoria_holdout_por_ano_2014_2023.csv` + Model Registry MLflow `enem_target_m4_producao` v1 (`sqlite:///mlflow.db`).
+   * **Alvo Oficial Definido:** `TARGET_M4` (Média das 4 provas objetivas da TRI: MT, LC, CN, CH), com $R^2 = 0.3467$ (ano-base 2023) / $R^2 = 0.33780$ (censo decenal 2014–2023) e Alfa de Cronbach = 0.865.
+   * **Próximo Passo (Avançar com Saulo):**
+     * Iniciar a **Etapa 2: Produtização, Containerização, CI/CD e Deploy na AWS** (`src/api/` em FastAPI consumindo `models/enem.pkl` e `models/enem_model_card.json`, suíte de testes de contrato `pytest`, `Dockerfile` multi-stage, `docker-compose.yml`, workflow GitHub Actions `.github/workflows/deploy.yml` e publicação no Amazon ECR / AWS App Runner).
 6. **Modo de Colaboração (Regra Mandatória):**
    * O trabalho é feito **em conjunto com o Saulo**, passo a passo. O agente **não** deve agir de forma autônoma.
    * **Toda tomada de decisão** (metodológica, de código, de dados ou de arquitetura) só pode ser aplicada **após o aval explícito do Saulo**.

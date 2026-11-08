@@ -1,0 +1,344 @@
+{
+  "nome_contrato": "enem_decada_ouro_2014_2023_consolidado",
+  "versao_contrato": "1.0",
+  "data_geracao_utc": "2026-11-03T01:22:27Z",
+  "insumo_governanca_semantica": {
+    "arquivo": "data/processed/schema_mapping_historico.json",
+    "versao_schema_mapping": "3.5 (Auditoria física amostral, integridade referencial e governança por testes)"
+  },
+  "artefato_parquet": {
+    "caminho_relativo": "data/processed/enem_2014_2023_consolidado.parquet",
+    "compressao": "snappy",
+    "tamanho_disco_mb": 153.17,
+    "consumo_ram_dataframe_mb": 537.78,
+    "bytes_por_registro_ram": 15,
+    "sha256": "a7fbce7cd5f6e89244351c8712be588f53dbbdf4ff46e9d3b397157647438d3a",
+    "n_registros_totais": 37593629,
+    "n_colunas": 8,
+    "anos_incluidos": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ]
+  },
+  "definicao_papel_colunas": {
+    "coluna_particao_temporal": {
+      "nome": "NU_ANO",
+      "dtype": "int16",
+      "regra": "Utilizar exclusivamente para split temporal/estratificação e auditoria de drift. NUNCA incluir em X."
+    },
+    "features_ordenadas": [
+      "RENDA_PER_CAPITA",
+      "Q024",
+      "TP_ANO_CONCLUIU",
+      "TP_LINGUA",
+      "TP_SEXO",
+      "Q002"
+    ],
+    "alvo_modelagem": {
+      "nome": "TARGET_M4",
+      "dtype": "float32",
+      "formula": "(NU_NOTA_CN + NU_NOTA_CH + NU_NOTA_LC + NU_NOTA_MT) / 4.0",
+      "limites_validos": [
+        0.0,
+        1000.0
+      ],
+      "media_global_decada": 511.0497,
+      "desvio_padrao_global_decada": 70.9684
+    }
+  },
+  "regras_harmonizacao_e_inferencia": {
+    "RENDA_PER_CAPITA": {
+      "dtype": "float32",
+      "unidade": "salarios_minimos_por_morador",
+      "formula": "MAPA_Q006_SALARIOS_MINIMOS[Q006] / Q005",
+      "mapa_q006_salarios_minimos": {
+        "A": 0.0,
+        "B": 0.5,
+        "C": 1.25,
+        "D": 1.75,
+        "E": 2.25,
+        "F": 2.75,
+        "G": 3.5,
+        "H": 4.5,
+        "I": 5.5,
+        "J": 6.5,
+        "K": 7.5,
+        "L": 8.5,
+        "M": 9.5,
+        "N": 11.0,
+        "O": 13.5,
+        "P": 17.5,
+        "Q": 22.5
+      },
+      "dominio_moradores_q005": [
+        1,
+        20
+      ]
+    },
+    "Q024": {
+      "dtype": "int8",
+      "significado": {
+        "0": "Nenhum computador",
+        "1": "1 computador",
+        "2": "2 computadores",
+        "3": "3 ou mais computadores"
+      },
+      "mapa_2014_q010": {
+        "D": 0,
+        "A": 1,
+        "B": 2,
+        "C": 3
+      },
+      "mapa_2015_2023_q024": {
+        "A": 0,
+        "B": 1,
+        "C": 2,
+        "D": 3,
+        "E": 3
+      }
+    },
+    "TP_ANO_CONCLUIU": {
+      "dtype": "int8",
+      "significado": "Anos decorridos desde a conclusão do EM harmonizados no intervalo estacionário [0, 9], onde 0 = Não informado/Concluinte e 9 = 9 ou mais anos.",
+      "teto_harmonizado": 9
+    },
+    "TP_LINGUA": {
+      "dtype": "int8",
+      "significado": {
+        "0": "Inglês",
+        "1": "Espanhol"
+      }
+    },
+    "TP_SEXO": {
+      "dtype": "int8",
+      "significado": {
+        "0": "Feminino (F)",
+        "1": "Masculino (M)"
+      }
+    },
+    "Q002": {
+      "dtype": "int8",
+      "significado": {
+        "0": "Nunca estudou",
+        "1": "EF I incompleto",
+        "2": "EF I completo / EF II incompleto",
+        "3": "EF completo / EM incompleto",
+        "4": "EM completo / Superior incompleto",
+        "5": "Superior completo",
+        "6": "Pós-graduação",
+        "7": "Não sei"
+      },
+      "mapa_2014_q002": {
+        "A": 0,
+        "B": 1,
+        "C": 2,
+        "D": 3,
+        "E": 4,
+        "F": 4,
+        "G": 5,
+        "H": 6,
+        "I": 7
+      },
+      "mapa_2015_2023_q002": {
+        "A": 0,
+        "B": 1,
+        "C": 2,
+        "D": 3,
+        "E": 4,
+        "F": 5,
+        "G": 6,
+        "H": 7
+      }
+    }
+  },
+  "linhagem_censitaria_por_edicao": [
+    {
+      "ano": 2014,
+      "arquivo_csv": "MICRODADOS_ENEM_2014.csv",
+      "n_inscritos_brutos": 8722248,
+      "n_presentes_4_provas": 5947909,
+      "n_notas_validas": 5947909,
+      "n_excluidos_questionario_incompleto": 0,
+      "n_retidos_finais": 5947909,
+      "taxa_retencao_pct": 68.19,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.6798,
+      "pct_sem_computador": 33.05,
+      "target_m4_media": 502.97,
+      "target_m4_dp": 67.13,
+      "ram_dataframe_mb": 85.09,
+      "tamanho_parquet_mb": 24.34,
+      "tempo_processamento_s": 198.5
+    },
+    {
+      "ano": 2015,
+      "arquivo_csv": "MICRODADOS_ENEM_2015.csv",
+      "n_inscritos_brutos": 7746427,
+      "n_presentes_4_provas": 5604905,
+      "n_notas_validas": 5604816,
+      "n_excluidos_questionario_incompleto": 672,
+      "n_retidos_finais": 5604144,
+      "taxa_retencao_pct": 72.34,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.7474,
+      "pct_sem_computador": 31.04,
+      "target_m4_media": 503.11,
+      "target_m4_dp": 66.73,
+      "ram_dataframe_mb": 80.17,
+      "tamanho_parquet_mb": 22.9,
+      "tempo_processamento_s": 160.42
+    },
+    {
+      "ano": 2016,
+      "arquivo_csv": "microdados_enem_2016.csv",
+      "n_inscritos_brutos": 8627179,
+      "n_presentes_4_provas": 5818264,
+      "n_notas_validas": 5818264,
+      "n_excluidos_questionario_incompleto": 3,
+      "n_retidos_finais": 5818261,
+      "taxa_retencao_pct": 67.44,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.6799,
+      "pct_sem_computador": 35.87,
+      "target_m4_media": 506.25,
+      "target_m4_dp": 65.76,
+      "ram_dataframe_mb": 83.23,
+      "tamanho_parquet_mb": 23.67,
+      "tempo_processamento_s": 197.61
+    },
+    {
+      "ano": 2017,
+      "arquivo_csv": "MICRODADOS_ENEM_2017.csv",
+      "n_inscritos_brutos": 6731278,
+      "n_presentes_4_provas": 4426692,
+      "n_notas_validas": 4426692,
+      "n_excluidos_questionario_incompleto": 1,
+      "n_retidos_finais": 4426691,
+      "taxa_retencao_pct": 65.76,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.7144,
+      "pct_sem_computador": 37.48,
+      "target_m4_media": 515.84,
+      "target_m4_dp": 67.59,
+      "ram_dataframe_mb": 63.32,
+      "tamanho_parquet_mb": 17.95,
+      "tempo_processamento_s": 122.53
+    },
+    {
+      "ano": 2018,
+      "arquivo_csv": "MICRODADOS_ENEM_2018.csv",
+      "n_inscritos_brutos": 3063481,
+      "n_presentes_4_provas": 2272217,
+      "n_notas_validas": 2272217,
+      "n_excluidos_questionario_incompleto": 0,
+      "n_retidos_finais": 2272217,
+      "taxa_retencao_pct": 74.17,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.7108,
+      "pct_sem_computador": 41.06,
+      "target_m4_media": 533.49,
+      "target_m4_dp": 68.66,
+      "ram_dataframe_mb": 32.5,
+      "tamanho_parquet_mb": 9.22,
+      "tempo_processamento_s": 59.66
+    },
+    {
+      "ano": 2019,
+      "arquivo_csv": "MICRODADOS_ENEM_2019.csv",
+      "n_inscritos_brutos": 5095171,
+      "n_presentes_4_provas": 3701910,
+      "n_notas_validas": 3701910,
+      "n_excluidos_questionario_incompleto": 0,
+      "n_retidos_finais": 3701910,
+      "taxa_retencao_pct": 72.66,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.7697,
+      "pct_sem_computador": 43.83,
+      "target_m4_media": 508.34,
+      "target_m4_dp": 70.59,
+      "ram_dataframe_mb": 52.96,
+      "tamanho_parquet_mb": 15.0,
+      "tempo_processamento_s": 97.71
+    },
+    {
+      "ano": 2020,
+      "arquivo_csv": "MICRODADOS_ENEM_2020.csv",
+      "n_inscritos_brutos": 5783109,
+      "n_presentes_4_provas": 2588681,
+      "n_notas_validas": 2588681,
+      "n_excluidos_questionario_incompleto": 27377,
+      "n_retidos_finais": 2561304,
+      "taxa_retencao_pct": 44.29,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.733,
+      "pct_sem_computador": 44.22,
+      "target_m4_media": 512.87,
+      "target_m4_dp": 79.4,
+      "ram_dataframe_mb": 36.64,
+      "tamanho_parquet_mb": 10.55,
+      "tempo_processamento_s": 90.71
+    },
+    {
+      "ano": 2021,
+      "arquivo_csv": "MICRODADOS_ENEM_2021.csv",
+      "n_inscritos_brutos": 3389832,
+      "n_presentes_4_provas": 2238107,
+      "n_notas_validas": 2238107,
+      "n_excluidos_questionario_incompleto": 1,
+      "n_retidos_finais": 2238106,
+      "taxa_retencao_pct": 66.02,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.8995,
+      "pct_sem_computador": 37.22,
+      "target_m4_media": 513.79,
+      "target_m4_dp": 78.71,
+      "ram_dataframe_mb": 32.02,
+      "tamanho_parquet_mb": 9.18,
+      "tempo_processamento_s": 63.54
+    },
+    {
+      "ano": 2022,
+      "arquivo_csv": "MICRODADOS_ENEM_2022.csv",
+      "n_inscritos_brutos": 3476105,
+      "n_presentes_4_provas": 2344823,
+      "n_notas_validas": 2344823,
+      "n_excluidos_questionario_incompleto": 0,
+      "n_retidos_finais": 2344823,
+      "taxa_retencao_pct": 67.46,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.8545,
+      "pct_sem_computador": 42.16,
+      "target_m4_media": 522.12,
+      "target_m4_dp": 72.78,
+      "ram_dataframe_mb": 33.54,
+      "tamanho_parquet_mb": 9.55,
+      "tempo_processamento_s": 66.44
+    },
+    {
+      "ano": 2023,
+      "arquivo_csv": "MICRODADOS_ENEM_2023.csv",
+      "n_inscritos_brutos": 3933955,
+      "n_presentes_4_provas": 2678264,
+      "n_notas_validas": 2678264,
+      "n_excluidos_questionario_incompleto": 0,
+      "n_retidos_finais": 2678264,
+      "taxa_retencao_pct": 68.08,
+      "inscricoes_duplicadas": 0,
+      "renda_per_capita_sm_media": 0.8222,
+      "pct_sem_computador": 47.93,
+      "target_m4_media": 519.11,
+      "target_m4_dp": 81.91,
+      "ram_dataframe_mb": 38.31,
+      "tamanho_parquet_mb": 11.02,
+      "tempo_processamento_s": 73.01
+    }
+  ]
+}

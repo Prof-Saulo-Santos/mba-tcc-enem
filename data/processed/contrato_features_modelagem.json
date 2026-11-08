@@ -1,0 +1,85 @@
+{
+    "nome_contrato": "enem_2023_esquadrao_titular",
+    "versao_contrato": "1.0",
+    "data_geracao_utc": "2026-10-29T20:15:44Z",
+    "granularidade": "um_registro_por_candidato",
+    "n_registros": 212386,
+    "colunas_exportadas": [
+        "NU_INSCRICAO",
+        "RENDA_PER_CAPITA",
+        "Q024",
+        "TP_ANO_CONCLUIU",
+        "TP_LINGUA",
+        "TP_SEXO",
+        "Q002",
+        "TARGET_M4"
+    ],
+    "chave_rastreabilidade": {
+        "coluna": "NU_INSCRICAO",
+        "tipo_fisico": "int64",
+        "papel": "identificador_unico_nao_preditor",
+        "regra": "Não utilizar como feature de treinamento."
+    },
+    "alvo_modelagem": {
+        "coluna": "TARGET_M4",
+        "tipo_fisico": "float64",
+        "tipo_semantico": "quantitativa_continua",
+        "definicao": "Média aritmética das quatro notas objetivas: CN, CH, LC e MT.",
+        "limites_validos": [
+            0.0,
+            1000.0
+        ]
+    },
+    "features_ordenadas": [
+        "RENDA_PER_CAPITA",
+        "Q024",
+        "TP_ANO_CONCLUIU",
+        "TP_LINGUA",
+        "TP_SEXO",
+        "Q002"
+    ],
+    "especificacao_features": {
+        "RENDA_PER_CAPITA": {
+            "tipo_fisico": "float64",
+            "tipo_semantico": "quantitativa_continua",
+            "descricao": "Estimativa da renda familiar dividida pelo número de moradores, em reais."
+        },
+        "Q024": {
+            "tipo_fisico": "float64",
+            "tipo_semantico": "categorica_ordinal",
+            "descricao": "Posse de computador no domicílio.",
+            "codigos": "Consultar o dicionário oficial do questionário socioeconômico do ENEM 2023."
+        },
+        "TP_ANO_CONCLUIU": {
+            "tipo_fisico": "int64",
+            "tipo_semantico": "categorica_codificada",
+            "descricao": "Código relativo à conclusão do Ensino Médio. Confirmar a interpretação dos códigos especiais no dicionário oficial do ENEM 2023."
+        },
+        "TP_LINGUA": {
+            "tipo_fisico": "int64",
+            "tipo_semantico": "categorica_nominal",
+            "descricao": "Língua estrangeira escolhida pelo candidato.",
+            "codigos": "Confirmar os códigos e seus significados no dicionário oficial do ENEM 2023."
+        },
+        "TP_SEXO": {
+            "tipo_fisico": "float64",
+            "tipo_semantico": "categorica_nominal",
+            "descricao": "Sexo informado no cadastro do candidato. A variável pode ser utilizada em auditorias de desempenho por grupo.",
+            "codigos": "Confirmar os códigos e seus significados no dicionário oficial do ENEM 2023."
+        },
+        "Q002": {
+            "tipo_fisico": "float64",
+            "tipo_semantico": "categorica_ordinal",
+            "descricao": "Escolaridade da mãe ou mulher responsável, conforme o questionário socioeconômico.",
+            "codigos": "Consultar o dicionário oficial do questionário socioeconômico do ENEM 2023."
+        }
+    },
+    "regras_processamento": [
+        "Validar os tipos e os domínios das features na entrada.",
+        "Confirmar os códigos categóricos no dicionário oficial.",
+        "Ajustar codificadores exclusivamente nos dados de treino.",
+        "Reutilizar o mesmo pré-processamento em treinamento e inferência.",
+        "Não incluir NU_INSCRICAO entre as features preditoras."
+    ],
+    "nota_processamento": "Dataset reduzido selecionado no estudo de parcimônia do Notebook 03. A validação definitiva do modelo, do pré-processamento e da inferência ocorrerá no Notebook 05."
+}
