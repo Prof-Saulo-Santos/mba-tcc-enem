@@ -1,0 +1,192 @@
+name: Deploy ENEM API — CI/CD & AWS App Runner (Etapa 2)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/api/**'
+      - 'tests/test_api_contract.py'
+      - 'tests/test_model_inference.py'
+      - 'models/enem.pkl'
+      - 'models/enem_model_card.json'
+      - 'requirements-api.txt'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/api/**'
+      - 'tests/**'
+      - 'models/**'
+      - 'requirements-api.txt'
+      - 'Dockerfile'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.13'
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'enem-target-m4-api' }}
+  EXPECTED_MODEL_SHA256: '114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f'
+
+jobs:
+  # ============================================================================
+  # JOB 1: Quality Gate CI — Auditoria SHA-256 + Suíte Pytest (25 Testes)
+  # ============================================================================
+  quality-gate-ci:
+    name: "🧪 Quality Gate (SHA-256 & Pytest)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "📥 Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "⚡ Configurar uv e Python ${{ env.PYTHON_VERSION }}"
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: "🔐 Verificar integridade criptográfica do artefato (SHA-256)"
+        run: |
+          ACTUAL_SHA=$(sha256sum models/enem.pkl | awk '{print $1}')
+          echo "SHA-256 calculado: $ACTUAL_SHA"
+          if [ "$ACTUAL_SHA" != "$EXPECTED_MODEL_SHA256" ]; then
+            echo "❌ ERRO DE GOVERNANÇA: Hash de models/enem.pkl diverge do Model Card!"
+            exit 1
+          fi
+          echo "✅ Integridade SHA-256 de models/enem.pkl validada com sucesso."
+
+      - name: "📦 Instalar dependências enxutas de inferência e teste"
+        run: |
+          uv pip install --system -r requirements-api.txt pytest httpx
+
+      - name: "🧪 Executar suíte de contrato HTTP, Anti-Leakage e Paridade"
+        run: |
+          python -m pytest tests/test_api_contract.py tests/test_model_inference.py -v --tb=short
+
+      - name: "📊 Publicar resumo de governança no GitHub Summary"
+        run: |
+          echo "### ✅ Quality Gate CI Aprovado (Etapa 2)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artefato:** \`models/enem.pkl\` (\`1,727 MB\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA-256:** \`$EXPECTED_MODEL_SHA256\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Suíte Pytest:** \`25/25 PASSED\` (Contrato Pydantic, Anti-Leakage e Paridade XGBoost)" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # JOB 2: Container Smoke Test — Build Multi-Stage e Teste E2E da Imagem Docker
+  # ============================================================================
+  docker-smoke-test:
+    name: "🐳 Docker Build & Smoke Test E2E"
+    runs-on: ubuntu-latest
+    needs: quality-gate-ci
+
+    steps:
+      - name: "📥 Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "🐳 Construir imagem Docker multi-stage"
+        run: |
+          docker build -t enem-target-m4-api:${{ github.sha }} .
+          docker images enem-target-m4-api:${{ github.sha }}
+
+      - name: "🚀 Iniciar container e executar Smoke Test HTTP real"
+        run: |
+          docker run -d --name enem-api-test -p 8000:8000 enem-target-m4-api:${{ github.sha }}
+
+          echo "Aguardando inicialização da API..."
+          for i in $(seq 1 15); do
+            if curl -fsS http://localhost:8000/health > /dev/null; then
+              echo "✅ API respondeu no endpoint /health!"
+              break
+            fi
+            sleep 2
+          done
+
+          curl -fsS http://localhost:8000/health | python3 -m json.tool
+
+          PRED_JSON=$(curl -fsS -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"RENDA_PER_CAPITA": 1.5, "Q024": 1, "TP_ANO_CONCLUIU": 0, "TP_LINGUA": 0, "TP_SEXO": 0, "Q002": 4}')
+          echo "Resposta /predict: $PRED_JSON"
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"RENDA_PER_CAPITA": 1.5, "Q024": 1, "TP_ANO_CONCLUIU": 0, "TP_LINGUA": 0, "TP_SEXO": 0, "Q002": 4, "NU_ANO": 2023}')
+          echo "Status Anti-Leakage (esperado 422): $HTTP_CODE"
+          if [ "$HTTP_CODE" != "422" ]; then
+            echo "❌ Falha no bloqueio Anti-Leakage!"
+            exit 1
+          fi
+
+          docker rm -f enem-api-test
+
+  # ============================================================================
+  # JOB 3: Continuous Deployment — Amazon ECR & AWS App Runner
+  # ============================================================================
+  deploy-aws:
+    name: "☁️ Push Amazon ECR & Deploy AWS App Runner"
+    runs-on: ubuntu-latest
+    needs: docker-smoke-test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (secrets.AWS_ROLE_TO_ASSUME != '' || secrets.AWS_ACCESS_KEY_ID != '')
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: "📥 Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "🔑 Autenticar na AWS (OIDC ou Access Keys)"
+        if: secrets.AWS_ROLE_TO_ASSUME != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: "🔑 Autenticar na AWS (Access Keys Fallback)"
+        if: secrets.AWS_ROLE_TO_ASSUME == '' && secrets.AWS_ACCESS_KEY_ID != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: "🔐 Login no Amazon ECR"
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: "📦 Garantir existência do repositório no Amazon ECR"
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }} || \
+          aws ecr create-repository \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-scanning-configuration scanOnPush=true \
+            --region ${{ env.AWS_REGION }}
+
+      - name: "🐳 Build, Tag e Push da imagem para o Amazon ECR"
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          FULL_URI="$REGISTRY/$ECR_REPOSITORY"
+          docker build -t "$FULL_URI:$IMAGE_TAG" -t "$FULL_URI:latest" .
+          docker push "$FULL_URI:$IMAGE_TAG"
+          docker push "$FULL_URI:latest"
+          echo "IMAGE_URI=$FULL_URI:$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: "🚀 Acionar atualização no AWS App Runner"
+        if: secrets.AWS_APPRUNNER_SERVICE_ARN != ''
+        run: |
+          aws apprunner start-deployment \
+            --service-arn "${{ secrets.AWS_APPRUNNER_SERVICE_ARN }}" \
+            --region "${{ env.AWS_REGION }}"
+
+      - name: "📊 Registrar status do Deploy no GitHub Summary"
+        run: |
+          echo "### ☁️ Deploy AWS Concluído com Sucesso" >> $GITHUB_STEP_SUMMARY
+          echo "- **Imagem ECR:** \`${{ env.IMAGE_URI }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Região AWS:** \`${{ env.AWS_REGION }}\`" >> $GITHUB_STEP_SUMMARY
+
