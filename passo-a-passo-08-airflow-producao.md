@@ -182,3 +182,118 @@ Para comprovar o funcionamento completo do ramo de retreinamento e evolução do
 }
 ```
 
+---
+
+## 5. Registro Oficial de Auditoria: Execução Real da DAG Autônoma com *Live SBERT* (`50.000` Linhas)
+
+Os comandos abaixo foram executados manualmente no host `saulo@LeCun:enem` acionando [`dags/enem_autonomous_dag.py`](dags/enem_autonomous_dag.py) com o modelo neural **`paraphrase-multilingual-MiniLM-L12-v2` (`LIVE_SBERT_MINILM_L12_V2`)** em memória para **2024** (`34.467` candidatos elegíveis retidos de `50.000`) e **2025** (`50.000` candidatos avaliados), seguido da suíte completa de **4 testes automatizados (`4 passed in 39.98s`)**.
+
+### 5.1 Execução da DAG Autônoma para a Safra 2024 (`LIVE_SBERT_MINILM_L12_V2`)
+
+```text
+saulo@LeCun:enem$ .venv/bin/python dags/enem_autonomous_dag.py --year 2024 --max-rows 50000
+
+[DAG START] Iniciando execução autônoma para a safra ENEM 2024...
+[Task 1 - Ingestão] Layout=BIPARTIDO_PARTICIPANTES_RESULTADOS | has_scores=True | positional_match_rate=0.0055
+Loading weights: 100%|████████████████████████████████████████████████████████████████| 199/199 [00:00<00:00, 308.88it/s]
+[Task 2 - NLP/SBERT] Modo=LIVE_SBERT_MINILM_L12_V2 | Drifts detectados=2 (Q006->Q007, Q024->Q021)
+[Task 3 - Seleção & Downcasting] Retidos=34467 | Bytes/linha=15 B | RAM=0.493 MB
+[Task 4 - BranchRouter] Rota selecionada: branch_with_scores_oot_gatekeeper
+[DAG COMPLETE] Safra 2024 finalizada no ramo: OOT_GATEKEEPER_CIRCUIT_BREAKER_FALLBACK
+{
+  "year": 2024,
+  "execution_branch": "OOT_GATEKEEPER_CIRCUIT_BREAKER_FALLBACK",
+  "gatekeeper_passed": false,
+  "positional_alignment_valid": false,
+  "positional_match_rate": 0.0055,
+  "oot_metrics_v1": {
+    "r2": -0.19173,
+    "rmse": 83.3544,
+    "mae": 66.2179
+  },
+  "circuit_breaker_action": "BLOCKED_RETRAIN_AND_ROUTED_TO_BATCH_DRIFT",
+  "fallback_drift_report": {
+    "year": 2024,
+    "execution_branch": "BATCH_INFERENCE_AND_DATA_DRIFT",
+    "trigger_reason": "CIRCUIT_BREAKER_OOT_REJECTED (alignment_ok=False, positional_match_rate=0.0055, r2_oot=-0.1917 < 0.28)",
+    "predictions_parquet": "/home/saulo/mba/tcc/enem/data/processed/safras_etapa3/enem_2024_predicoes_batch.parquet",
+    "prediction_summary": {
+      "n_scored": 34467,
+      "pred_mean": 507.2,
+      "pred_std": 40.06,
+      "pred_p10": 463.81,
+      "pred_p50": 498.38,
+      "pred_p90": 564.7
+    },
+    "max_psi": 0.05146,
+    "overall_drift_status": "ESTAVEL (PSI < 0.10)",
+    "feature_drift": {
+      "RENDA_PER_CAPITA": { "psi": 0.04449, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0903, "ref_mean": 0.8223, "cur_mean": 0.6694 },
+      "Q024":             { "psi": 0.00489, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0229, "ref_mean": 0.7368, "cur_mean": 0.6819 },
+      "TP_ANO_CONCLUIU":  { "psi": 0.05146, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0913, "ref_mean": 1.5245, "cur_mean": 2.1691 },
+      "TP_LINGUA":        { "psi": 0.00048, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0108, "ref_mean": 0.4236, "cur_mean": 0.4127 },
+      "TP_SEXO":          { "psi": 0.00021, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0070, "ref_mean": 0.3860, "cur_mean": 0.3930 },
+      "Q002":             { "psi": 0.03388, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0582, "ref_mean": 3.7777, "cur_mean": 3.5948 }
+    }
+  }
+}
+```
+
+### 5.2 Execução da DAG Autônoma para a Safra 2025 (`LIVE_SBERT_MINILM_L12_V2`)
+
+```text
+saulo@LeCun:enem$ .venv/bin/python dags/enem_autonomous_dag.py --year 2025 --max-rows 50000
+
+[DAG START] Iniciando execução autônoma para a safra ENEM 2025...
+[Task 1 - Ingestão] Layout=SOMENTE_PARTICIPANTES_SEM_NOTAS | has_scores=False | positional_match_rate=0.0
+Loading weights: 100%|████████████████████████████████████████████████████████████████| 199/199 [00:00<00:00, 291.18it/s]
+[Task 2 - NLP/SBERT] Modo=LIVE_SBERT_MINILM_L12_V2 | Drifts detectados=2 (Q006->Q007, Q024->Q021)
+[Task 3 - Seleção & Downcasting] Retidos=50000 | Bytes/linha=11 B | RAM=0.525 MB
+[Task 4 - BranchRouter] Rota selecionada: branch_without_scores_batch_drift
+[DAG COMPLETE] Safra 2025 finalizada no ramo: BATCH_INFERENCE_AND_DATA_DRIFT
+{
+  "year": 2025,
+  "execution_branch": "BATCH_INFERENCE_AND_DATA_DRIFT",
+  "trigger_reason": "EDITION_WITHOUT_SCORES",
+  "predictions_parquet": "/home/saulo/mba/tcc/enem/data/processed/safras_etapa3/enem_2025_predicoes_batch.parquet",
+  "prediction_summary": {
+    "n_scored": 50000,
+    "pred_mean": 516.47,
+    "pred_std": 48.92,
+    "pred_p10": 460.69,
+    "pred_p50": 508.14,
+    "pred_p90": 587.03
+  },
+  "max_psi": 0.0279,
+  "overall_drift_status": "ESTAVEL (PSI < 0.10)",
+  "feature_drift": {
+    "RENDA_PER_CAPITA": { "psi": 0.01282, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0238, "ref_mean": 0.8223, "cur_mean": 0.8481 },
+    "Q024":             { "psi": 0.00601, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0289, "ref_mean": 0.7368, "cur_mean": 0.8021 },
+    "TP_ANO_CONCLUIU":  { "psi": 0.02790, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0570, "ref_mean": 1.5245, "cur_mean": 1.4749 },
+    "TP_LINGUA":        { "psi": 0.00040, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0099, "ref_mean": 0.4236, "cur_mean": 0.4335 },
+    "TP_SEXO":          { "psi": 0.01413, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0585, "ref_mean": 0.3860, "cur_mean": 0.4445 },
+    "Q002":             { "psi": 0.02016, "status_psi": "ESTAVEL (PSI < 0.10)", "ks_statistic": 0.0379, "ref_mean": 3.7777, "cur_mean": 3.9330 }
+  }
+}
+```
+
+### 5.3 Execução da Suíte Completa Pytest da Etapa 3 (`4/4 PASSED`)
+
+```text
+saulo@LeCun:enem$ .venv/bin/python -m pytest tests/test_orchestration_etapa3.py -v
+================================================== test session starts ==================================================
+platform linux -- Python 3.13.9, pytest-9.2.0, pluggy-1.7.0 -- /home/saulo/mba/tcc/enem/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/saulo/mba/tcc/enem
+plugins: typeguard-4.6.0, anyio-4.15.1
+collected 4 items                                                                                                       
+
+tests/test_orchestration_etapa3.py::test_etapa3_full_pipeline_2024_circuit_breaker PASSED                         [ 25%]
+tests/test_orchestration_etapa3.py::test_etapa3_full_pipeline_2025_batch_inference_and_drift PASSED               [ 50%]
+tests/test_orchestration_etapa3.py::test_etapa3_oot_approved_retrain_champion_vs_challenger PASSED                [ 75%]
+tests/test_orchestration_etapa3.py::test_dag_executor_e2e_2024_and_2025 PASSED                                    [100%]
+
+============================================= 4 passed, 1 warning in 39.98s =============================================
+```
+
+

@@ -1,0 +1,42 @@
+# ==============================================================================
+# Dockerfile.airflow — Plano Pesado Local (Etapa 3: Orquestração + SBERT + XGBoost + MLflow)
+# ==============================================================================
+FROM python:3.13-slim
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+# libgomp1 necessário para execução multithread do XGBoost (OpenMP)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Instala a pilha analítica e de MLOps da Etapa 3 (incluindo PyTorch CPU enxuto + SBERT + MLflow)
+RUN uv venv /opt/venv && \
+    uv pip install --python /opt/venv/bin/python --no-cache \
+        --extra-index-url https://download.pytorch.org/whl/cpu \
+        numpy==2.5.3 \
+        pandas==3.0.5 \
+        pyarrow==25.0.1 \
+        openpyxl==3.1.5 \
+        scipy==1.18.1 \
+        scikit-learn==1.9.0 \
+        xgboost==3.4.1 \
+        joblib==1.6.0 \
+        mlflow==3.17.2 \
+        torch \
+        sentence-transformers==6.1.0
+
+COPY src/ ./src/
+COPY dags/ ./dags/
+COPY models/ ./models/
+
+CMD ["python", "dags/enem_autonomous_dag.py", "--year", "2024", "--max-rows", "50000"]
+

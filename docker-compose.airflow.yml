@@ -1,0 +1,33 @@
+services:
+  enem-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    image: enem-etapa3-orchestrator:v1
+    container_name: enem-etapa3-orchestrator
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./dags:/app/dags
+      - ./src:/app/src
+      - ./mlflow.db:/app/mlflow.db
+      - ./mlruns:/app/mlruns
+    command: >
+      sh -c "python dags/enem_autonomous_dag.py --year 2024 --max-rows 50000 &&
+             python dags/enem_autonomous_dag.py --year 2025 --max-rows 50000"
+
+  enem-mlflow-ui:
+    image: enem-etapa3-orchestrator:v1
+    container_name: enem-mlflow-ui
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow.db:/app/mlflow.db
+      - ./mlruns:/app/mlruns
+    command: >
+      mlflow ui
+      --backend-store-uri sqlite:///mlflow.db
+      --host 0.0.0.0
+      --port 5000
+    restart: unless-stopped
+

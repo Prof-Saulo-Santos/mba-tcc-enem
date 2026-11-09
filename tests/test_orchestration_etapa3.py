@@ -16,6 +16,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from dags.enem_autonomous_dag import execute_dag_locally
 from src.orchestration import (
     decide_branch_task_id,
     inspect_and_ingest_edition,
@@ -138,4 +139,22 @@ def test_etapa3_oot_approved_retrain_champion_vs_challenger() -> None:
     )
     assert retrain_res["oot_metrics_v1"]["r2"] >= 0.30
     assert Path(retrain_res["artifact_v2_path"]).exists()
+
+
+def test_dag_executor_e2e_2024_and_2025() -> None:
+    """Testa a execução ponta a ponta da DAG autônoma (`dags/enem_autonomous_dag.py`)."""
+    dag_2024 = execute_dag_locally(year=2024, max_rows=10000, use_live_sbert=False)
+    assert dag_2024["chosen_branch"] == "branch_with_scores_oot_gatekeeper"
+    assert (
+        dag_2024["t4_result"]["execution_branch"]
+        == "OOT_GATEKEEPER_CIRCUIT_BREAKER_FALLBACK"
+    )
+
+    dag_2025 = execute_dag_locally(year=2025, max_rows=10000, use_live_sbert=False)
+    assert dag_2025["chosen_branch"] == "branch_without_scores_batch_drift"
+    assert (
+        dag_2025["t4_result"]["execution_branch"]
+        == "BATCH_INFERENCE_AND_DATA_DRIFT"
+    )
+
 
