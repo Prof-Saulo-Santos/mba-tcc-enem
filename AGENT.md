@@ -152,19 +152,22 @@ Baseada no diagrama `media/pipeline-2.jpg`, `diagrama_deploy_aws.md`, `passo-a-p
 
 ---
 
-## 5. Detalhamento da Etapa 3: Orquestração Local em Docker e Governança Autônoma (2024/2025)
+## 5. Detalhamento da Etapa 3: Orquestração Local em Docker e Governança Autônoma (2024/2025) - *Homologada*
 
-Baseada no diagrama `media/pipeline-3.jpg` e `diagrama_producao_2024.md`:
+Baseada no diagrama `media/pipeline-3.jpg`, `diagrama_producao_2024.md`, `passo-a-passo-08-airflow-producao.md` e `slides-08.md`:
 
 1. **Arquitetura FinOps (Plano Pesado Local Containerizado):**
-   * Airflow + SBERT + XGBoost + MLflow rodam localmente containerizados, evitando custos ociosos de processamento pesado em nuvem.
-2. **Fluxo Ordenado da DAG Autônoma (4 Estágios):**
-   * **(1) Ingestão:** Recepção e inspeção estrutural dos microdados e dicionário da nova edição (`2024` ou `2025`).
-   * **(2) NLP/SBERT no Dicionário ANTES da Seleção:** Execução do `paraphrase-multilingual-MiniLM-L12-v2` sobre o dicionário para descobrir dinamicamente quais colunas equivalem às 6 variáveis do Esquadrão de Elite antes do corte colunar.
-   * **(3) Seleção + Harmonização + Downcasting:** Extração das 6 features mapeadas, deflação da `RENDA_PER_CAPITA` em Salários Mínimos do respectivo ano, harmonização de escalas e compactação para `15 bytes/linha` em Parquet.
-   * **(4) Bifurcação Automática (`BranchPythonOperator`):**
-     * **Cenário A — Safra com Notas Homologadas (`2024`):** Passa pelo **Gatekeeper Out-of-Time** avaliando `enem.pkl v1`; se aprovado no SLA, concatena a base histórica (`2014–2024`), retreina o `XGBRegressor` e aciona o **MLflow como Juiz Champion vs. Challenger** para promover `enem.pkl v2`.
-     * **Cenário B — Safra sem Notas / Pré-Prova (`2025`):** Desvia para **Modo Inferência em Lote (*Batch Scoring*)** + **Auditoria de Data Drift de $X$** (*Population Stability Index* — PSI e teste KS).
+   * Airflow + SBERT + XGBoost + MLflow rodam localmente containerizados (`Dockerfile.airflow` e `docker-compose.airflow.yml`), evitando custos ociosos de processamento pesado em nuvem.
+2. **Fluxo Ordenado da DAG Autônoma em 4 Estágios (`src/orchestration/` & `dags/enem_autonomous_dag.py`):**
+   * **(1) Ingestão (`step1_ingest_detect.py`):** Recepção e inspeção estrutural dos microdados e dicionário da nova edição (`2024` com layout bipartido LGPD `PARTICIPANTES_2024.csv` + `RESULTADOS_2024.csv` ou `2025` somente `PARTICIPANTES_2025.csv`), incluindo auditoria de integridade posicional (`positional_match_rate = 0.0055` em 2024).
+   * **(2) NLP/SBERT no Dicionário ANTES da Seleção (`step2_sbert_mapper.py`):** Execução ao vivo do `paraphrase-multilingual-MiniLM-L12-v2` sobre o dicionário oficial do INEP antes da leitura do CSV, detectando `2` *drifts* semânticos reais (`Q006 -> Q007` para Renda Familiar e `Q024 -> Q021` para Posse de Computador, já que `Q024` dejó de existir fisicamente em 2024/2025).
+   * **(3) Seleção + Harmonização + Downcasting (`step3_select_harmonize.py`):** Extração exclusiva das 6 features mapeadas, deflação da `RENDA_PER_CAPITA` em Salários Mínimos vigentes (`R$ 1.412,00` em 2024; `R$ 1.518,00` em 2025), harmonização ordinal e compactação extrema para `15 bytes/linha` (`0,493 MB` RAM em 2024) e `11 bytes/linha` (`0,525 MB` RAM em 2025).
+   * **(4) Bifurcação Automática e Governança (`step4_branch_oot_drift.py`):**
+     * **Cenário A1 — Safra `2024` Real (Bipartida sem Chave por LGPD $\rightarrow$ Circuit Breaker):** O **Gatekeeper Out-of-Time** detecta a quebra de pareamento posicional (`positional_match_rate = 0.0055`, $R^2_{\text{OOT}} = -0.19173 < 0.28$), aciona o **Circuit Breaker** para bloquear o retreino e impedir *Data Poisoning* da base histórica `2014–2023`, e redireciona para Inferência em Lote (`34.467` concluintes escorados, média `507,20 ± 40,06 pts`) + Auditoria de Drift (`max_psi = 0.05146 < 0.10`, todas as 6 variáveis `ESTAVEL`).
+     * **Cenário A2 — Safra OOT Alinhada (Retreino Contínuo + Juiz MLflow):** Quando pareada ($R^2_{\text{OOT}} = 0.31522 \ge 0.28$), concatena a série histórica, retreina o `XGBRegressor` Challenger (`v2`) e utiliza o **MLflow como Juiz Champion vs. Challenger** no Holdout estratificado ($\text{RMSE}_{\text{v2}} = 66.1667 < \text{RMSE}_{\text{v1}} = 66.3074$), promovendo `enem_v2.pkl`.
+     * **Cenário B — Safra `2025` sem Notas (`EDITION_WITHOUT_SCORES`):** Roteia diretamente para **Inferência em Lote (*Batch Scoring*)** (`50.000` candidatos escorados, média `516,47 ± 48,92 pts`) + **Auditoria de Data Drift de $X$** (`max_psi = 0.02790 < 0.10`, todas as 6 variáveis `ESTAVEL`).
+3. **Suíte Automatizada de Testes E2E (`tests/test_orchestration_etapa3.py`):**
+   * `4/4 PASSED` validando a proteção de Circuit Breaker em 2024, o Batch Scoring + Drift em 2025, a promoção Champion vs. Challenger no MLflow e a execução ponta a ponta da DAG.
 
 ---
 
@@ -183,6 +186,7 @@ Baseada no diagrama `media/pipeline-3.jpg` e `diagrama_producao_2024.md`:
 5. **Estado Atual e Próxima Tarefa:**
    * **Etapa 1 Integralmente Concluída e Homologada:** Todos os notebooks da esteira analítica — `01_investigacao_estrutural.ipynb`, `02_eda.ipynb`, `03_engenharia_features.ipynb`, `04_varredura_semantica.ipynb`, `05_consolidacao_historica.ipynb` e `06_treinamento_modelo.ipynb` — estão 100% executados, auditados e homologados (com guias `passo-a-passo-05.md`, `passo-a-passo-06.md` e roteiros de defesa `slides-03.md`, `slides-04.md`, `slides-05.md` e `slides-06.md`).
    * **Etapa 2 Integralmente Concluída e Homologada:** Microserviço FastAPI (`src/api/`), suíte de 25 testes `pytest` (`tests/`), containerização multi-stage enxuta (`Dockerfile`, `docker-compose.yml`, `requirements-api.txt`, `515 MB` OCI) e esteira CI/CD GitHub Actions (`.github/workflows/deploy.yml`) 100% implementados, testados e documentados em `passo-a-passo-07-api-docker.md` e `slides-07.md`.
+   * **Etapa 3 Integralmente Concluída e Homologada:** Módulos de orquestração (`src/orchestration/`), DAG autônoma Apache Airflow (`dags/enem_autonomous_dag.py`), containerização local pesada (`Dockerfile.airflow`, `docker-compose.airflow.yml`), suíte E2E `pytest` (`tests/test_orchestration_etapa3.py`, `4/4 PASSED`, totalizando `29/29 PASSED` no repositório), execução real nas safras 2024 e 2025 e documentação completa em `passo-a-passo-08-airflow-producao.md` e `slides-08.md`.
    * **Artefatos Canônicos Exportados:**
      * `data/processed/enem_2023_features_modelagem.parquet` (212.386 concluintes $\times$ 8 colunas: `NU_INSCRICAO`, `TARGET_M4` e as 6 features do Esquadrão de Elite);
      * `data/processed/schema_mapping_historico.json` (Contrato canônico de mapeamento semântico 2014–2024 para ETL e Airflow);
@@ -190,8 +194,8 @@ Baseada no diagrama `media/pipeline-3.jpg` e `diagrama_producao_2024.md`:
      * `data/processed/enem_2014_2023_consolidado.parquet` + `data/processed/contrato_consolidacao_2014_2023.json` (37.593.629 candidatos $\times$ 8 colunas, 153,17 MB em disco, 537,78 MB em RAM);
      * `models/enem.pkl` (`XGBRegressor` campeão puro, `1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`, Holdout `7,52M` $R^2 = 0.33780$, $\text{RMSE} = 57.7439$ pts; OOT `2023` $R^2 = 0.31842$) + `models/enem_xgboost.ubj` + `models/enem_model_card.json` + `models/auditoria_holdout_por_ano_2014_2023.csv` + Model Registry MLflow `enem_target_m4_producao` v1 (`sqlite:///mlflow.db`).
    * **Alvo Oficial Definido:** `TARGET_M4` (Média das 4 provas objetivas da TRI: MT, LC, CN, CH), com $R^2 = 0.3467$ (ano-base 2023) / $R^2 = 0.33780$ (censo decenal 2014–2023) e Alfa de Cronbach = 0.865.
-   * **Próximo Passo (Avançar com Saulo):**
-     * Iniciar a **Etapa 3: Orquestração Local em Docker com Apache Airflow Autônomo (2024/2025)** (`Ingestão -> NLP/SBERT no dicionário ANTES da seleção -> Seleção + Harmonização + Downcasting -> Bifurcação 2024 [Gatekeeper OOT + Retreino XGBoost + MLflow Champion vs. Challenger] vs. 2025 [Inferência em Lote + Data Drift de X]`).
+   * **Próximo Passo Opcional (Demonstração Final em Nuvem / Preparação da Defesa):**
+     * As **3 Grandes Etapas do TCC (Capítulos 01 a 08)** estão **100% implementadas, testadas e documentadas**. Caso desejado no momento da apresentação final, provisionar o deploy pontual na AWS (Amazon ECR + AWS App Runner) ou revisar os slides consolidados (`slides-03.md` a `slides-08.md`).
 6. **Modo de Colaboração (Regra Mandatória):**
    * O trabalho é feito **em conjunto com o Saulo**, passo a passo. O agente **não** deve agir de forma autônoma.
    * **Toda tomada de decisão** (metodológica, de código, de dados ou de arquitetura) só pode ser aplicada **após o aval explícito do Saulo**.

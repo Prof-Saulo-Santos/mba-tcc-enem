@@ -16,7 +16,7 @@ A tabela abaixo consolida a correspondência exata entre as **3 Grandes Etapas A
 | **ETAPA 1** | **Cap. 05:** Consolidação 2014–2023 (37,59M) e Downcasting | **[`passo-a-passo-05.md`](passo-a-passo-05.md)** | **[`slides-05.md`](slides-05.md)** | ✅ Concluído |
 | **ETAPA 1** | **Cap. 06:** Treinamento Escalável XGBoost + MLflow + SHAP (`enem.pkl`) | **[`passo-a-passo-06.md`](passo-a-passo-06.md)** | **[`slides-06.md`](slides-06.md)** | ✅ Concluído |
 | **ETAPA 2**<br>*(API FastAPI, Pytest, Docker e CI/CD AWS)* | **Cap. 07:** Produtização da API REST, Testes de Contrato, Docker e GitHub Actions | **[`passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md)** | **[`slides-07.md`](slides-07.md)** | ✅ Concluído |
-| **ETAPA 3**<br>*(Airflow Autônomo 2024/2025 em Docker Local)* | **Cap. 08:** DAG Airflow Autônoma (NLP $\rightarrow$ Gatekeeper OOT 2024 / Drift 2025) | **`passo-a-passo-08-airflow-producao.md`** *(Etapa 3)* | **`slides-08.md`** *(Etapa 3)* | ⏳ Em execução |
+| **ETAPA 3**<br>*(Airflow Autônomo 2024/2025 em Docker Local)* | **Cap. 08:** DAG Airflow Autônoma (NLP $\rightarrow$ Gatekeeper OOT 2024 / Drift 2025) | **[`passo-a-passo-08-airflow-producao.md`](passo-a-passo-08-airflow-producao.md)** | **[`slides-08.md`](slides-08.md)** | ✅ Concluído |
 
 ---
 
