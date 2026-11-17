@@ -188,10 +188,10 @@ Essa variabilidade de estilo, humor e subjetividade do corretor atua na modelage
 ### Conteúdo dos Tópicos no Slide
 * **Blindagem de Seleção:** Uso de *Permutation Importance* sobre conjunto de validação out-of-fold para eliminar o viés de cardinalidade da impureza de Gini;
 * **Interpretabilidade Sociológica Clara:** Alinhamento direto com as teorias da sociologia educacional de Pierre Bourdieu (Capital Econômico + Capital Cultural + Tempo);
-* **Persistência do Artefato Canônico:** Base salva em `data/processed/enem_2023_features_modelagem.parquet` ($212.386$ linhas $\times$ $8$ colunas).
+* **Persistência do Contrato Canônico:** Especificação salva em `data/processed/contrato_features_modelagem.json` (contrato das 6 features de elite e `TARGET_M4` validado em $212.386$ concluintes de 2023).
 
 ### Roteiro de Fala do Apresentador
-> *"Chegamos assim ao nosso 'Esquadrão de Elite'. Comprovado via Permutation Importance, este sexteto de variáveis une a Renda Per Capita e a posse de computador com o frescor de conclusão do Ensino Médio, a língua estrangeira escolhida, o sexo e a escolaridade materna. Temos aqui uma síntese perfeita entre parcimônia computacional para a engenharia de MLOps e densidade sociológica para a ciência educacional. Este é o dataset final exportado em Parquet que alimenta as etapas seguintes."*
+> *"Chegamos assim ao nosso 'Esquadrão de Elite'. Comprovado via Permutation Importance, este sexteto de variáveis une a Renda Per Capita e a posse de computador com o frescor de conclusão do Ensino Médio, a língua estrangeira escolhida, o sexo e a escolaridade materna. Temos aqui uma síntese perfeita entre parcimônia computacional para a engenharia de MLOps e densidade sociológica para a ciência educacional. Este contrato canônico das 6 features formaliza o escopo que orienta a harmonização histórica e o treinamento nas etapas seguintes."*
 
 ---
 

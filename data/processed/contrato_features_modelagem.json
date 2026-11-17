@@ -1,10 +1,10 @@
 {
     "nome_contrato": "enem_2023_esquadrao_titular",
     "versao_contrato": "1.0",
-    "data_geracao_utc": "2026-10-29T20:15:44Z",
+    "data_geracao_utc": "2026-11-16T18:20:11Z",
     "granularidade": "um_registro_por_candidato",
-    "n_registros": 212386,
-    "colunas_exportadas": [
+    "n_registros_auditados_2023": 212386,
+    "colunas_homologadas": [
         "NU_INSCRICAO",
         "RENDA_PER_CAPITA",
         "Q024",
@@ -81,5 +81,5 @@
         "Reutilizar o mesmo pré-processamento em treinamento e inferência.",
         "Não incluir NU_INSCRICAO entre as features preditoras."
     ],
-    "nota_processamento": "Dataset reduzido selecionado no estudo de parcimônia do Notebook 03. A validação definitiva do modelo, do pré-processamento e da inferência ocorrerá no Notebook 05."
+    "nota_processamento": "Especificação das 6 features de elite e do alvo TARGET_M4 validada no estudo de parcimônia do Notebook 03 (212.386 concluintes do ENEM 2023). A consolidação censitária multi-ano (2014–2023) ocorre no Notebook 05 e o treinamento no Notebook 06."
 }

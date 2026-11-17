@@ -93,7 +93,7 @@ A Etapa 1 representa o laboratório analítico e a preparação de dados, tendo 
      * **7.1 Validação Psicométrica:** Matriz de Pearson entre provas e **Alfa de Cronbach de 0.865**, provando alta consistência interna unidimensional na escala TRI.
      * **7.2 Auditoria de Data Leakage & Permutation:** Nenhuma feature preditora ultrapassou o limiar de 0.80 de correlação com o alvo. O *Permutation Importance* confirmou a liderança de `RENDA_PER_CAPITA`, `TP_ANO_CONCLUIU`, `TP_LINGUA` e `Q024` sem viés de Gini.
      * **7.3 A Prova da Parcimônia (Navalha de Ockham):** O modelo completo de 21 features ($R^2 = 0.3546$) versus o "Esquadrão de Elite" de 6 features ($R^2 = 0.3294$) registrou perda desprezível de apenas **7.11% de $R^2$**, justificando a economia de 71% das perguntas do questionário.
-     * **7.4 Contrato Canônico e Exportação:** Persistência do dataset final homologado em **`data/processed/enem_2023_features_modelagem.parquet`** (212.386 linhas $\times$ 8 colunas: `NU_INSCRICAO`, `TARGET_M4` e as 6 features de elite).
+     * **7.4 Contrato Canônico e Exportação:** Validação do subconjunto de 2023 (212.386 concluintes) e persistência do manifesto canônico em **`data/processed/contrato_features_modelagem.json`** (especificação das 6 features de elite e `TARGET_M4` para os Notebooks 04, 05 e 06).
 * **O "Esquadrão de Elite" Oficial (6 Features Homologadas):**
   1. `RENDA_PER_CAPITA`: Renda familiar estimada por morador do domicílio (Feature engenhada suprema);
   2. `Q024`: Posse de computador no domicílio (Inclusão digital e ferramenta de estudo);
@@ -188,7 +188,7 @@ Baseada no diagrama `media/pipeline-3.jpg`, `diagrama_producao_2024.md`, `passo-
    * **Etapa 2 Integralmente Concluída e Homologada:** Microserviço FastAPI (`src/api/`), suíte de 25 testes `pytest` (`tests/`), containerização multi-stage enxuta (`Dockerfile`, `docker-compose.yml`, `requirements-api.txt`, `515 MB` OCI) e esteira CI/CD GitHub Actions (`.github/workflows/deploy.yml`) 100% implementados, testados e documentados em `passo-a-passo-07-api-docker.md` e `slides-07.md`.
    * **Etapa 3 Integralmente Concluída e Homologada:** Módulos de orquestração (`src/orchestration/`), DAG autônoma Apache Airflow (`dags/enem_autonomous_dag.py`), containerização local pesada (`Dockerfile.airflow`, `docker-compose.airflow.yml`), suíte E2E `pytest` (`tests/test_orchestration_etapa3.py`, `4/4 PASSED`, totalizando `29/29 PASSED` no repositório), execução real nas safras 2024 e 2025 e documentação completa em `passo-a-passo-08-airflow-producao.md` e `slides-08.md`.
    * **Artefatos Canônicos Exportados:**
-     * `data/processed/enem_2023_features_modelagem.parquet` (212.386 concluintes $\times$ 8 colunas: `NU_INSCRICAO`, `TARGET_M4` e as 6 features do Esquadrão de Elite);
+     * `data/processed/contrato_features_modelagem.json` (Contrato canônico das 6 features do Esquadrão de Elite + `TARGET_M4`, validado em 212.386 concluintes de 2023);
      * `data/processed/schema_mapping_historico.json` (Contrato canônico de mapeamento semântico 2014–2024 para ETL e Airflow);
      * `data/processed/enem_2014_gold.parquet` (5.947.909 candidatos purificados $\times$ 17 colunas, 95.91 MB, safra histórica inicial da Década de Ouro);
      * `data/processed/enem_2014_2023_consolidado.parquet` + `data/processed/contrato_consolidacao_2014_2023.json` (37.593.629 candidatos $\times$ 8 colunas, 153,17 MB em disco, 537,78 MB em RAM);
