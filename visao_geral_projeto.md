@@ -1,12 +1,12 @@
 # 🎓 Visão Geral do Projeto: Previsão de Notas do ENEM e Arquitetura de Dados
 
-Este documento tem como objetivo apresentar à banca avaliadora a arquitetura ponta a ponta do projeto, esclarecendo o papel da fase de pesquisa (Jupyter Notebooks), a estratégia de validação cronológica (2024-2025) e a engenharia de dados em nuvem para colocar a Inteligência Artificial em produção.
+Este documento apresenta à banca avaliadora a arquitetura ponta a ponta do projeto, esclarecendo o papel da fase de pesquisa e modelagem histórica (Notebooks `01` a `06` — Etapa 1), o recorte censitário até `2023` (devido à ruptura estrutural da LGPD a partir de `2024`) e a engenharia de produtização em nuvem (Etapa 2).
 
 ---
 
 ## 🗺️ Mapa Completo de Documentação e Slides por Etapa do TCC
 
-A tabela abaixo consolida a correspondência exata entre as **3 Grandes Etapas Arquiteturais** do projeto, os **Capítulos Sequenciais (`01` a `08`)**, os guias técnicos de execução (`passo-a-passo`) e os roteiros de slides para a defesa perante a banca (`slides`):
+A tabela abaixo consolida a correspondência exata entre as **2 Grandes Etapas Arquiteturais** do projeto, os **Capítulos Sequenciais (`01` a `07`)**, os guias técnicos de execução (`passo-a-passo`) e os roteiros de slides para a defesa perante a banca (`slides`):
 
 | Grande Etapa do Projeto | Capítulo / Escopo Técnico | Guia Técnico (`passo-a-passo`) | Roteiro de Slides para a Banca (`slides`) | Status |
 | :--- | :--- | :--- | :--- | :---: |
@@ -16,46 +16,33 @@ A tabela abaixo consolida a correspondência exata entre as **3 Grandes Etapas A
 | **ETAPA 1** | **Cap. 05:** Consolidação 2014–2023 (37,59M) e Downcasting | **[`passo-a-passo-05.md`](passo-a-passo-05.md)** | **[`slides-05.md`](slides-05.md)** | ✅ Concluído |
 | **ETAPA 1** | **Cap. 06:** Treinamento Escalável XGBoost + MLflow + SHAP (`enem.pkl`) | **[`passo-a-passo-06.md`](passo-a-passo-06.md)** | **[`slides-06.md`](slides-06.md)** | ✅ Concluído |
 | **ETAPA 2**<br>*(API FastAPI, Pytest, Docker e CI/CD AWS)* | **Cap. 07:** Produtização da API REST, Testes de Contrato, Docker e GitHub Actions | **[`passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md)** | **[`slides-07.md`](slides-07.md)** | ✅ Concluído |
-| **ETAPA 3**<br>*(Airflow Autônomo 2024/2025 em Docker Local)* | **Cap. 08:** DAG Airflow Autônoma (NLP $\rightarrow$ Gatekeeper OOT 2024 / Drift 2025) | **[`passo-a-passo-08-airflow-producao.md`](passo-a-passo-08-airflow-producao.md)** | **[`slides-08.md`](slides-08.md)** | ✅ Concluído |
 
 ---
 
-## 🔬 Etapa 1: A Fase de Pesquisa e Modelagem (Os Notebooks)
-Nesta primeira etapa, o ambiente interativo (Jupyter) é utilizado como laboratório para embasar as decisões sociológicas e estatísticas do projeto. 
+## 🔬 Etapa 1: Laboratório Científico, Big Data e Modelagem (Notebooks `01` a `06`)
 
-1. **`01_iniciando_dados.ipynb` (Ingestão Inicial):** Onde ocorre o reconhecimento da base original do INEP, mapeamento de metadados e carregamento estrutural inicial.
-2. **`02_eda.ipynb` (Análise Exploratória):** Limpeza rigorosa, tratamento focado em Machine Learning (substituição de nulos estruturais), definição da estratégia de safra (Concluintes 2023) e o uso estatístico do *Cohen's d* para comprovar a desigualdade por raça e escola. O output é o dataset purificado (`enem_2023_silver.parquet`).
-3. **`03_engenharia_features.ipynb` (Engenharia de Features):** Criação de novas variáveis como a *Renda Per Capita*, Estudo de Ablação (Navalha de Ockham para simplificar o modelo) e testes de correlação. O laboratório comprova o *Target_M2* (Matemática + Linguagens) como o alvo supremo e livre de *Data Leakage*.
-4. **`04_varredura_semantica.ipynb` (Harmonização por NLP):** Uso de *Sentence Transformers (SBERT)* para mapear automaticamente colunas históricas do ENEM. Resolve o *Drift Semântico* (quando o governo muda o nome da coluna de Q021 para Q006 entre os anos), pareando os dicionários de dados matematicamente para o Padrão Ouro de 2023.
-5. **`05_modelagem_xgboost.ipynb` (Em breve - A Construção do Modelo):** É **neste notebook** que a Inteligência Artificial será definitivamente treinada. Utilizaremos o algoritmo *XGBoost* para encontrar os melhores hiperparâmetros, extrair o modelo treinado e exportá-lo como um arquivo serializado (ex: `.pkl` ou `.joblib`) pronto para ir para a nuvem.
-
----
-
-## ⏳ Etapa 2: A Validação Temporal (Testando o Futuro com 2024 e 2025)
-Em projetos de Machine Learning, é muito comum que um modelo sofra degradação com o passar do tempo. A intenção de baixar e aplicar o modelo preditivo nas bases do ENEM de 2024 e 2025 tem dois grandes propósitos para a banca:
-1. **Teste de Robustez Cega (Out-of-Time Validation):** Em vez de validar o modelo apenas separando 20% dos alunos de 2023, nós o testaremos em **alunos que fizeram a prova no futuro**. Se o $R^2$ se mantiver alto em 2024 e 2025, provamos que o algoritmo não "decorou" o padrão de 2023, mas sim que **aprendeu uma regra sociológica atemporal** do Brasil.
-2. **Monitoramento do Determinismo Social:** Acompanhar se o impacto do Computador ou da Renda aumentou ou diminuiu nas provas futuras, oferecendo uma janela incrível para debates sobre políticas públicas recentes.
+1. **`01_investigacao_estrutural.ipynb`:** Reconhecimento estrutural dos CSVs brutos do INEP, checagem de colunas, tipos e layout.
+2. **`02_eda.ipynb` (Análise Exploratória):** Limpeza metodológica de 2023 (`enem_2023_eda_purificado.parquet`), análise bivariada demográfica e cálculo de tamanho de efeito (*Cohen's d*).
+3. **`03_engenharia_features.ipynb` (Engenharia e Seleção):** Definição do alvo **`TARGET_M4`** (média das 4 provas objetivas da TRI, Alfa de Cronbach = `0,865`) e seleção parcimoniosa das **6 features de elite** (`contrato_features_modelagem.json`).
+4. **`04_varredura_semantica.ipynb` (Harmonização por NLP):** Uso de *Sentence Transformers (SBERT)* para mapear os dicionários históricos (`schema_mapping_historico.json`), homologando a janela **2014–2023** (*Década de Ouro*) e identificando a ruptura estrutural a partir de `2024`.
+5. **`05_consolidacao_historica.ipynb` (Big Data 2014–2023):** Leitura em *chunks* de 500 mil linhas dos 10 CSVs brutos (`56,57M` inscritos varridos $\rightarrow$ **`37.593.629` elegíveis**), deflação em Salários Mínimos, harmonização ordinal e *downcasting* para `15 bytes/linha` (`enem_2014_2023_consolidado.parquet`).
+6. **`06_treinamento_modelo.ipynb` (Treinamento, MLflow, SHAP e OOT):** Competição `Dummy` vs. `Ridge` vs. `RandomForest` vs. `XGBoost`, eleição do **`XGBRegressor`** campeão no Holdout de `7,52M` ($R^2 = 0{,}33780$, $\text{RMSE} = 57{,}7439\text{ pts}$), **Validação *Out-of-Time* Interna (`2014–2022 -> 2023`, $R^2 = 0{,}31842$)**, explicabilidade via **TreeSHAP** e exportação de [`models/enem.pkl`](models/enem.pkl) + [`models/enem_model_card.json`](models/enem_model_card.json).
 
 ---
 
-## ⚙️ Etapa 3: Fluxo de Dados Automatizado (Pipeline via Apache Airflow)
-A banca perguntará: *"O que acontece quando o INEP lança a base de 2024?"* 
-O projeto foi desenhado para não depender de trabalho manual. O fluxo orquestrado pelo Apache Airflow será o seguinte:
+## 🔒 Por Que o Recorte Censitário Encerra em 2023 (Barreira LGPD 2024–2025)
 
-1. **Trigger de Download:** O Airflow roda periodicamente um web-scraper ou consome uma API para verificar se os microdados novos do ENEM estão disponíveis. Ao detectar o lançamento, faz o download do `.zip`.
-2. **Descompressão e Dicionário:** O arquivo é descompactado. O Airflow extrai o Excel do Dicionário de Dados do novo ano.
-3. **Acionamento da Varredura Semântica (NLP):** O script em Python contendo a lógica do Notebook 04 (*SBERT*) é ativado. Ele lê o dicionário novo, compara com o Padrão Ouro de 2023 e descobre como as colunas do novo ano devem se chamar.
-4. **Transformação e Ingestão (ETL):** O dataset novo tem as colunas renomeadas instantaneamente pela IA, passa pelos filtros de limpeza (Concluintes, sem treineiros) e é formatado em Parquet.
-5. **Append no Data Lake:** Os dados de 2024 são soldados (append) à base imensa histórica (2009-2023), atualizando o banco de dados principal do projeto sem intervenção humana.
+A partir da edição de **2024**, por adequação à **Lei Geral de Proteção de Dados (LGPD)**, o INEP deixou de publicar os microdados em tabela única por inscrito e separou participantes (`PARTICIPANTES`) e notas (`RESULTADOS`) sem chave de ligação (`NU_INSCRICAO` ausente para cruzamento e ordenação independente). Em **2025**, tampouco existe tabela pareável com notas.
+
+Como ficou comprovada a impossibilidade técnica e intencional de unir as duas tabelas CSV de `2024` e `2025`, o processamento dessas edições foi **retirado do escopo do projeto**, preservando a integridade científica da base `2014–2023` e comprovando a generalização temporal do modelo através da **Validação *Out-of-Time* Interna sobre os `2.678.264` candidatos integrais de `2023`**.
 
 ---
 
-## ☁️ Etapa 4: Produtização e Deploy na Nuvem (AWS)
-O objetivo final de um projeto de Machine Learning moderno não é o Jupyter Notebook, mas sim a entrega do modelo como um serviço (MaaS - Model as a Service).
+## ☁️ Etapa 2: Produtização, Testes de Contrato, Docker e CI/CD na AWS
 
-1. **Empacotamento do Modelo (FastAPI):** O arquivo `.pkl` gerado no Notebook 05 será acoplado a uma API escrita em Python usando a biblioteca `FastAPI`. Esta API receberá um JSON com as respostas socioeconômicas do aluno e retornará a previsão da nota *TARGET_M2*.
-2. **Containerização (Docker):** A aplicação FastAPI será colocada dentro de um container Docker, garantindo que rode exatamente da mesma forma em qualquer computador do mundo.
-3. **Deploy na AWS:**
-   - **Armazenamento:** O *Amazon S3* servirá como o Data Lake para hospedar os pesados arquivos parquet da base de dados imensa.
-   - **Hospedagem da API:** Utilizaremos serviços como o *AWS App Runner*, *ECS (Elastic Container Service)* ou uma instância *EC2* simples para rodar a imagem Docker com o FastAPI 24 horas por dia.
-4. **Apresentação:** Um simples front-end ou chamadas via Postman consumirão essa API alocada na AWS. A banca poderá digitar "Renda: 3000, Computador: Sim, Escolaridade: Superior" e o sistema baterá no servidor da AWS e responderá ao vivo qual seria o futuro acadêmico projetado para aquele jovem.
+O objetivo final de MLOps é entregar o modelo como um serviço (*Model as a Service*):
+
+1. **Microserviço REST (`src/api/`):** A API **FastAPI** carrega [`models/enem.pkl`](models/enem.pkl) e [`models/enem_model_card.json`](models/enem_model_card.json), valida estritamente as 6 variáveis de entrada via **Pydantic v2** (`extra="forbid"`, bloqueando variáveis proibidas como `NU_ANO`) e expõe `/health`, `/info`, `/predict` e `/predict/batch`.
+2. **Suíte de Testes (`tests/`):** Testes automatizados validam integridade `SHA-256`, contratos HTTP, limites psicométricos e paridade exata de inferência com o estimador `XGBRegressor`.
+3. **Containerização FinOps (`Dockerfile`):** Build *multi-stage* com `uv`, `requirements-api.txt` enxuto (`515 MB` Content Size), biblioteca OpenMP (`libgomp1`) e usuário sem privilégios de `root` (`appuser`).
+4. **CI/CD GitHub Actions (`.github/workflows/deploy.yml`):** Esteira automatizada em 3 jobs (`quality-gate-ci` $\rightarrow$ `docker-smoke-test` $\rightarrow$ `deploy-aws` para **Amazon ECR** e **AWS App Runner** com trava FinOps condicional).

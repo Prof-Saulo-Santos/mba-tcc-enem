@@ -6,18 +6,17 @@
 
 ---
 
-## 1. Visão Geral: O Fechamento da Etapa 1 e a Ponte para Produção (AWS & Airflow)
+## 1. Visão Geral: O Fechamento da Etapa 1 e a Ponte para Produção (API FastAPI, Docker & AWS)
 
-Na arquitetura em três etapas do projeto, o **Notebook 06** é o elo que transforma **37.593.629 registros históricos harmonizados** em um **modelo preditivo auditado, explicável e serializado para nuvem**:
+Na arquitetura em duas etapas do projeto, o **Notebook 06** é o elo que transforma **37.593.629 registros históricos harmonizados (`2014–2023`)** em um **modelo preditivo auditado, explicável e serializado para nuvem**:
 
 ```text
 ETAPA 1 — LABORATÓRIO CIENTÍFICO, NLP E MLFLOW (Concluída neste Notebook)
 [01_investigacao] ─> [02_eda] ─> [03_features] ─> [04_nlp_sbert] ─> [05_consolidacao] ─> ⭐ [06_treinamento_modelo]
                                                                                                   │
-                       ┌──────────────────────────────────────────────────────────────────────────┴───────────────────┐
-                       ▼                                                                                              ▼
-ETAPA 2 — PRODUTIZAÇÃO E DEPLOY CONTÍNUO (AWS)                                     ETAPA 3 — ORQUESTRAÇÃO E OOT (2024+)
-[models/enem.pkl + enem_model_card.json] ─> FastAPI ─> Docker ─> AWS App Runner    Apache Airflow ─> ENEM 2024 ─> Auditoria Drift MLflow
+                                                                                                  ▼
+ETAPA 2 — PRODUTIZAÇÃO, TESTES, DOCKER E DEPLOY CONTÍNUO (AWS)
+[models/enem.pkl + enem_model_card.json] ─> FastAPI ─> Pytest ─> Docker ─> GitHub Actions ─> AWS App Runner
 ```
 
 ---
@@ -35,7 +34,7 @@ Após materializar as três fatias (`df_test`, `df_val_es`, `df_fit`), `df_decad
 | **`df_test`** | **20,00%** (Holdout Cego) | `7.518.726` | Conjunto **100% lacrado** durante CV, *tuning* e curva — aberto a partir da Seção 6 para eleição do campeão, auditoria anual, amostra SHAP (`10k`) e *Smoke Test* (`100` linhas). |
 | **`df_cv`** | **2,66%** (Subamostra de `df_fit`) | `1.000.000` | Extraída **somente de `df_fit`** para competição rápida em 5-Fold CV e *Tuning* (Estágio 1). |
 
-> **Blindagem Dupla (Estratificada + Temporal):** Além da avaliação estratificada nos `7.518.726` candidatos do Holdout (`2014–2023`), a **Seção 6 (Bloco 6.3)** executa uma rodada independente de **Validação *Out-of-Time* Interna**, treinando um `XGBRegressor` exclusivamente de `2014` a `2022` (`NU_ANO <= 2022`, mantendo os hiperparâmetros selecionados no Estágio 1) e avaliando nos **`2.678.264` candidatos integrais de `2023`**. Isso comprova generalização temporal para safras inéditas antes de conectarmos o ENEM 2024 na Etapa 3.
+> **Blindagem Dupla (Estratificada + Temporal):** Além da avaliação estratificada nos `7.518.726` candidatos do Holdout (`2014–2023`), a **Seção 6 (Bloco 6.3)** executa uma rodada independente de **Validação *Out-of-Time* Interna**, treinando um `XGBRegressor` exclusivamente de `2014` a `2022` (`NU_ANO <= 2022`, mantendo os hiperparâmetros selecionados no Estágio 1) e avaliando nos **`2.678.264` candidatos integrais de `2023`**. Isso comprova generalização temporal sem depender das edições `2024` e `2025` (cujo pareamento participante-nota foi impossibilitado pela separação proposital das tabelas do INEP devido à LGPD).
 
 ---
 

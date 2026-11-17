@@ -10,7 +10,7 @@ Este documento atua como **memória persistente, bússola arquitetural e instru�
 O objetivo central deste trabalho de conclusão de curso (MBA em Ciência de Dados / MLOps) é **investigar e prever o determinismo social e o desempenho acadêmico dos estudantes brasileiros no ENEM** (Exame Nacional do Ensino Médio), integrando:
 1. **Sociologia Educacional:** Comprovação empírica do impacto do capital cultural e econômico familiar (Bourdieu), tipo de escola, raça e gênero nas notas;
 2. **Machine Learning Robusto:** Modelagem preditiva com algoritmos não lineares baseados em árvores (*Random Forest* e *XGBoost*);
-3. **Engenharia de Dados & MLOps em Larga Escala:** Consolidação histórica de uma década de microdados (Big Data), inteligência semântica via NLP para resolução de deriva de esquema (*Schema/Semantic Drift*), rastreabilidade com **MLFlow**, deploy em nuvem (**FastAPI + Docker + GitHub Actions + AWS**) e orquestração contínua com **Apache Airflow**.
+3. **Engenharia de Dados & MLOps em Larga Escala:** Consolidação histórica de uma década de microdados (`2014–2023`, Big Data), inteligência semântica via NLP para resolução de deriva de esquema (*Schema/Semantic Drift*), rastreabilidade com **MLflow** e deploy em nuvem (**FastAPI + Docker + GitHub Actions + AWS**).
 
 ### 1.2 O Alvo Homologado (`TARGET_M4`)
 
@@ -25,14 +25,14 @@ Após rigoroso benchmark empírico multialvo sob Validação Cruzada (5-Fold CV)
 
 ---
 
-## 2. A Arquitetura do Projeto em Três Etapas
+## 2. A Arquitetura do Projeto em Duas Etapas (e Corte em 2023 por LGPD)
 
-A esteira de desenvolvimento do projeto está estruturada rigorosamente em **três etapas evolutivas**, ilustradas nos diagramas de arquitetura do projeto (`media/pipeline-1.jpg`, `media/pipeline-2.jpg` e `media/pipeline-3.jpg`):
+A esteira de desenvolvimento do projeto está estruturada em **duas etapas consolidadas** (`media/pipeline-1.jpg` e `media/pipeline-2.jpg`):
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ ETAPA 1: LABORATÓRIO DE DADOS, SELEÇÃO, NLP E MLFLOW (media/pipeline-1.jpg)            │
-│ [2023] ─> [02_eda] ─> [03_features] ─> [04_nlp] ─> [05_consolidacao] ─> [06_xgboost+mlflow] ─> enem.pkl│
+│ [2014–2023] ─> [02_eda] ─> [03_features] ─> [04_nlp] ─> [05_consolidacao] ─> [06_xgboost+mlflow] ─> enem.pkl│
 └────────────────────────────────────────────────────────────────────────────────────────┘
                                             │
                                             ▼
@@ -40,13 +40,9 @@ A esteira de desenvolvimento do projeto está estruturada rigorosamente em **tr�
 │ ETAPA 2: PRODUTIZAÇÃO, CONTAINERIZAÇÃO, CI/CD E NUVEM AWS (media/pipeline-2.jpg)       │
 │ [enem.pkl] ──> [API FastAPI] ──> [Docker] ──> [GitHub Actions] ──> [AWS App Runner] ──> Endpoints │
 └────────────────────────────────────────────────────────────────────────────────────────┘
-                                            │
-                                            ▼
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ ETAPA 3: ORQUESTRAÇÃO BIG DATA E PRODUÇÃO EM TEMPO REAL (media/pipeline-3.jpg)         │
-│ [ENEM 2024] ──> [Airflow DAG] ──> [Seleção/NLP] ──> [2014-2024] ──> [OOT Validation MLFlow]   │
-└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Decisão Arquitetural sobre 2024 e 2025 (Barreira LGPD):** O processamento inicialmente planejado para as safras de 2024 e 2025 (Etapa 3) foi **encerrado do escopo de execução** após a constatação de que, a partir de 2024, o INEP separou os microdados em tabelas distintas sem chave identificadora (`PARTICIPANTES` vs. `RESULTADOS`) propositalmente por adequação à LGPD — impossibilitando o pareamento determinístico entre variáveis socioeconômicas (`X`) e notas (`y`). Assim, o recorte histórico censitário encerra-se em **2023**, com generalização temporal comprovada via **Validação *Out-of-Time* Interna (`2014–2022 -> 2023`)** no Notebook 06.
 
 ---
 
@@ -152,22 +148,11 @@ Baseada no diagrama `media/pipeline-2.jpg`, `diagrama_deploy_aws.md`, `passo-a-p
 
 ---
 
-## 5. Detalhamento da Etapa 3: Orquestração Local em Docker e Governança Autônoma (2024/2025) - *Homologada*
+## 5. Encerramento da Série em 2023 e Descontinuação do Processamento 2024/2025 (Barreira LGPD)
 
-Baseada no diagrama `media/pipeline-3.jpg`, `diagrama_producao_2024.md`, `passo-a-passo-08-airflow-producao.md` e `slides-08.md`:
-
-1. **Arquitetura FinOps (Plano Pesado Local Containerizado):**
-   * Airflow + SBERT + XGBoost + MLflow rodam localmente containerizados (`Dockerfile.airflow` e `docker-compose.airflow.yml`), evitando custos ociosos de processamento pesado em nuvem.
-2. **Fluxo Ordenado da DAG Autônoma em 4 Estágios (`src/orchestration/` & `dags/enem_autonomous_dag.py`):**
-   * **(1) Ingestão (`step1_ingest_detect.py`):** Recepção e inspeção estrutural dos microdados e dicionário da nova edição (`2024` com layout bipartido LGPD `PARTICIPANTES_2024.csv` + `RESULTADOS_2024.csv` ou `2025` somente `PARTICIPANTES_2025.csv`), incluindo auditoria de integridade posicional (`positional_match_rate = 0.0055` em 2024).
-   * **(2) NLP/SBERT no Dicionário ANTES da Seleção (`step2_sbert_mapper.py`):** Execução ao vivo do `paraphrase-multilingual-MiniLM-L12-v2` sobre o dicionário oficial do INEP antes da leitura do CSV, detectando `2` *drifts* semânticos reais (`Q006 -> Q007` para Renda Familiar e `Q024 -> Q021` para Posse de Computador, já que `Q024` dejó de existir fisicamente em 2024/2025).
-   * **(3) Seleção + Harmonização + Downcasting (`step3_select_harmonize.py`):** Extração exclusiva das 6 features mapeadas, deflação da `RENDA_PER_CAPITA` em Salários Mínimos vigentes (`R$ 1.412,00` em 2024; `R$ 1.518,00` em 2025), harmonização ordinal e compactação extrema para `15 bytes/linha` (`0,493 MB` RAM em 2024) e `11 bytes/linha` (`0,525 MB` RAM em 2025).
-   * **(4) Bifurcação Automática e Governança (`step4_branch_oot_drift.py`):**
-     * **Cenário A1 — Safra `2024` Real (Bipartida sem Chave por LGPD $\rightarrow$ Circuit Breaker):** O **Gatekeeper Out-of-Time** detecta a quebra de pareamento posicional (`positional_match_rate = 0.0055`, $R^2_{\text{OOT}} = -0.19173 < 0.28$), aciona o **Circuit Breaker** para bloquear o retreino e impedir *Data Poisoning* da base histórica `2014–2023`, e redireciona para Inferência em Lote (`34.467` concluintes escorados, média `507,20 ± 40,06 pts`) + Auditoria de Drift (`max_psi = 0.05146 < 0.10`, todas as 6 variáveis `ESTAVEL`).
-     * **Cenário A2 — Safra OOT Alinhada (Retreino Contínuo + Juiz MLflow):** Quando pareada ($R^2_{\text{OOT}} = 0.31522 \ge 0.28$), concatena a série histórica, retreina o `XGBRegressor` Challenger (`v2`) e utiliza o **MLflow como Juiz Champion vs. Challenger** no Holdout estratificado ($\text{RMSE}_{\text{v2}} = 66.1667 < \text{RMSE}_{\text{v1}} = 66.3074$), promovendo `enem_v2.pkl`.
-     * **Cenário B — Safra `2025` sem Notas (`EDITION_WITHOUT_SCORES`):** Roteia diretamente para **Inferência em Lote (*Batch Scoring*)** (`50.000` candidatos escorados, média `516,47 ± 48,92 pts`) + **Auditoria de Data Drift de $X$** (`max_psi = 0.02790 < 0.10`, todas as 6 variáveis `ESTAVEL`).
-3. **Suíte Automatizada de Testes E2E (`tests/test_orchestration_etapa3.py`):**
-   * `4/4 PASSED` validando a proteção de Circuit Breaker em 2024, o Batch Scoring + Drift em 2025, a promoção Champion vs. Challenger no MLflow e a execução ponta a ponta da DAG.
+1. **Ruptura Estrutural do INEP a partir de 2024 (LGPD):** Nos microdados de 2024, o INEP passou a publicar `PARTICIPANTES_2024.csv` e `RESULTADOS_2024.csv` sem coluna-chave de ligação (`NU_INSCRICAO` ausente para cruzamento e ordenação independente por anonimização LGPD), e em 2025 não há tabela pareável com notas.
+2. **Decisão de Escopo:** Comprovada a impossibilidade técnica e legal de unir as duas tabelas CSV de 2024 e 2025, optou-se por **não realizar o processamento e retreinamento sobre 2024/2025** (removendo do escopo ativo os módulos de orquestração Airflow da antiga Etapa 3).
+3. **Como a Validação Temporal foi Garantida:** A capacidade de generalização para anos futuros inéditos é comprovada diretamente na **Etapa 1 (Notebook 06, Bloco 6.3)** mediante **Validação *Out-of-Time* Interna (`Treino 2014–2022` $\rightarrow$ `Teste Cego 2023`, $N = 2.678.264$)** com $R^2 = 0.31842$ ($\Delta R^2 = -0.00293$).
 
 ---
 
@@ -186,7 +171,7 @@ Baseada no diagrama `media/pipeline-3.jpg`, `diagrama_producao_2024.md`, `passo-
 5. **Estado Atual e Próxima Tarefa:**
    * **Etapa 1 Integralmente Concluída e Homologada:** Todos os notebooks da esteira analítica — `01_investigacao_estrutural.ipynb`, `02_eda.ipynb`, `03_engenharia_features.ipynb`, `04_varredura_semantica.ipynb`, `05_consolidacao_historica.ipynb` e `06_treinamento_modelo.ipynb` — estão 100% executados, auditados e homologados (com guias `passo-a-passo-05.md`, `passo-a-passo-06.md` e roteiros de defesa `slides-03.md`, `slides-04.md`, `slides-05.md` e `slides-06.md`).
    * **Etapa 2 Integralmente Concluída e Homologada:** Microserviço FastAPI (`src/api/`), suíte de 25 testes `pytest` (`tests/`), containerização multi-stage enxuta (`Dockerfile`, `docker-compose.yml`, `requirements-api.txt`, `515 MB` OCI) e esteira CI/CD GitHub Actions (`.github/workflows/deploy.yml`) 100% implementados, testados e documentados em `passo-a-passo-07-api-docker.md` e `slides-07.md`.
-   * **Etapa 3 Integralmente Concluída e Homologada:** Módulos de orquestração (`src/orchestration/`), DAG autônoma Apache Airflow (`dags/enem_autonomous_dag.py`), containerização local pesada (`Dockerfile.airflow`, `docker-compose.airflow.yml`), suíte E2E `pytest` (`tests/test_orchestration_etapa3.py`, `4/4 PASSED`, totalizando `29/29 PASSED` no repositório), execução real nas safras 2024 e 2025 e documentação completa em `passo-a-passo-08-airflow-producao.md` e `slides-08.md`.
+   * **Encerramento do Escopo em 2023 (Sem Processamento 2024/2025):** A antiga Etapa 3 (Airflow para 2024/2025) foi removida do escopo porque o INEP desmembrou as tabelas CSV de 2024 e 2025 por LGPD sem chave de junção entre participantes e notas.
    * **Artefatos Canônicos Exportados:**
      * `data/processed/contrato_features_modelagem.json` (Contrato canônico das 6 features do Esquadrão de Elite + `TARGET_M4`, validado em 212.386 concluintes de 2023);
      * `data/processed/schema_mapping_historico.json` (Contrato canônico de mapeamento semântico 2014–2024 para ETL e Airflow);
@@ -195,7 +180,7 @@ Baseada no diagrama `media/pipeline-3.jpg`, `diagrama_producao_2024.md`, `passo-
      * `models/enem.pkl` (`XGBRegressor` campeão puro, `1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`, Holdout `7,52M` $R^2 = 0.33780$, $\text{RMSE} = 57.7439$ pts; OOT `2023` $R^2 = 0.31842$) + `models/enem_xgboost.ubj` + `models/enem_model_card.json` + `models/auditoria_holdout_por_ano_2014_2023.csv` + Model Registry MLflow `enem_target_m4_producao` v1 (`sqlite:///mlflow.db`).
    * **Alvo Oficial Definido:** `TARGET_M4` (Média das 4 provas objetivas da TRI: MT, LC, CN, CH), com $R^2 = 0.3467$ (ano-base 2023) / $R^2 = 0.33780$ (censo decenal 2014–2023) e Alfa de Cronbach = 0.865.
    * **Próximo Passo Opcional (Demonstração Final em Nuvem / Preparação da Defesa):**
-     * As **3 Grandes Etapas do TCC (Capítulos 01 a 08)** estão **100% implementadas, testadas e documentadas**. Caso desejado no momento da apresentação final, provisionar o deploy pontual na AWS (Amazon ECR + AWS App Runner) ou revisar os slides consolidados (`slides-03.md` a `slides-08.md`).
+     * As **2 Grandes Etapas do TCC (Capítulos 01 a 07)** estão **100% implementadas, testadas e documentadas**. Caso desejado no momento da apresentação final, provisionar o deploy pontual na AWS (Amazon ECR + AWS App Runner) ou revisar os slides consolidados (`slides-03.md` a `slides-07.md`).
 6. **Modo de Colaboração (Regra Mandatória):**
    * O trabalho é feito **em conjunto com o Saulo**, passo a passo. O agente **não** deve agir de forma autônoma.
    * **Toda tomada de decisão** (metodológica, de código, de dados ou de arquitetura) só pode ser aplicada **após o aval explícito do Saulo**.

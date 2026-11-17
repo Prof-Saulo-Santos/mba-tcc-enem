@@ -47,7 +47,7 @@ assert "NU_ANO" not in FEATURES_ELITE, "Violação: NU_ANO jamais entra em X!"
 ```
 
 ### Roteiro de Fala do Apresentador
-> *"Senhores membros da banca, no Notebook 06 encerramos a Etapa 1 transformando os 37,6 milhões de estudantes harmonizados no Notebook 05 em nosso modelo oficial de produção. Antes de qualquer ajuste matemático, o código verifica o hash SHA-256 da base e aplica uma trava crítica de engenharia: a variável `NU_ANO` é proibida de entrar na matriz `X`. Queremos um modelo atemporal, capaz de operar em 2024 ou 2025 na nuvem sem depender do calendário."*
+> *"Senhores membros da banca, no Notebook 06 encerramos a Etapa 1 transformando os 37,6 milhões de estudantes harmonizados no Notebook 05 em nosso modelo oficial de produção. Antes de qualquer ajuste matemático, o código verifica o hash SHA-256 da base e aplica uma trava crítica de engenharia: a variável `NU_ANO` é proibida de entrar na matriz `X`. Queremos um modelo atemporal, livre de vazamento de calendário, para servir via API na Etapa 2."*
 
 ---
 
@@ -172,7 +172,7 @@ assert "NU_ANO" not in FEATURES_ELITE, "Violação: NU_ANO jamais entra em X!"
 * **Consistência Longitudinal:** Em **9 das 10 edições**, o $R^2$ permanece firme na faixa **`0,312` a `0,363`**;
 * **Pico Histórico na Pandemia (`2020`):** Maior $R^2$ da série (**`0,3631`**), refletindo sociologicamente o agravamento da desigualdade digital (posse de computador e renda no ensino remoto);
 * **Diagnóstico Científico de `2018` ($R^2 = 0,2260$, viés `-23,81 pts`):** Em 2018, a calibração das provas do INEP elevou atipicamente a média real da TRI nacional para **`533,54 pts`** (`+22,5 pts` acima da década). Como `NU_ANO` **não entra em `X`**, o modelo previu `509,73 pts` — **prova irrefutável de zero vazamento temporal**;
-* **Garantia para a Etapa 3 (Airflow 2024):** A perda quase nula no teste *Out-of-Time* ($\Delta R^2 = -0,0029$) comprova que a relação socioeconômica aprendida é estacionária no tempo.
+* **Estacionariedade Temporal Comprovada (OOT Interno `2023`):** A perda quase nula no teste *Out-of-Time* ($\Delta R^2 = -0,0029$) comprova que a relação socioeconômica aprendida é estável no tempo — garantia essencial diante da impossibilidade de parear notas e questionários em 2024/2025 por LGPD.
 
 ### Roteiro de Fala do Apresentador
 > *"Este slide traz duas provas fundamentais para a banca. Primeiro, notem o pico de $R^2$ em 2020 (36,3%): durante a pandemia, ter computador e renda pesou ainda mais na nota do ENEM. Segundo, vejam a queda aparente em 2018: naquele ano, a média nacional da TRI subiu atipicamente 22 pontos para 533,5; como bloqueamos `NU_ANO` no treino, o modelo manteve sua régua pura em 510 pontos, provando que não há vazamento temporal! E quando treinamos apenas até 2022 para prever os 2,68 milhões de alunos de 2023 às cegas, o $R^2$ varia menos de 0,3 ponto percentual."*
@@ -274,8 +274,8 @@ nota_prevista = float(modelo_prod.predict(X_api)[0])  # Latência < 1 ms
 **3. "Um erro médio absoluto (MAE) de `45,59` pontos (RMSE de `57,74`) não é elevado para prever a nota individual de um candidato?"**
 > *Resposta:* "Para substituir a aplicação do exame individual, sim — e felizmente é elevado, pois significa que o esforço pessoal, a resiliência e a trajetória pedagógica individual do aluno ainda respondem por cerca de dois terços da variância (`~66,2%`) que o questionário socioeconômico não enxerga! Porém, do ponto de vista econométrico e de políticas públicas, prever um terço inteiro da variância cognitiva nacional (`33,8%`) em 7,52 milhões de jovens usando apenas 6 perguntas cadastrais pré-prova é uma comprovação contundente da magnitude do determinismo estrutural no Brasil."
 
-**4. "Como garantir que esse modelo treinado até 2023 não sofrerá degradação severa (*Concept Drift*) quando receber dados de 2024 ou 2025 na nuvem?"**
-> *Resposta:* "Antecipamos exatamente esse risco de duas formas: primeiro, deflacionamos a renda convertendo-a em múltiplos de Salários Mínimos per capita da época, tornando a principal variável imune à inflação monetária; segundo, executamos na Seção 6 uma Validação *Out-of-Time* Interna treinando apenas de `2014` a `2022` e avaliando às cegas nos `2.678.264` candidatos de `2023`, obtendo $R^2 = 0,3184$ — uma variação de apenas `-0,0029` em relação ao Holdout *in-sample*. Além disso, na Etapa 3, o Apache Airflow monitorará continuamente o drift das safras futuras registrando as métricas no MLflow."
+**4. "Como garantir que esse modelo treinado até 2023 não sofrerá degradação severa (*Concept Drift*) quando receber novos dados via API?"**
+> *Resposta:* "Antecipamos exatamente esse risco de duas formas: primeiro, deflacionamos a renda convertendo-a em múltiplos de Salários Mínimos per capita da época, tornando a principal variável imune à inflação monetária; segundo, executamos na Seção 6 uma Validação *Out-of-Time* Interna treinando apenas de `2014` a `2022` e avaliando às cegas nos `2.678.264` candidatos de `2023`, obtendo $R^2 = 0,3184$ — uma variação de apenas `-0,0029` em relação ao Holdout *in-sample*. Vale destacar que, a partir de 2024, o INEP separou as tabelas de participantes e resultados sem chave de ligação por adequação à LGPD, tornando inviável o pareamento de `(X, y)` em 2024 e 2025; por isso, a validação OOT em 2023 é o teto censitário cientificamente válido."
 
 ---
 

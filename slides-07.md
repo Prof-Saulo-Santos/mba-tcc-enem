@@ -141,7 +141,7 @@ CONTAINER ID   STATUS                    PORTS                    NAMES
 * **Segurança em Nuvem (`appuser`):** Execução sob UID/GID `1000` sem privilégios de `root` e `HEALTHCHECK` nativo em Python.
 
 ### Roteiro de Fala do Apresentador
-> *"Para que o deploy no AWS App Runner seja rápido e econômico, aplicamos engenharia FinOps rigorosa no Docker. Separamos um manifesto exclusivo de inferência sem o peso do PyTorch e do SBERT, que pertencem ao processamento local da Etapa 3. Usando um Dockerfile multi-stage com o gerenciador `uv`, a biblioteca OpenMP `libgomp1` e usuário não-root, comprimimos a imagem para 515 megabytes. Os testes em container real confirmaram status healthy imediato e inferência em lote para três perfis socioeconômicos em apenas 6,49 milissegundos."*
+> *"Para que o deploy no AWS App Runner seja rápido e econômico, aplicamos engenharia FinOps rigorosa no Docker. Separamos um manifesto exclusivo de inferência sem o peso do PyTorch, do SBERT e do Jupyter, que pertencem apenas ao laboratório offline da Etapa 1. Usando um Dockerfile multi-stage com o gerenciador `uv`, a biblioteca OpenMP `libgomp1` e usuário não-root, comprimimos a imagem para 515 megabytes. Os testes em container real confirmaram status healthy imediato e inferência em lote para três perfis socioeconômicos em apenas 6,49 milissegundos."*
 
 ---
 
@@ -161,14 +161,14 @@ CONTAINER ID   STATUS                    PORTS                    NAMES
 * **Job 3 (`deploy-aws` com Governança FinOps):** Autentica via OIDC/IAM, envia a imagem taggeada com `$GITHUB_SHA` para o **Amazon ECR** (com *Scan on Push* ativo) e aciona o **AWS App Runner**. Possui trava condicional inteligente que mantém a esteira **100% verde** e a custo zero enquanto o ambiente de nuvem não está em apresentação.
 
 ### Roteiro de Fala do Apresentador
-> *"Fechamos a Etapa 2 automatizando toda a entrega contínua no GitHub Actions. A esteira possui três barreiras de segurança: o Job 1 audita o hash SHA-256 do modelo e roda o Pytest; o Job 2 constrói o container e faz chamadas HTTP reais dentro do próprio GitHub; e somente após essa dupla aprovação o Job 3 publica a imagem no Amazon ECR e atualiza o AWS App Runner. Com isso, nosso plano leve de inferência está completo, homologado e pronto para interagir com a orquestração da Etapa 3."*
+> *"Fechamos a Etapa 2 automatizando toda a entrega contínua no GitHub Actions. A esteira possui três barreiras de segurança: o Job 1 audita o hash SHA-256 do modelo e roda o Pytest; o Job 2 constrói o container e faz chamadas HTTP reais dentro do próprio GitHub; e somente após essa dupla aprovação o Job 3 publica a imagem no Amazon ECR e atualiza o AWS App Runner. Com isso, nosso plano de inferência está completo, homologado e pronto para demonstração em nuvem."*
 
 ---
 
 ## ❓ Perguntas Prováveis da Banca sobre a Etapa 2 (e Respostas Blindadas)
 
-**1. "Por que não colocar o modelo SBERT (NLP) e o Apache Airflow dentro dessa mesma imagem Docker na AWS?"**
-> *Resposta:* "Por uma decisão arquitetural fundamentada em **FinOps e Separação de Responsabilidades (Plano Leve vs. Plano Pesado)**. A API de inferência recebe requisições online leves de 6 variáveis numéricas e precisa escalar horizontalmente rápido no AWS App Runner, exigindo uma imagem enxuta (`515 MB`) e *stateless*. Já o SBERT (PyTorch) e o retreinamento sobre 40 milhões de registros exigem gigabytes de bibliotecas neurais e alto processamento em lote (executado apenas uma vez por ano quando o INEP divulga uma nova safra). Manter o plano leve na nuvem e o plano pesado orquestrado em containers locais na Etapa 3 evita desperdício financeiro crônico na AWS sem abrir mão da automação ponta a ponta."
+**1. "Por que não colocar o modelo SBERT (NLP) e o pipeline de treinamento dentro dessa mesma imagem Docker na AWS?"**
+> *Resposta:* "Por uma decisão arquitetural fundamentada em **FinOps e Separação de Responsabilidades (Treino/Laboratório vs. Inferência)**. A API recebe requisições online leves de 6 variáveis numéricas e precisa escalar rápido no AWS App Runner, exigindo uma imagem enxuta (`515 MB`) e *stateless*. Já o SBERT (PyTorch) e o processamento de 37,6 milhões de registros da Etapa 1 exigem gigabytes de bibliotecas neurais e alto processamento em lote, que não precisam rodar em produção na nuvem — evitando desperdício financeiro crônico na AWS."
 
 **2. "Por que travar versões exatas (`==`) no `requirements-api.txt` em vez de usar `>=`?"**
 > *Resposta:* "Artefatos serializados em árvores binárias (`pickle`/`joblib`) dependem da estabilidade da ABI (*Application Binary Interface*) entre `xgboost`, `scikit-learn`, `numpy` e `pandas`. Travar na imagem Docker exatamente as mesmas versões registradas no `enem_model_card.json` durante o treinamento (`xgboost==3.4.1`, `scikit-learn==1.9.0`, `numpy==2.5.3`) garante reprodutibilidade determinística até a última casa decimal e elimina riscos de incompatibilidade em produção."
