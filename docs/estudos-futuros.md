@@ -2,7 +2,7 @@
 
 **Projeto de TCC — MBA em Ciência de Dados & MLOps**  
 **Autor:** Saulo Santos  
-**Objetivo deste Documento:** Consolidar alternativas tecnológicas aplicáveis a cada camada do projeto, analisando *trade-offs*, justificativas arquiteturais para a banca examinadora e possíveis evoluções futuras (com destaque para **Terraform / Infraestrutura como Código**).
+**Objetivo deste Documento:** Consolidar alternativas tecnológicas aplicáveis a cada camada do projeto, analisar *trade-offs* para a banca examinadora e **formalizar a decisão arquitetural aprovada (`Opção A + Cenário 1`)** para evolução de MLOps (eliminação do `SQLite`, adoção de `DVC + S3`, `MLflow` com `PostgreSQL + S3`, `Terraform` e `Prometheus + Grafana`).
 
 ---
 
@@ -80,8 +80,42 @@ Esta seção mapeia tecnologias equivalentes de mercado para cada etapa do pipel
 
 ---
 
-## 3. Resumo de Prioridades Caso o Projeto Continue Após o TCC
+## 3. Decisão Arquitetural Definida (`Opção A + Cenário 1` — 18/11/2026)
 
-1. **Curto prazo (Baixo esforço / Alto impacto de governança):** adicionar `ruff` e `mypy` ao job `quality-gate-ci` em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) e incluir módulo **Terraform** em `infra/` para automatizar criação e destruição do AWS App Runner + OIDC.
-2. **Médio prazo (Performance de dados e reprodutibilidade):** adotar **DVC** (para rastrear `.parquet` e `.pkl` em S3) e avaliar **DuckDB** ou **Polars** na etapa de consolidação histórica.
-3. **Longo prazo (Operação contínua em produção):** acoplar **MLflow remoto (PostgreSQL + S3)**, monitoramento de **Data Drift** via **Evidently AI** sobre logs de inferência e comparação controlada de **LightGBM / CatBoost** sob o mesmo protocolo de validação cruzada e Holdout.
+Para elevar o rigor de produção perante a banca do MBA — eliminando a dependência do `SQLite` local e incorporando versionamento de dados, IaC e observabilidade — foi definida a adoção da **Opção A (Arquitetura Desacoplada por Planos)** combinada ao **Cenário 1 (Observabilidade containerizada com `Prometheus + Grafana`)**.
+
+### 3.1 Enquadramento Conceitual Correto (Por que *não* chamar de *Hybrid Cloud*)
+* **Critério rigoroso (NIST):** *Hybrid Cloud* exige a integração orquestrada entre uma **Nuvem Privada corporativa** (*datacenter on-premises*) e uma **Nuvem Pública**. Uma estação de trabalho pessoal (WSL2 + Docker Compose) não configura Nuvem Privada.
+* **Classificação técnica adotada — Arquitetura Desacoplada por Planos (*Decoupled Training & Serving Planes* / *Local-to-Cloud MLOps*):**
+  1. **Plano Offline / Governança (Workstation Containerizada + Storage em Nuvem):** `PostgreSQL` + `MLflow Tracking Server` + `DVC` executam em containers sob demanda durante os experimentos e treinamentos, persistindo os dados `.parquet` e os artefatos de modelos diretamente no **Amazon S3** (eliminando `sqlite:///mlflow.db` e `./mlruns` locais).
+  2. **Plano Online / *Serving* em Produção (Nuvem Pública AWS via Terraform):** **Amazon S3**, **Amazon ECR**, **IAM/OIDC** e **AWS App Runner** são provisionados via **Terraform (`infra/`)**. A API FastAPI em produção opera de forma **100% independente** da estação local.
+  3. **Plano de Observabilidade (Cenário 1 — `Prometheus + Grafana` via `docker-compose`):** a API FastAPI expõe `/metrics` (em ambiente local e em produção no App Runner), sendo monitorada por containers **Prometheus + Grafana** para validação em *staging* local e *scrape* remoto durante demonstração ao vivo.
+     * *Limitação transparente para a banca:* como o Prometheus local coleta métricas apenas enquanto a estação está ativa, em produção corporativa contínua (24/7) a coleta migraria para **Amazon Managed Service for Prometheus (AMP) + Amazon Managed Grafana (AMG)** ou instância dedicada na VPC da AWS.
+
+### 3.2 Impacto Exato nos Notebooks e no Repositório
+
+| Componente | Precisa alterar? | Escopo exato da alteração planejada |
+| :--- | :---: | :--- |
+| [`notebooks/01_investigacao_estrutural.ipynb`](../notebooks/01_investigacao_estrutural.ipynb) | **Não** | Nenhuma alteração. |
+| [`notebooks/02_eda.ipynb`](../notebooks/02_eda.ipynb) | **Não (código)** | Código intacto; apenas eventual nota sobre versionamento da saída Silver via CLI do **DVC**. |
+| [`notebooks/03_engenharia_features.ipynb`](../notebooks/03_engenharia_features.ipynb) | **Não** | Nenhuma alteração. |
+| [`notebooks/04_varredura_semantica.ipynb`](../notebooks/04_varredura_semantica.ipynb) | **Não** | Nenhuma alteração. |
+| [`notebooks/05_consolidacao_historica.ipynb`](../notebooks/05_consolidacao_historica.ipynb) | **Não (código)** | Código ETL intacto; `enem_2014_2023_consolidado.parquet` passa a ser rastreado via `dvc add` / `dvc push` para S3 (eventual ajuste apenas textual nas notas finais). |
+| [`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb) | **Sim (único)** | Atualizar `Bloco 1.5` (Célula 2) para ler `MLFLOW_TRACKING_URI` remoto (PostgreSQL + S3) via variável de ambiente, atualizar o diagrama da Célula 3 / textos das células `0`, `1`, `18`, `19` e reexecutar o treino para registrar runs e modelo no servidor remoto. |
+| **API & Testes (`src/api/`, `tests/`, `requirements-api.txt`)** | **Sim** | Instrumentar `/metrics` no FastAPI (`src/api/main.py`: latência, requisições, bloqueios `HTTP 422` anti-leakage e métricas de distribuição das predições `TARGET_M4`) e cobrir `/metrics` nos testes automatizados. |
+| **Containerização & Observabilidade (`docker-compose.yml`, `monitoring/`)** | **Sim** | Orquestrar serviços `postgres`, `mlflow`, `prometheus` e `grafana` (com *scrape config* e dashboard JSON provisionado). |
+| **IaC & Dados (`infra/`, `.dvc/`, `.github/workflows/deploy.yml`)** | **Sim** | Criar módulo **Terraform** (`S3`, `ECR`, `IAM/OIDC`, `App Runner`) com `apply`/`destroy` FinOps, configurar remoto **DVC** no S3 e ajustar o job `deploy-aws` se necessário. |
+
+---
+
+## 4. Roadmap de Execução e Evoluções Adicionais Pós-TCC
+
+1. **Execução do Pacote Definido (`Opção A + Cenário 1`):**
+   * **Fase 1 (Observabilidade na API):** instrumentar `/metrics` em [`src/api/main.py`](../src/api/main.py), atualizar testes e configurar `Prometheus + Grafana` no `docker-compose.yml`.
+   * **Fase 2 (IaC & Dados em Nuvem):** criar módulo **Terraform** (`infra/`) para `S3 + ECR + IAM/OIDC + App Runner` e inicializar **DVC** apontando para o bucket S3.
+   * **Fase 3 (MLflow Remoto e Reexecução):** subir `PostgreSQL + MLflow Tracking Server` apontando artefatos para o S3, ajustar [`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb) e reexecutar o registro oficial dos experimentos e modelo campeão.
+   * **Fase 4 (Qualidade CI):** adicionar `ruff` e `mypy` ao job `quality-gate-ci` em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
+2. **Evoluções Futuras Pós-TCC (Fora do Escopo Imediato):**
+   * Substituir `Pandas` em chunks por **Polars** ou **DuckDB** na consolidação histórica caso haja reprocessamento de novas safras;
+   * Avaliar **LightGBM** / **CatBoost** sob o mesmo protocolo de validação e Holdout;
+   * Evoluir a observabilidade para **Evidently AI** + **Amazon Managed Service for Prometheus (AMP) / Amazon Managed Grafana (AMG)** para monitoramento 24/7 de *Data Drift* e *Prediction Drift* na AWS.
