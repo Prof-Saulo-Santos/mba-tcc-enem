@@ -2,7 +2,7 @@
 
 **Projeto de TCC:** MBA em Ciência de Dados / MLOps — Predição de Desempenho no ENEM  
 **Autor:** Saulo Santos  
-**Módulos de Referência:** [`src/api/`](file:///home/saulo/mba/tcc/enem/src/api/), [`tests/`](file:///home/saulo/mba/tcc/enem/tests/), [`Dockerfile`](file:///home/saulo/mba/tcc/enem/Dockerfile), [`.github/workflows/deploy.yml`](file:///home/saulo/mba/tcc/enem/.github/workflows/deploy.yml) e [`passo-a-passo-07-api-docker.md`](file:///home/saulo/mba/tcc/enem/passo-a-passo-07-api-docker.md)  
+**Módulos de Referência:** [`src/api/`](file:///home/saulo/mba/tcc/enem/src/api/), [`tests/`](file:///home/saulo/mba/tcc/enem/tests/), [`Dockerfile`](file:///home/saulo/mba/tcc/enem/Dockerfile), [`.github/workflows/deploy.yml`](file:///home/saulo/mba/tcc/enem/.github/workflows/deploy.yml) e [`docs/passo-a-passo-07-api-docker.md`](file:///home/saulo/mba/tcc/enem/docs/passo-a-passo-07-api-docker.md)  
 **Foco da Defesa:** Produtização do Modelo Campeão (`models/enem.pkl`), Governança de Contrato via **Pydantic v2**, Testes Automatizados (**Pytest 25/25**), Containerização Multi-Stage Enxuta (**FinOps `515 MB`**) e Esteira **CI/CD GitHub Actions $\rightarrow$ Amazon ECR / AWS App Runner**.
 
 ---
@@ -118,7 +118,7 @@ class CandidatoInput(BaseModel):
 ---
 
 ## 🐳 Slide 4 — Containerização Multi-Stage Enxuta (`515 MB`) e Homologação Real
-> **Mapeamento no Repositório:** [`Dockerfile`](file:///home/saulo/mba/tcc/enem/Dockerfile), [`requirements-api.txt`](file:///home/saulo/mba/tcc/enem/requirements-api.txt) e [`passo-a-passo-07-api-docker.md`](file:///home/saulo/mba/tcc/enem/passo-a-passo-07-api-docker.md)
+> **Mapeamento no Repositório:** [`Dockerfile`](file:///home/saulo/mba/tcc/enem/Dockerfile), [`requirements-api.txt`](file:///home/saulo/mba/tcc/enem/requirements-api.txt) e [`docs/passo-a-passo-07-api-docker.md`](file:///home/saulo/mba/tcc/enem/docs/passo-a-passo-07-api-docker.md)
 
 ### Mensagem Central
 > *"Isolando apenas os 8 pacotes de inferência em um build multi-stage com `uv`, reduzimos a imagem de >5 GB para 515 MB (OCI) e homologamos a resposta em 6,49 ms."*
@@ -146,7 +146,7 @@ CONTAINER ID   STATUS                    PORTS                    NAMES
 ---
 
 ## ☁️ Slide 5 — Esteira CI/CD no GitHub Actions, Amazon ECR e AWS App Runner
-> **Mapeamento no Repositório:** [`.github/workflows/deploy.yml`](file:///home/saulo/mba/tcc/enem/.github/workflows/deploy.yml) e [`diagrama_deploy_aws.md`](file:///home/saulo/mba/tcc/enem/diagrama_deploy_aws.md)
+> **Mapeamento no Repositório:** [`.github/workflows/deploy.yml`](file:///home/saulo/mba/tcc/enem/.github/workflows/deploy.yml) e [`docs/diagrama_deploy_aws.md`](file:///home/saulo/mba/tcc/enem/docs/diagrama_deploy_aws.md)
 
 ### Mensagem Central
 > *"Nenhuma imagem chega à nuvem AWS sem antes passar pelo crivo criptográfico do SHA-256, pelos 25 testes Pytest e por um Smoke Test real em container no GitHub Actions."*

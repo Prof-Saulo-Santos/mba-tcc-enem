@@ -2,10 +2,10 @@
   "_metadata": {
     "descricao": "Contrato Canônico de MLOps - Harmonização Semântica, Reprodutibilidade e Testes de Integridade ENEM",
     "versao_contrato": "3.5 (Auditoria física amostral, integridade referencial e governança por testes)",
-    "data_auditoria": "2026-10-30",
+    "data_auditoria": "2026-11-11",
     "ambiente_reprodutibilidade": {
       "python_version": "3.13.9",
-      "sistema_operacional": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+      "sistema_operacional": "Linux-6.18.58.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
       "semente_aleatoria": 42,
       "pythonhashseed_configurado_antes_kernel": false,
       "dispositivo": "cpu",
@@ -3035,10 +3035,10 @@
         "tolerancia_taxa_flags_ausentes": 0.0005,
         "descricao": "Tolerância de 0,05% para ruídos isolados de presença em bases de grande escala.",
         "expurgo_producao_confirmado": true,
-        "script_etl_garantia": "scripts/etl_parquet.py aplica fillna(0) nas 4 flags de presenca e filtra por == 1"
+        "script_etl_garantia": "scripts/etl_parquet.py aplica fillna(0) e descarta no filtro de presenca == 1"
       }
     },
-    "data_consolidacao_governanca": "2026-10-30"
+    "data_consolidacao_governanca": "2026-11-11"
   },
   "2014": {
     "Q006": "Q003",

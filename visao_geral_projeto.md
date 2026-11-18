@@ -10,12 +10,12 @@ A tabela abaixo consolida a correspondência exata entre as **2 Grandes Etapas A
 
 | Grande Etapa do Projeto | Capítulo / Escopo Técnico | Guia Técnico (`passo-a-passo`) | Roteiro de Slides para a Banca (`slides`) | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **ETAPA 1**<br>*(Laboratório, Seleção, NLP, Big Data 2014–2023 e Treino MLflow)* | **Cap. 01 e 02:** Ingestão e Análise Exploratória (EDA 2023) | Documentado no [`AGENT.md`](AGENT.md) (Seção 3.1/3.2) | [`resumo-apresentacao-tcc-19-09-26.md`](resumo-apresentacao-tcc-19-09-26.md) | ✅ Concluído |
-| **ETAPA 1** | **Cap. 03:** Engenharia de Features e Homologação do `TARGET_M4` | [`conclusoes_do_notebook_03.md`](conclusoes_do_notebook_03.md) | **[`slides-03.md`](slides-03.md)** | ✅ Concluído |
-| **ETAPA 1** | **Cap. 04:** Varredura Semântica Histórica com NLP/SBERT | Documentado no `04_varredura_semantica.ipynb` | **[`slides-04.md`](slides-04.md)** | ✅ Concluído |
-| **ETAPA 1** | **Cap. 05:** Consolidação 2014–2023 (37,59M) e Downcasting | **[`passo-a-passo-05.md`](passo-a-passo-05.md)** | **[`slides-05.md`](slides-05.md)** | ✅ Concluído |
-| **ETAPA 1** | **Cap. 06:** Treinamento Escalável XGBoost + MLflow + SHAP (`enem.pkl`) | **[`passo-a-passo-06.md`](passo-a-passo-06.md)** | **[`slides-06.md`](slides-06.md)** | ✅ Concluído |
-| **ETAPA 2**<br>*(API FastAPI, Pytest, Docker e CI/CD AWS)* | **Cap. 07:** Produtização da API REST, Testes de Contrato, Docker e GitHub Actions | **[`passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md)** | **[`slides-07.md`](slides-07.md)** | ✅ Concluído |
+| **ETAPA 1**<br>*(Laboratório, Seleção, NLP, Big Data 2014–2023 e Treino MLflow)* | **Cap. 01 e 02:** Ingestão e Análise Exploratória (EDA 2023) | Documentado no [`AGENT.md`](AGENT.md) (Seção 3.1/3.2) | [`docs/resumo-apresentacao-tcc-19-09-26.md`](docs/resumo-apresentacao-tcc-19-09-26.md) | ✅ Concluído |
+| **ETAPA 1** | **Cap. 03:** Engenharia de Features e Homologação do `TARGET_M4` | [`docs/conclusoes_do_notebook_03.md`](docs/conclusoes_do_notebook_03.md) | **[`docs/slides-03.md`](docs/slides-03.md)** | ✅ Concluído |
+| **ETAPA 1** | **Cap. 04:** Varredura Semântica Histórica com NLP/SBERT | Documentado no `04_varredura_semantica.ipynb` | **[`docs/slides-04.md`](docs/slides-04.md)** | ✅ Concluído |
+| **ETAPA 1** | **Cap. 05:** Consolidação 2014–2023 (37,59M) e Downcasting | **[`docs/passo-a-passo-05.md`](docs/passo-a-passo-05.md)** | **[`docs/slides-05.md`](docs/slides-05.md)** | ✅ Concluído |
+| **ETAPA 1** | **Cap. 06:** Treinamento Escalável XGBoost + MLflow + SHAP (`enem.pkl`) | **[`docs/passo-a-passo-06.md`](docs/passo-a-passo-06.md)** | **[`docs/slides-06.md`](docs/slides-06.md)** | ✅ Concluído |
+| **ETAPA 2**<br>*(API FastAPI, Pytest, Docker e CI/CD AWS)* | **Cap. 07:** Produtização da API REST, Testes de Contrato, Docker e GitHub Actions | **[`docs/passo-a-passo-07-api-docker.md`](docs/passo-a-passo-07-api-docker.md)** | **[`docs/slides-07.md`](docs/slides-07.md)** | ✅ Concluído |
 
 ---
 

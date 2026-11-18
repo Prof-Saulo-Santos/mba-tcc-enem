@@ -1,0 +1,25 @@
+flowchart LR
+    %% Configuração de Estilo 16:9 Executivo
+    classDef start fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef process fill:#1e293b,stroke:#94a3b8,stroke-width:1.5px,color:#f8fafc;
+    classDef decision fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#ffffff;
+    classDef mlflow fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef output fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+
+    A(["Base Pré-processada<br />(3,57M Treino)"]):::start --> B["Gerador de Configurações<br />(4 Algoritmos / 11 Trials)"]:::process
+
+    %% Subgrafo do Ciclo Iterativo
+    subgraph CICLO_MLFLOW ["Ciclo Iterativo de Testes (MLflow Tracking)"]
+        B --> C["Treino & Validação<br />(K-Fold CV / Folds 1 a 5)"]:::process
+        C --> D["Logging de Métricas<br />(RMSE, R², MAE por Rodada)"]:::mlflow
+        D --> E{"Superou o Melhor<br />Score Anterior?"}:::decision
+        
+        %% Fluxo do NÃO: Volta ao ciclo iterativo
+        E -- "Não (Ajusta Hiperparâmetro)" --> B
+    end
+
+    %% Fluxo do SIM: Avança para o modelo campeão
+    E -- "Sim (Novo Campeão Eleito)" --> F["Treinamento Censitário<br />(Early Stopping - 650 Árvores)"]:::process
+    F --> G["Auditoria OOT (10 Anos)<br />+ Explicabilidade SHAP"]:::process
+    G --> H["Serialização & MLflow Registry<br />(modelo.ubj + preprocessor.joblib)"]:::output
+

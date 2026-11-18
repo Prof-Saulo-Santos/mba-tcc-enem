@@ -14,7 +14,7 @@ O objetivo central deste trabalho de conclusão de curso (MBA em Ciência de Dad
 
 ### 1.2 O Alvo Homologado (`TARGET_M4`)
 
-Após rigoroso benchmark empírico multialvo sob Validação Cruzada (5-Fold CV) no laboratório de features (`03_engenharia_features.ipynb` e `scripts/analise_alvos_compara_note03.py`), a dúvida sobre o alvo ideal foi **definitivamente resolvida**:
+Após rigoroso benchmark empírico multialvo sob Validação Cruzada (5-Fold CV) no laboratório de features (`03_engenharia_features.ipynb`), a dúvida sobre o alvo ideal foi **definitivamente resolvida**:
 * **Alvo Oficial Homologado:** **`TARGET_M4` (Média Aritmética das 4 Provas Objetivas da TRI)**:
   $$\text{TARGET\_M4} = \frac{\text{NU\_NOTA\_CN} + \text{NU\_NOTA\_CH} + \text{NU\_NOTA\_LC} + \text{NU\_NOTA\_MT}}{4}$$
 * **Justificativa Defensiva para a Banca do TCC:**
@@ -107,7 +107,7 @@ A Etapa 1 representa o laboratório analítico e a preparação de dados, tendo 
 * **Veredito da Auditoria Histórica:**
   * 2009 a 2013: Descartados por ausência estrutural de perguntas essenciais no questionário.
   * **2014 a 2023 (10 Anos):** "Era de Ouro" aprovada com 100% de consistência semântica e integridade de variáveis.
-* **Big Data ETL Homologado:** O script `scripts/etl_parquet.py` consome dinamicamente o contrato `data/processed/schema_mapping_historico.json`, processa os microdados CSV pesados em chunks de 500.000 linhas, aplica o filtro de presença integral, calcula o alvo oficial `TARGET_M4` e converte os dados em arquivos colunares **Apache Parquet (`snappy`)**. A safra do **ENEM 2014** foi processada e validada com sucesso, gerando `data/processed/enem_2014_gold.parquet` (5.947.909 candidatos purificados $\times$ 17 colunas, 95.91 MB, média TRI $502.98 \pm 67.13$).
+* **Piloto Histórico de Big Data ETL (Arquivado na tag `archive/pre-faxina-2026-11`):** Como validação preliminar antes da consolidação definitiva no Notebook 05, o antigo script `scripts/etl_parquet.py` consumiu `data/processed/schema_mapping_historico.json` e gerou o piloto `enem_2014_gold.parquet` (5.947.909 candidatos $\times$ 17 colunas, 95,91 MB). O fluxo oficial completo (`2014–2023`) foi integralmente consolidado pelo Notebook 05.
 
 ### 3.5 `notebooks/05_consolidacao_historica.ipynb` (Consolidação Censitária 2014–2023) - *Homologado*
 * **Consolidação Longitudinal da Década de Ouro:** Ingestão em *chunks* de 500.000 linhas dos 10 CSVs brutos (`2014` a `2023`, 25,45 GB, 56.568.785 inscritos brutos varridos) guiada estritamente pelo contrato `data/processed/schema_mapping_historico.json`.
@@ -126,13 +126,13 @@ A Etapa 1 representa o laboratório analítico e a preparação de dados, tendo 
      * **Estabilidade Longitudinal (`2014–2023`) e Caso TRI `2018`:** $R^2 \in [0.3120, 0.3631]$ em 9 das 10 edições (pico de $R^2 = 0.36314$ na pandemia de `2020`); queda pontual do $R^2$ não centrado em `2018` ($0.22595$, viés `-23,81 pts`) explicada pelo deslocamento histórico da média real da TRI do INEP em 2018 (`533,54 pts`), comprovando que o modelo não memoriza o ano da prova.
      * **Validação *Out-of-Time* Interna (`Treino 2014–2022` $\rightarrow$ `Teste Cego 2023`, `N = 2.678.264`):** **$R^2 = 0.31842$**, **$\text{RMSE} = 67.6232$ pts**, **$\text{MAE} = 52.8526$ pts**, $\text{RMSE}/\sigma = 0.82558$ ($\Delta R^2 = -0.00293$ frente ao Holdout *in-sample* de 2023), atestando estacionariedade temporal para a Etapa 3 (ENEM 2024).
 * **Explicabilidade Sociológica Exata (TreeSHAP em `10.000` candidatos do Holdout):** Valor base $\mathbb{E}[f(X)] = 511.04$ pts (erro de aditividade de Shapley `1,26e-03` pts). Liderança isolada de `RENDA_PER_CAPITA` (**`18,483 pts`** de `|SHAP|` médio, **`30,10%`** do impacto total, amplitude de `127,89 pts` entre `-41,93` e `+85,96` pts com curva côncava de retorno marginal), seguida por `TP_LINGUA` (`10,895 pts` / `17,74%`), `Q024` (`9,487 pts` / `15,45%`), `TP_ANO_CONCLUIU` (`8,958 pts` / `14,59%`), `Q002` (`8,642 pts` / `14,07%`) e `TP_SEXO` (`4,946 pts` / `8,05%`).
-* **Rastreabilidade MLflow e Artefatos de Produção:** Backend **MLflow 3.17.2** (`sqlite:///mlflow.db` + `./mlruns`, **20/20 runs `FINISHED`**) com modelo registrado **`enem_target_m4_producao` Versão 1 (`READY`, `run_id = 8b4ed2c387044363968b6088078bdf2d`)**. Exportação do estimador puro em **`models/enem.pkl`** (`1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`), backup nativo `models/enem_xgboost.ubj` (`1,712 MB`), contrato `models/enem_model_card.json`, auditoria `models/auditoria_holdout_por_ano_2014_2023.csv`, 7 figuras em `media/nb06_figuras/`, guia `passo-a-passo-06.md` e roteiro de defesa `slides-06.md`.
+* **Rastreabilidade MLflow e Artefatos de Produção:** Backend **MLflow 3.17.2** (`sqlite:///mlflow.db` + `./mlruns`, **20/20 runs `FINISHED`**) com modelo registrado **`enem_target_m4_producao` Versão 1 (`READY`, `run_id = 8b4ed2c387044363968b6088078bdf2d`)**. Exportação do estimador puro em **`models/enem.pkl`** (`1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`), backup nativo `models/enem_xgboost.ubj` (`1,712 MB`), contrato `models/enem_model_card.json`, auditoria `models/auditoria_holdout_por_ano_2014_2023.csv`, 7 figuras em `media/nb06_figuras/`, guia `docs/passo-a-passo-06.md` e roteiro de defesa `docs/slides-06.md`.
 
 ---
 
 ## 4. Detalhamento da Etapa 2: Produtização, CI/CD e Deploy na AWS - *Homologada*
 
-Baseada no diagrama `media/pipeline-2.jpg`, `diagrama_deploy_aws.md`, `passo-a-passo-07-api-docker.md` e `slides-07.md`:
+Baseada no diagrama `media/pipeline-2.jpg`, `docs/diagrama_deploy_aws.md`, `docs/passo-a-passo-07-api-docker.md` e `docs/slides-07.md`:
 
 1. **Encapsulamento com FastAPI (`src/api/`):**
    * Serviço Python modular (`src/api/main.py`, `src/api/model_loader.py` e `src/api/schemas.py`) carregando `models/enem.pkl` e `models/enem_model_card.json` via padrão *Singleton* no `lifespan`.
@@ -169,18 +169,18 @@ Baseada no diagrama `media/pipeline-2.jpg`, `diagrama_deploy_aws.md`, `passo-a-p
    * Nunca use a nota de uma prova para prever outra prova (evitar data leakage inter-target).
    * Manter sempre a explicabilidade por meio de valores SHAP.
 5. **Estado Atual e Próxima Tarefa:**
-   * **Etapa 1 Integralmente Concluída e Homologada:** Todos os notebooks da esteira analítica — `01_investigacao_estrutural.ipynb`, `02_eda.ipynb`, `03_engenharia_features.ipynb`, `04_varredura_semantica.ipynb`, `05_consolidacao_historica.ipynb` e `06_treinamento_modelo.ipynb` — estão 100% executados, auditados e homologados (com guias `passo-a-passo-05.md`, `passo-a-passo-06.md` e roteiros de defesa `slides-03.md`, `slides-04.md`, `slides-05.md` e `slides-06.md`).
-   * **Etapa 2 Integralmente Concluída e Homologada:** Microserviço FastAPI (`src/api/`), suíte de 25 testes `pytest` (`tests/`), containerização multi-stage enxuta (`Dockerfile`, `docker-compose.yml`, `requirements-api.txt`, `515 MB` OCI) e esteira CI/CD GitHub Actions (`.github/workflows/deploy.yml`) 100% implementados, testados e documentados em `passo-a-passo-07-api-docker.md` e `slides-07.md`.
+   * **Etapa 1 Integralmente Concluída e Homologada:** Todos os notebooks da esteira analítica — `01_investigacao_estrutural.ipynb`, `02_eda.ipynb`, `03_engenharia_features.ipynb`, `04_varredura_semantica.ipynb`, `05_consolidacao_historica.ipynb` e `06_treinamento_modelo.ipynb` — estão 100% executados, auditados e homologados (com guias `docs/passo-a-passo-05.md`, `docs/passo-a-passo-06.md` e roteiros de defesa `docs/slides-03.md`, `docs/slides-04.md`, `docs/slides-05.md` e `docs/slides-06.md`, além da documentação histórica introdutória em `docs/onde-tudo-comeca.md`).
+   * **Etapa 2 Integralmente Concluída e Homologada:** Microserviço FastAPI (`src/api/`), suíte de 25 testes `pytest` (`tests/`), containerização multi-stage enxuta (`Dockerfile`, `docker-compose.yml`, `requirements-api.txt`, `515 MB` OCI) e esteira CI/CD GitHub Actions (`.github/workflows/deploy.yml`) 100% implementados, testados e documentados em `docs/passo-a-passo-07-api-docker.md` e `docs/slides-07.md`.
    * **Encerramento do Escopo em 2023 (Sem Processamento 2024/2025):** A antiga Etapa 3 (Airflow para 2024/2025) foi removida do escopo porque o INEP desmembrou as tabelas CSV de 2024 e 2025 por LGPD sem chave de junção entre participantes e notas.
    * **Artefatos Canônicos Exportados:**
+     * `data/processed/enem_2023_eda_purificado.parquet` (212.386 concluintes $\times$ 53 colunas, Camada Silver gerada pelo Notebook 02);
      * `data/processed/contrato_features_modelagem.json` (Contrato canônico das 6 features do Esquadrão de Elite + `TARGET_M4`, validado em 212.386 concluintes de 2023);
-     * `data/processed/schema_mapping_historico.json` (Contrato canônico de mapeamento semântico 2014–2024 para ETL e Airflow);
-     * `data/processed/enem_2014_gold.parquet` (5.947.909 candidatos purificados $\times$ 17 colunas, 95.91 MB, safra histórica inicial da Década de Ouro);
+     * `data/processed/schema_mapping_historico.json` (Contrato canônico de mapeamento semântico 2014–2024 gerado pelo Notebook 04);
      * `data/processed/enem_2014_2023_consolidado.parquet` + `data/processed/contrato_consolidacao_2014_2023.json` (37.593.629 candidatos $\times$ 8 colunas, 153,17 MB em disco, 537,78 MB em RAM);
      * `models/enem.pkl` (`XGBRegressor` campeão puro, `1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`, Holdout `7,52M` $R^2 = 0.33780$, $\text{RMSE} = 57.7439$ pts; OOT `2023` $R^2 = 0.31842$) + `models/enem_xgboost.ubj` + `models/enem_model_card.json` + `models/auditoria_holdout_por_ano_2014_2023.csv` + Model Registry MLflow `enem_target_m4_producao` v1 (`sqlite:///mlflow.db`).
    * **Alvo Oficial Definido:** `TARGET_M4` (Média das 4 provas objetivas da TRI: MT, LC, CN, CH), com $R^2 = 0.3467$ (ano-base 2023) / $R^2 = 0.33780$ (censo decenal 2014–2023) e Alfa de Cronbach = 0.865.
    * **Próximo Passo Opcional (Demonstração Final em Nuvem / Preparação da Defesa):**
-     * As **2 Grandes Etapas do TCC (Capítulos 01 a 07)** estão **100% implementadas, testadas e documentadas**. Caso desejado no momento da apresentação final, provisionar o deploy pontual na AWS (Amazon ECR + AWS App Runner) ou revisar os slides consolidados (`slides-03.md` a `slides-07.md`).
+     * As **2 Grandes Etapas do TCC (Capítulos 01 a 07)** estão **100% implementadas, testadas e documentadas**. Caso desejado no momento da apresentação final, provisionar o deploy pontual na AWS (Amazon ECR + AWS App Runner) ou revisar os slides consolidados (`docs/slides-03.md` a `docs/slides-07.md`).
 6. **Modo de Colaboração (Regra Mandatória):**
    * O trabalho é feito **em conjunto com o Saulo**, passo a passo. O agente **não** deve agir de forma autônoma.
    * **Toda tomada de decisão** (metodológica, de código, de dados ou de arquitetura) só pode ser aplicada **após o aval explícito do Saulo**.

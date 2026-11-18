@@ -1,6 +1,6 @@
 # 📘 Guia Passo a Passo e Relatório de Homologação — Etapa 2 (API FastAPI, Pytest e Docker)
 
-**Módulos de Produção:** [`src/api/`](src/api/), [`tests/`](tests/), [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml)  
+**Módulos de Produção:** [`src/api/`](../src/api/), [`tests/`](../tests/), [`Dockerfile`](../Dockerfile), [`docker-compose.yml`](../docker-compose.yml)  
 **Projeto de TCC:** MBA em Ciência de Dados & MLOps — Predição de Desempenho no ENEM  
 **Autor:** Saulo Santos  
 **Data da Auditoria de Execução:** 08 de Novembro de 2026 (`20:54:58 UTC`)  
@@ -9,7 +9,7 @@
 
 ## 1. Visão Geral: Do Laboratório Científico ao Microserviço Containerizado (Etapa 2)
 
-Após o treinamento e a validação *Out-of-Time* do modelo campeão **`XGBRegressor`** sobre os **37.593.629 candidatos** da Década de Ouro (`2014–2023`) na Etapa 1, a **Etapa 2** encapsula o artefato homologado [`models/enem.pkl`](models/enem.pkl) (`1,727 MB`, SHA-256 `114f51959492...`) e seu contrato canônico [`models/enem_model_card.json`](models/enem_model_card.json) em uma arquitetura de *Serving* pronta para nuvem AWS:
+Após o treinamento e a validação *Out-of-Time* do modelo campeão **`XGBRegressor`** sobre os **37.593.629 candidatos** da Década de Ouro (`2014–2023`) na Etapa 1, a **Etapa 2** encapsula o artefato homologado [`models/enem.pkl`](../models/enem.pkl) (`1,727 MB`, SHA-256 `114f51959492...`) e seu contrato canônico [`models/enem_model_card.json`](../models/enem_model_card.json) em uma arquitetura de *Serving* pronta para nuvem AWS:
 
 ```text
 ETAPA 2 — PRODUTIZAÇÃO, TESTES DE CONTRATO E CONTAINERIZAÇÃO HERMÉTICA
@@ -32,13 +32,13 @@ ETAPA 2 — PRODUTIZAÇÃO, TESTES DE CONTRATO E CONTAINERIZAÇÃO HERMÉTICA
 | **Build Multi-Stage com `uv` (`Dockerfile`)** | Estágio `builder` compila bytecode (`UV_COMPILE_BYTECODE=1`) em `/opt/venv`; estágio `runtime` copia apenas o ambiente pronto e os artefatos. | Elimina compiladores e caches da imagem final, acelerando o *cold start* no **AWS App Runner**. |
 | **Suporte OpenMP Nativo (`libgomp1`)** | Instalação explícita de `libgomp1` no estágio `runtime` (`python:3.13-slim`). | Imagens Debian `-slim` omitem a biblioteca compartilhada `libgomp.so.1` exigida pelo motor C++ do XGBoost. Sua inclusão garante execução multithread sem falhas de carregamento dinâmico. |
 | **Segurança Zero-Privilege (`appuser`)** | Criação do grupo e usuário `appuser` (`UID/GID 1000`) sem privilégios de `root`. | Mitiga superfície de ataque em contêineres expostos na nuvem pública (conformidade OWASP Docker Security). |
-| **Blindagem Anti-Leakage (`extra="forbid"`)** | Configurada em `CandidatoInput` ([`src/api/schemas.py`](src/api/schemas.py)). | Rejeita imediatamente com **`HTTP 422`** qualquer tentativa de envio de variáveis proibidas (como `NU_ANO` ou notas parciais), protegendo o modelo em produção. |
+| **Blindagem Anti-Leakage (`extra="forbid"`)** | Configurada em `CandidatoInput` ([`src/api/schemas.py`](../src/api/schemas.py)). | Rejeita imediatamente com **`HTTP 422`** qualquer tentativa de envio de variáveis proibidas (como `NU_ANO` ou notas parciais), protegendo o modelo em produção. |
 
 ---
 
 ## 3. Resumo da Suíte Automatizada de Testes (Marco 2.2 — `pytest`)
 
-Antes da containerização, a aplicação foi submetida a **25 testes automatizados** ([`tests/test_api_contract.py`](tests/test_api_contract.py) e [`tests/test_model_inference.py`](tests/test_model_inference.py)), alcançando **100% de aprovação (`25 passed in 15.89s`)**:
+Antes da containerização, a aplicação foi submetida a **25 testes automatizados** ([`tests/test_api_contract.py`](../tests/test_api_contract.py) e [`tests/test_model_inference.py`](../tests/test_model_inference.py)), alcançando **100% de aprovação (`25 passed in 15.89s`)**:
 
 * **Integridade Criptográfica:** Verificação exata do hash SHA-256 (`114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`) entre o arquivo físico, o endpoint `/health` e o `enem_model_card.json`.
 * **Fronteiras de Domínio (12 Testes Parametrizados):** Rejeição `HTTP 422` para valores abaixo do mínimo ou acima do máximo em todas as 6 variáveis do Esquadrão de Elite (`RENDA_PER_CAPITA` $\notin [0, 25]$, `Q024` $\notin \{0..3\}$, `TP_ANO_CONCLUIU` $\notin \{0..9\}$, `TP_LINGUA` $\notin \{0, 1\}$, `TP_SEXO` $\notin \{0, 1\}$, `Q002` $\notin \{0..7\}$).
@@ -203,7 +203,7 @@ saulo@LeCun:enem$ docker compose down
 
 ## 5. Esteira Automatizada de CI/CD e FinOps em Nuvem (Marco 2.4 — GitHub Actions & AWS)
 
-Para fechar o ciclo da **Etapa 2**, o arquivolegado `.github/workflows/pipeline.yml` foi removido via `git rm` e substituído pela esteira oficial [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), desenhada com **3 Jobs encadeados**:
+Para fechar o ciclo da **Etapa 2**, o arquivolegado `.github/workflows/pipeline.yml` foi removido via `git rm` e substituído pela esteira oficial [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml), desenhada com **3 Jobs encadeados**:
 
 | Job do Workflow | Nome Técnico | O que Executa no Runner (`ubuntu-latest`) | Regra de Governança / FinOps |
 | :--- | :--- | :--- | :--- |

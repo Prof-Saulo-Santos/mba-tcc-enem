@@ -1,6 +1,6 @@
 # 📘 Guia Passo a Passo e Documentação Complementar — Notebook 06
 
-**Arquivo do Notebook:** [`notebooks/06_treinamento_modelo.ipynb`](notebooks/06_treinamento_modelo.ipynb)  
+**Arquivo do Notebook:** [`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb)  
 **Projeto de TCC:** MBA em Ciência de Dados & MLOps — Predição de Desempenho no ENEM  
 **Autor:** Saulo Santos  
 
@@ -70,7 +70,7 @@ Por que dividimos a competição entre **Random Forest** (*Bagging*) e **XGBoost
 | **Seção 8** (Células `17–18`) | Exporta `models/enem.pkl`, `models/enem_xgboost.ubj`, `models/enem_model_card.json`, registra no *MLflow Registry* e roda *Smoke Test* API. | `~5 a 10 s` | `enem.pkl` (`1,727 MB`), `SHA-256`, URI `enem_target_m4_producao` v1 e predições compatíveis com `pickle`, `joblib` e JSON. |
 | **Anexo Slides** (Célula `19`) | 6 diagramas Mermaid auxiliares para slides da apresentação de TCC. | — | *Nota:* nos slides desta célula, o *Tuning* é rotulado como "Estágio 2" (convenção visual distinta das Seções 4–5 do código). |
 
-> **Observação sobre o estado salvo do notebook:** Em uma reexecução parcial posterior (12/11/2026), a Célula `14` foi interrompida após imprimir o cabeçalho do Bloco `6.3` (OOT `2023`), de modo que a saída desse bloco não aparece impressa no `.ipynb` atual; os resultados completos do OOT `2023`, SHAP e serialização encontram-se preservados nas Células `00`, `16`, `18` e em [`models/enem_model_card.json`](models/enem_model_card.json).
+> **Observação sobre o estado salvo do notebook:** Em uma reexecução parcial posterior (12/11/2026), a Célula `14` foi interrompida após imprimir o cabeçalho do Bloco `6.3` (OOT `2023`), de modo que a saída desse bloco não aparece impressa no `.ipynb` atual; os resultados completos do OOT `2023`, SHAP e serialização encontram-se preservados nas Células `00`, `16`, `18` e em [`models/enem_model_card.json`](../models/enem_model_card.json).
 
 ---
 
@@ -126,7 +126,7 @@ Para responder perguntas da banca sobre *"caixa-preta de algoritmos de Machine L
 
 ## 8. Checklist de Validação Final do Notebook 06
 
-Após executar todas as células de [`notebooks/06_treinamento_modelo.ipynb`](notebooks/06_treinamento_modelo.ipynb) no kernel **`Python (ENEM .venv)`**, confira:
+Após executar todas as células de [`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb) no kernel **`Python (ENEM .venv)`**, confira:
 
 - [ ] A Seção 2 validou o `SHA-256` do Parquet consolidado sem erros?
 - [ ] A Seção 4 confirmou a superioridade dos modelos de árvore (*Random Forest* e *XGBoost*) frente ao modelo linear `Ridge` e ao `Dummy`?

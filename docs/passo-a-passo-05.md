@@ -1,6 +1,6 @@
 # 📘 Guia Passo a Passo e Documentação Complementar — Notebook 05
 
-**Arquivo do Notebook:** [`notebooks/05_consolidacao_historica.ipynb`](notebooks/05_consolidacao_historica.ipynb)  
+**Arquivo do Notebook:** [`notebooks/05_consolidacao_historica.ipynb`](../notebooks/05_consolidacao_historica.ipynb)  
 **Projeto de TCC:** MBA em Ciência de Dados & MLOps — Predição de Desempenho no ENEM  
 **Autor:** Saulo Santos  
 
@@ -130,7 +130,7 @@ data/processed/safras_consolidacao/
 
 ## 7. Checklist de Validação Antes de Avançarmos para o Notebook 06
 
-Após executar todas as células de [`notebooks/05_consolidacao_historica.ipynb`](notebooks/05_consolidacao_historica.ipynb) no kernel **`Python (ENEM .venv)`**, verifique:
+Após executar todas as células de [`notebooks/05_consolidacao_historica.ipynb`](../notebooks/05_consolidacao_historica.ipynb) no kernel **`Python (ENEM .venv)`**, verifique:
 
 - [ ] A Seção 2 exibiu `15/15 + ID OK` para todos os 10 anos (`2014` a `2023`)?
 - [ ] O *Smoke Test* da Seção 4 passou com a mensagem `✅ Smoke Test aprovado`?

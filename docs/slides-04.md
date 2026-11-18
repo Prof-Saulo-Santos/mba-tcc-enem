@@ -252,7 +252,7 @@ status_2024 = "PENDENTE_CONFIRMACAO_ALINHAMENTO"
 ### Texto para o Slide (Bullets Curtos)
 * **SLA de Data Quality para Big Data:** Tolerância máxima de **$0,05\%$** para ruídos cadastrais de presença decorrentes de sorteio estocástico.
 * **Resultado Empírico:** 9 das 10 safras com $0,000\%$ de ausências; 2016 com 1 caso ($0,005\% \le 0,05\%$) $\rightarrow$ *Conforme dentro do SLA*.
-* **Garantia de Expurgo no ETL de Produção ([etl_parquet.py](file:///home/saulo/mba/tcc/enem/scripts/etl_parquet.py)):**
+* **Garantia de Expurgo no ETL de Produção (`scripts/etl_parquet.py` — *arquivado na tag `archive/pre-faxina-2026-11`*):**
   * Converte nulos de presença para `0` via `.fillna(0)`;
   * Filtra estritamente `(chunk[presencas] == 1).all(axis=1)` em todas as 4 provas.
 * **Matriz Final de Decisão:**
