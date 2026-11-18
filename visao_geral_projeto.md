@@ -10,9 +10,9 @@ A tabela abaixo consolida a correspondência exata entre as **2 Grandes Etapas A
 
 | Grande Etapa do Projeto | Capítulo / Escopo Técnico | Guia Técnico (`passo-a-passo`) | Roteiro de Slides para a Banca (`slides`) | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **ETAPA 1**<br>*(Laboratório, Seleção, NLP, Big Data 2014–2023 e Treino MLflow)* | **Cap. 01 e 02:** Ingestão e Análise Exploratória (EDA 2023) | Documentado no [`AGENT.md`](AGENT.md) (Seção 3.1/3.2) | [`docs/resumo-apresentacao-tcc-19-09-26.md`](docs/resumo-apresentacao-tcc-19-09-26.md) | ✅ Concluído |
+| **ETAPA 1**<br>*(Laboratório, Seleção, NLP, Big Data 2014–2023 e Treino MLflow)* | **Cap. 01 e 02:** Ingestão e Análise Exploratória (EDA 2023) | Documentado no [`AGENT.md`](AGENT.md) (Seção 3.1/3.2) | [`docs/resumo-apresentacao-tcc-19-09-26.md`](docs/resumo-apresentacao-tcc-19-09-26.md) *(legado; consolidar Cap. 01–02)* | ⚠️ Slides pendentes |
 | **ETAPA 1** | **Cap. 03:** Engenharia de Features e Homologação do `TARGET_M4` | [`docs/conclusoes_do_notebook_03.md`](docs/conclusoes_do_notebook_03.md) | **[`docs/slides-03.md`](docs/slides-03.md)** | ✅ Concluído |
-| **ETAPA 1** | **Cap. 04:** Varredura Semântica Histórica com NLP/SBERT | Documentado no `04_varredura_semantica.ipynb` | **[`docs/slides-04.md`](docs/slides-04.md)** | ✅ Concluído |
+| **ETAPA 1** | **Cap. 04:** Varredura Semântica Histórica com NLP/SBERT | Documentado no [`notebooks/04_varredura_semantica.ipynb`](notebooks/04_varredura_semantica.ipynb) | **[`docs/slides-04.md`](docs/slides-04.md)** | ✅ Concluído |
 | **ETAPA 1** | **Cap. 05:** Consolidação 2014–2023 (37,59M) e Downcasting | **[`docs/passo-a-passo-05.md`](docs/passo-a-passo-05.md)** | **[`docs/slides-05.md`](docs/slides-05.md)** | ✅ Concluído |
 | **ETAPA 1** | **Cap. 06:** Treinamento Escalável XGBoost + MLflow + SHAP (`enem.pkl`) | **[`docs/passo-a-passo-06.md`](docs/passo-a-passo-06.md)** | **[`docs/slides-06.md`](docs/slides-06.md)** | ✅ Concluído |
 | **ETAPA 2**<br>*(API FastAPI, Pytest, Docker e CI/CD AWS)* | **Cap. 07:** Produtização da API REST, Testes de Contrato, Docker e GitHub Actions | **[`docs/passo-a-passo-07-api-docker.md`](docs/passo-a-passo-07-api-docker.md)** | **[`docs/slides-07.md`](docs/slides-07.md)** | ✅ Concluído |
@@ -46,3 +46,11 @@ O objetivo final de MLOps é entregar o modelo como um serviço (*Model as a Ser
 2. **Suíte de Testes (`tests/`):** Testes automatizados validam integridade `SHA-256`, contratos HTTP, limites psicométricos e paridade exata de inferência com o estimador `XGBRegressor`.
 3. **Containerização FinOps (`Dockerfile`):** Build *multi-stage* com `uv`, `requirements-api.txt` enxuto (`515 MB` Content Size), biblioteca OpenMP (`libgomp1`) e usuário sem privilégios de `root` (`appuser`).
 4. **CI/CD GitHub Actions (`.github/workflows/deploy.yml`):** Esteira automatizada em 3 jobs (`quality-gate-ci` $\rightarrow$ `docker-smoke-test` $\rightarrow$ `deploy-aws` para **Amazon ECR** e **AWS App Runner** com trava FinOps condicional).
+
+---
+
+## 🗂️ Diagramas e Documentação Complementar
+
+* **Diagramas Arquiteturais e Figuras (`media/`):** [`media/pipeline-1.jpg`](media/pipeline-1.jpg), [`media/pipeline-2.jpg`](media/pipeline-2.jpg), [`media/arquitetura_medalhao_parquet.png`](media/arquitetura_medalhao_parquet.png), [`media/fluxo_notebooks_parquet_json.png`](media/fluxo_notebooks_parquet_json.png) e [`media/nb06_figuras/`](media/nb06_figuras/).
+* **Guias e Roteiros (`docs/`):** [`docs/fluxo_arquitetura_enem.md`](docs/fluxo_arquitetura_enem.md), [`docs/diagrama_deploy_aws.md`](docs/diagrama_deploy_aws.md), [`docs/diagrama_treinamento_mlflow.mmd`](docs/diagrama_treinamento_mlflow.mmd), [`docs/onde-tudo-comeca.md`](docs/onde-tudo-comeca.md) e [`docs/criacao-slides.md`](docs/criacao-slides.md) *(em revisão final para remoção de referências legadas)*.
+* **Guia Operacional e Contratos:** [`README.md`](README.md), [`AGENT.md`](AGENT.md) e [`models/enem_model_card.json`](models/enem_model_card.json).
