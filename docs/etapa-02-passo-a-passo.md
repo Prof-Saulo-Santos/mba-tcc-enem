@@ -2,8 +2,9 @@
 
 **Projeto:** TCC MBA — Predição de Desempenho no ENEM (`TARGET_M4`) e Arquitetura MLOps  
 **Autor:** Saulo Santos  
-**Ponto de Partida (Commit Base):** `5841d7d` (`main` / `origin/main`)  
-**Objetivo deste Documento:** Servir como **roteiro mestre (*handoff*)** para o próximo chat de IA conduzir, passo a passo junto com o Saulo, a implementação da arquitetura aprovada em [`docs/estudos-futuros.md`](estudos-futuros.md) (**Opção A + Cenário 1**) e a entrega final do TCC (dissertação, slides, sabatina e deploy pontual na AWS).
+**Ponto de Partida do Plano:** `77c01fc` (`main`) + alterações validadas da **Fase 1** (`Observabilidade`)  
+**Última Atualização:** `19/11/2026`  
+**Objetivo deste Documento:** Servir como **roteiro mestre (*handoff*)** registrando o que já foi concluído e validado e conduzindo, passo a passo junto com o Saulo, as próximas etapas até o fechamento final do TCC.
 
 ---
 
@@ -51,27 +52,24 @@
 ## 3. Parte I — Roteiro Técnico de Execução (4 Fases)
 
 ```text
-[Fase 1: Prometheus + Grafana] ──> [Fase 2: Terraform + S3 + DVC] ──> [Fase 3: MLflow PostgreSQL+S3 & NB06] ──> [Fase 4: CI Hardening + Docs]
+[✅ Fase 1: Prometheus + Grafana] ──> [⏸️ Estudo & Slides Fase 1] ──> [⏳ Fase 2: Terraform + S3 + DVC] ──> [⏳ Fase 3: MLflow PostgreSQL+S3 & NB06] ──> [⏳ Fase 4: CI Hardening + Docs]
 ```
 
-### Fase 1 — Observabilidade na API (`Prometheus + Grafana`, Cenário 1)
-* **Objetivo:** Atender à exigência da banca adicionando telemetria HTTP e de ML à API FastAPI e dashboards prontos no Grafana.
-* **Impacto nos notebooks:** **Nenhum.**
-* **Arquivos alvo:**
-  * [`requirements-api.txt`](../requirements-api.txt)
-  * [`src/api/main.py`](../src/api/main.py) (e se necessário módulo dedicado `src/api/metrics.py`)
-  * [`tests/test_api_contract.py`](../tests/test_api_contract.py)
-  * [`docker-compose.yml`](../docker-compose.yml)
-  * Nova pasta `monitoring/` (ex.: `monitoring/prometheus/prometheus.yml` e provisioning de datasource/dashboard JSON do Grafana)
-* **Passo a passo com o Saulo:**
-  1. Alinhar escolha da biblioteca de métricas (`prometheus-fastapi-instrumentator` + `prometheus_client` vs. `prometheus_client` puro) e definir métricas expostas em `GET /metrics`:
-     * **HTTP/Infra:** taxa de requisições por rota/status, latência (histograma) e **contagem de bloqueios `HTTP 422`** (visibilidade para tentativas de *Data Leakage* ou payload fora do contrato);
-     * **ML/Drift:** histograma das predições `target_m4` retornadas em `/predict` e `/predict/batch` e contadores/histogramas resumidos das features de entrada (ex.: `RENDA_PER_CAPITA`, `Q024`, `TP_LINGUA`) para inspeção de *Prediction/Data Drift*.
-  2. Discutir se `docker-compose.yml` usará *profiles* (`monitoring`, `mlops`) ou serviços padrão, e como o `prometheus.yml` permitirá alternar facilmente entre o alvo local (`enem-api:8000`) e o endpoint público do App Runner na hora da demonstração.
-  3. Implementar a instrumentação, adicionar testes para `GET /metrics` no `pytest`, validar build da imagem Docker (`Dockerfile`) e testar localmente `enem-api + prometheus + grafana` via `docker compose`.
-  4. **Checkpoint Git:** propor commit após validação local com `pytest` e `docker compose`.
+### Fase 1 — Observabilidade na API (`Prometheus + Grafana`, Cenário 1) — ✅ CONCLUÍDA E VALIDADA (`19/11/2026`)
+* **O que foi entregue e testado:**
+  * [`src/api/metrics.py`](../src/api/metrics.py) + [`src/api/main.py`](../src/api/main.py): endpoint `GET /metrics` com `prometheus-client==0.26.0`, middleware HTTP sem explosão de cardinalidade (`route.path`, ignorando `/metrics`), `validation_exception_handler` separando rejeições `HTTP 422` (`extra_forbidden` vs. `domain_or_schema`) e métricas de ML (*Prediction Drift* de `TARGET_M4` e *Data Drift* de `RENDA_PER_CAPITA` + 5 categóricas).
+  * [`requirements-api.txt`](../requirements-api.txt) e [`requirements.txt`](../requirements.txt): `prometheus-client==0.26.0` fixado.
+  * [`tests/test_api_contract.py`](../tests/test_api_contract.py): adicionado `test_metrics_endpoint_and_observability_counters` (**`26/26 PASSED`** no `pytest` e **`ruff check`** limpo).
+  * [`docker-compose.yml`](../docker-compose.yml) + `monitoring/`: serviços `prometheus` (`:9090`) e `grafana` (`:3000`) sob `profiles: ["monitoring"]`, [`prometheus.yml`](../monitoring/prometheus/prometheus.yml) (`scrape_interval: 5s`), provisioning automático de datasource e dashboard [`enem_api_observability.json`](../monitoring/grafana/provisioning/dashboards/enem_api_observability.json) (10 painéis).
+  * [`media/observabilidade_docker_prometheus_grafana.png`](../media/observabilidade_docker_prometheus_grafana.png): infográfico `1920×1080` gerado e validado.
+  * [`docs/guia-estudo-observabilidade.md`](guia-estudo-observabilidade.md): guia didático detalhado da Fase 1 para estudo, montagem de slides e preparação para sabatina.
+* **Evidência em runtime (Docker Desktop/WSL em `19/11/2026`):** `docker compose --profile monitoring up -d --build` subiu os 3 containers; Prometheus validou `enem-api-local` (`http://enem-api:8000/metrics`) com estado **`1 / 1 up` (`UP`, `4ms`)** e o Data Source `Prometheus` foi confirmado no Grafana.
 
-### Fase 2 — Infraestrutura como Código (`Terraform`) + Versionamento de Dados (`DVC + S3`)
+### ⏸️ Pausa Planejada Antes da Fase 2 — Estudo e Slides da Fase 1 (Próxima Ação Imediata)
+* **Objetivo:** Antes de avançar para AWS/Terraform/DVC, o Saulo deseja **dominar intelectualmente** tudo o que foi implementado na Fase 1 (usando [`docs/guia-estudo-observabilidade.md`](guia-estudo-observabilidade.md)) e **produzir os slides explicativos dessa camada** (atualizando/complementando [`docs/slides-07.md`](slides-07.md) ou o roteiro da apresentação).
+* **Ação pendente no Grafana:** rodar a pequena sequência de chamadas `POST /predict` (documentada na Seção 4 de `docs/guia-estudo-observabilidade.md`) para visualizar as curvas de `rate()` / *Drift* preenchidas no dashboard **`ENEM TARGET_M4 — Observabilidade & Drift (API FastAPI)`**.
+
+### Fase 2 — Infraestrutura como Código (`Terraform`) + Versionamento de Dados (`DVC + S3`) — ⏳ PENDENTE
 * **Objetivo:** Eliminar *ClickOps* na criação de recursos AWS e versionar os arquivos `.parquet` pesados fora do Git usando Amazon S3.
 * **Impacto nos notebooks:** **Nenhum código Python alterado** (`02_eda` e `05_consolidacao` apenas têm suas saídas `.parquet` rastreadas via CLI do DVC).
 * **Arquivos alvo:**
@@ -157,4 +155,4 @@
 
 Ao abrir um novo chat, você pode enviar:
 
-> *"Leia `AGENT.md`, `visao_geral_projeto.md`, `docs/estudos-futuros.md` e `docs/etapa-02-passo-a-passo.md`. Confirme que entendeu o contexto e as regras de colaboração passo a passo, e me apresente as opções técnicas para começarmos pela **Fase 1 (Prometheus + Grafana na API FastAPI)**."*
+> *"Leia `AGENT.md`, `visao_geral_projeto.md`, `docs/estudos-futuros.md`, `docs/etapa-02-passo-a-passo.md` e `docs/guia-estudo-observabilidade.md`. Confirme o estado atual (Fase 1 concluída) e siga as regras de colaboração passo a passo: quero [estudar os detalhes da Fase 1 / montar os slides da Fase 1 / iniciar a Fase 2 (Terraform + S3 + DVC)]."*

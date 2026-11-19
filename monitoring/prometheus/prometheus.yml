@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: "enem-api-local"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["enem-api:8000"]
+        labels:
+          environment: "local-docker"
+          service: "enem-target-m4-api"
+
+  # ---------------------------------------------------------------------------
+  # Demonstração ao vivo na AWS App Runner (Cenário 1):
+  # Descomente o bloco abaixo substituindo pelo domínio do App Runner e
+  # reinicie o Prometheus (`docker compose --profile monitoring restart prometheus`).
+  # ---------------------------------------------------------------------------
+  # - job_name: "enem-api-aws-apprunner"
+  #   scheme: https
+  #   metrics_path: "/metrics"
+  #   static_configs:
+  #     - targets: ["SEU-SERVICO.us-east-1.awsapprunner.com"]
+  #       labels:
+  #         environment: "aws-app-runner"
+  #         service: "enem-target-m4-api"

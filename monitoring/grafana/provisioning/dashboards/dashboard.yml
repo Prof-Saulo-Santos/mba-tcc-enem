@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: "ENEM MLOps Dashboards"
+    orgId: 1
+    folder: "ENEM TARGET_M4"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 15
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

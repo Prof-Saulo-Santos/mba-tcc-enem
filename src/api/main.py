@@ -1,16 +1,25 @@
 """Serviço REST FastAPI para inferência do modelo preditivo do ENEM.
 
 Este serviço encapsula o estimador campeão XGBoost (enem.pkl) e expõe
-endpoints para inferência pontual, inferência em lote, auditoria de saúde
-e metadados de governança (Model Card).
+endpoints para inferência pontual, inferência em lote, auditoria de saúde,
+metadados de governança (Model Card) e métricas Prometheus (/metrics).
 """
 
 from contextlib import asynccontextmanager
 import time
 from typing import AsyncGenerator
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import RedirectResponse
 
+from src.api.metrics import (
+    record_http_request,
+    record_inference,
+    record_validation_error,
+    render_metrics,
+    set_model_status,
+)
 from src.api.model_loader import ModelManager
 from src.api.schemas import (
     BatchCandidatosInput,
@@ -21,6 +30,8 @@ from src.api.schemas import (
     PredictionOutput,
 )
 
+MODEL_VERSION_TAG = "enem_target_m4_producao:v1"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -28,9 +39,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     manager = ModelManager.get_instance()
     try:
         manager.load()
+        set_model_status(
+            model_version=MODEL_VERSION_TAG,
+            artifact_sha256=manager.sha256,
+            loaded=manager.is_loaded(),
+        )
     except Exception as exc:
         # Permite que o container inicie mesmo se houver erro temporário,
-        # mas sinaliza o erro nos logs
+        # mas sinaliza o erro nos logs e nas métricas Prometheus
+        set_model_status(
+            model_version=MODEL_VERSION_TAG,
+            artifact_sha256="",
+            loaded=False,
+        )
         print(f"[ERRO LIFESPAN] Falha ao carregar o modelo: {exc}")
     yield
 
@@ -49,10 +70,52 @@ app = FastAPI(
 )
 
 
+@app.middleware("http")
+async def prometheus_http_middleware(request: Request, call_next) -> Response:
+    """Mede latência e contabiliza requisições HTTP sem explosão de cardinalidade."""
+    t_inicio = time.perf_counter()
+    status_code = 500
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    finally:
+        duracao = time.perf_counter() - t_inicio
+        route = request.scope.get("route")
+        route_path = route.path if route is not None else "unmatched"
+        if route_path != "/metrics":
+            record_http_request(
+                method=request.method,
+                path=route_path,
+                status_code=status_code,
+                duration_seconds=duracao,
+            )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> Response:
+    """Contabiliza bloqueios HTTP 422 (Anti-Leakage vs. domínio) preservando o payload padrão."""
+    record_validation_error(exc.errors())
+    return await request_validation_exception_handler(request, exc)
+
+
 @app.get("/", include_in_schema=False)
 def root() -> RedirectResponse:
     """Redireciona para a documentação interativa Swagger."""
     return RedirectResponse(url="/docs")
+
+
+@app.get(
+    "/metrics",
+    tags=["Monitoramento"],
+    summary="Exposição de métricas no formato Prometheus",
+)
+def metrics() -> Response:
+    """Retorna métricas HTTP e de Machine Learning para coleta pelo Prometheus."""
+    payload, content_type = render_metrics()
+    return Response(content=payload, media_type=content_type)
 
 
 @app.get(
@@ -68,7 +131,7 @@ def health_check() -> HealthResponse:
     return HealthResponse(
         status="healthy" if is_ready else "degraded",
         model_loaded=is_ready,
-        model_version="enem_target_m4_producao:v1",
+        model_version=MODEL_VERSION_TAG,
         artifact_sha256=manager.sha256,
     )
 
@@ -106,8 +169,16 @@ def predict(candidato: CandidatoInput) -> PredictionOutput:
             detail="O modelo preditivo não está carregado.",
         )
 
+    t_inicio = time.perf_counter()
     try:
         nota = manager.predict_single(candidato)
+        duracao = time.perf_counter() - t_inicio
+        record_inference(
+            mode="single",
+            candidatos=[candidato],
+            predictions=[nota],
+            duration_seconds=duracao,
+        )
         return PredictionOutput(target_m4=nota)
     except Exception as exc:
         raise HTTPException(
@@ -134,8 +205,14 @@ def predict_batch(payload: BatchCandidatosInput) -> BatchPredictionOutput:
     t_inicio = time.perf_counter()
     try:
         predicoes = manager.predict_batch(payload.candidatos)
-        t_fim = time.perf_counter()
-        tempo_ms = round((t_fim - t_inicio) * 1000.0, 2)
+        duracao = time.perf_counter() - t_inicio
+        tempo_ms = round(duracao * 1000.0, 2)
+        record_inference(
+            mode="batch",
+            candidatos=payload.candidatos,
+            predictions=predicoes,
+            duration_seconds=duracao,
+        )
 
         return BatchPredictionOutput(
             total_candidatos=len(predicoes),
@@ -147,4 +224,3 @@ def predict_batch(payload: BatchCandidatosInput) -> BatchPredictionOutput:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro interno durante a inferência em lote: {str(exc)}",
         ) from exc
-

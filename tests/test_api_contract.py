@@ -207,3 +207,56 @@ def test_predict_batch_valid_and_empty(
     empty_response = client.post("/predict/batch", json={"candidatos": []})
     assert empty_response.status_code == 422
 
+
+def test_metrics_endpoint_and_observability_counters(
+    client: TestClient, payload_valido: Dict[str, Any]
+) -> None:
+    """Valida exposição /metrics (Prometheus) e incremento de predições e bloqueios 422."""
+    from prometheus_client import REGISTRY
+
+    pred_before = REGISTRY.get_sample_value(
+        "enem_api_predictions_total", {"mode": "single"}
+    ) or 0.0
+    leakage_before = REGISTRY.get_sample_value(
+        "enem_api_validation_errors_total", {"error_type": "extra_forbidden"}
+    ) or 0.0
+    domain_before = REGISTRY.get_sample_value(
+        "enem_api_validation_errors_total", {"error_type": "domain_or_schema"}
+    ) or 0.0
+
+    res_ok = client.post("/predict", json=payload_valido)
+    assert res_ok.status_code == 200
+
+    res_leakage = client.post("/predict", json={**payload_valido, "NU_ANO": 2023})
+    assert res_leakage.status_code == 422
+
+    res_domain = client.post("/predict", json={**payload_valido, "Q024": 99})
+    assert res_domain.status_code == 422
+
+    res_metrics = client.get("/metrics")
+    assert res_metrics.status_code == 200
+    assert "text/plain" in res_metrics.headers["content-type"]
+
+    body = res_metrics.text
+    assert "enem_api_model_info" in body
+    assert "enem_api_http_requests_total" in body
+    assert "enem_api_predicted_target_m4_bucket" in body
+    assert "enem_api_input_renda_per_capita_bucket" in body
+
+    assert (
+        REGISTRY.get_sample_value("enem_api_predictions_total", {"mode": "single"})
+        == pred_before + 1.0
+    )
+    assert (
+        REGISTRY.get_sample_value(
+            "enem_api_validation_errors_total", {"error_type": "extra_forbidden"}
+        )
+        == leakage_before + 1.0
+    )
+    assert (
+        REGISTRY.get_sample_value(
+            "enem_api_validation_errors_total", {"error_type": "domain_or_schema"}
+        )
+        == domain_before + 1.0
+    )
+
