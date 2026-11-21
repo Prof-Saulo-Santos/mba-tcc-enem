@@ -5,9 +5,10 @@ endpoints para inferência pontual, inferência em lote, auditoria de saúde,
 metadados de governança (Model Card) e métricas Prometheus (/metrics).
 """
 
-from contextlib import asynccontextmanager
 import time
-from typing import AsyncGenerator
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator, Awaitable, Callable
+
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -71,7 +72,10 @@ app = FastAPI(
 
 
 @app.middleware("http")
-async def prometheus_http_middleware(request: Request, call_next) -> Response:
+async def prometheus_http_middleware(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
     """Mede latência e contabiliza requisições HTTP sem explosão de cardinalidade."""
     t_inicio = time.perf_counter()
     status_code = 500

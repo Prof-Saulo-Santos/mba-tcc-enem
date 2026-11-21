@@ -4,6 +4,7 @@ Baseado estritamente no contrato canônico formalizado em models/enem_model_card
 """
 
 from typing import Any, Dict, List
+
 from pydantic import BaseModel, ConfigDict, Field
 
 

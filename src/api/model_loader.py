@@ -9,8 +9,8 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
 import joblib
-import numpy as np
 import pandas as pd
 
 from src.api.schemas import CandidatoInput
@@ -29,14 +29,15 @@ class ModelManager:
         project_root = Path(__file__).resolve().parent.parent.parent
 
         self.model_path = Path(
-            model_path or os.getenv("MODEL_PATH", project_root / "models" / "enem.pkl")
+            model_path or os.getenv("MODEL_PATH") or (project_root / "models" / "enem.pkl")
         )
         self.model_card_path = Path(
             model_card_path
-            or os.getenv("MODEL_CARD_PATH", project_root / "models" / "enem_model_card.json")
+            or os.getenv("MODEL_CARD_PATH")
+            or (project_root / "models" / "enem_model_card.json")
         )
 
-        self.model = None
+        self.model: Any = None
         self.model_card: Dict[str, Any] = {}
         self.sha256: str = ""
         self.features_ordenadas: List[str] = [

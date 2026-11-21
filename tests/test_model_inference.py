@@ -6,6 +6,7 @@ e cumpre o SLA de latência em lote.
 """
 
 import time
+
 import joblib
 import pandas as pd
 import pytest

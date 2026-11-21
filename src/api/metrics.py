@@ -7,6 +7,7 @@ entrada para detecção de Prediction Drift e Data Drift).
 """
 
 from typing import Any, Iterable, Sequence
+
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 
 from src.api.schemas import CandidatoInput

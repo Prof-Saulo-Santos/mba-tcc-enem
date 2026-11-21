@@ -5,15 +5,16 @@ estabelecidos em models/enem_model_card.json e bloqueiem payloads inválidos
 ou colunas proibidas (ex.: NU_ANO contra Temporal Leakage).
 """
 
-from typing import Any, Dict
-from fastapi.testclient import TestClient
+from typing import Any, Dict, Iterator
+
 import pytest
+from fastapi.testclient import TestClient
 
 from src.api.main import app
 
 
 @pytest.fixture(scope="module")
-def client() -> TestClient:
+def client() -> Iterator[TestClient]:
     """Inicializa o TestClient acionando o lifespan da aplicação FastAPI."""
     with TestClient(app) as test_client:
         yield test_client

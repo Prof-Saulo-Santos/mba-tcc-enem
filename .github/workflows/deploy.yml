@@ -13,6 +13,7 @@ on:
       - 'requirements-api.txt'
       - 'Dockerfile'
       - 'docker-compose.yml'
+      - 'pyproject.toml'
       - '.github/workflows/deploy.yml'
   pull_request:
     branches:
@@ -23,6 +24,7 @@ on:
       - 'models/**'
       - 'requirements-api.txt'
       - 'Dockerfile'
+      - 'pyproject.toml'
   workflow_dispatch:
 
 env:
@@ -33,10 +35,10 @@ env:
 
 jobs:
   # ============================================================================
-  # JOB 1: Quality Gate CI — Auditoria SHA-256 + Suíte Pytest (25 Testes)
+  # JOB 1: Quality Gate CI — Auditoria SHA-256 + Ruff + Mypy + Pytest (26 Testes)
   # ============================================================================
   quality-gate-ci:
-    name: "🧪 Quality Gate (SHA-256 & Pytest)"
+    name: "🧪 Quality Gate (SHA-256, Lint, Type Check & Pytest)"
     runs-on: ubuntu-latest
 
     steps:
@@ -58,9 +60,14 @@ jobs:
           fi
           echo "✅ Integridade SHA-256 de models/enem.pkl validada com sucesso."
 
-      - name: "📦 Instalar dependências enxutas de inferência e teste"
+      - name: "📦 Instalar dependências enxutas de inferência e validação"
         run: |
-          uv pip install --system -r requirements-api.txt pytest httpx
+          uv pip install --system -r requirements-api.txt pytest httpx ruff mypy
+
+      - name: "🔍 Executar análise estática (Ruff & Mypy)"
+        run: |
+          ruff check src tests
+          mypy src/api tests
 
       - name: "🧪 Executar suíte de contrato HTTP, Anti-Leakage e Paridade"
         run: |
@@ -71,7 +78,8 @@ jobs:
           echo "### ✅ Quality Gate CI Aprovado (Etapa 2)" >> $GITHUB_STEP_SUMMARY
           echo "- **Artefato:** \`models/enem.pkl\` (\`1,727 MB\`)" >> $GITHUB_STEP_SUMMARY
           echo "- **SHA-256:** \`$EXPECTED_MODEL_SHA256\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Suíte Pytest:** \`25/25 PASSED\` (Contrato Pydantic, Anti-Leakage e Paridade XGBoost)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Qualidade Estática:** \`ruff check\` e \`mypy\` sem erros (\`src/api/\`, \`tests/\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Suíte Pytest:** \`26/26 PASSED\` (Contrato Pydantic, Observabilidade /metrics, Anti-Leakage e Paridade XGBoost)" >> $GITHUB_STEP_SUMMARY
 
   # ============================================================================
   # JOB 2: Container Smoke Test — Build Multi-Stage e Teste E2E da Imagem Docker

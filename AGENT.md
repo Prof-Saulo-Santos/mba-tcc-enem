@@ -126,25 +126,28 @@ A Etapa 1 representa o laboratório analítico e a preparação de dados, tendo 
      * **Estabilidade Longitudinal (`2014–2023`) e Caso TRI `2018`:** $R^2 \in [0.3120, 0.3631]$ em 9 das 10 edições (pico de $R^2 = 0.36314$ na pandemia de `2020`); queda pontual do $R^2$ não centrado em `2018` ($0.22595$, viés `-23,81 pts`) explicada pelo deslocamento histórico da média real da TRI do INEP em 2018 (`533,54 pts`), comprovando que o modelo não memoriza o ano da prova.
      * **Validação *Out-of-Time* Interna (`Treino 2014–2022` $\rightarrow$ `Teste Cego 2023`, `N = 2.678.264`):** **$R^2 = 0.31842$**, **$\text{RMSE} = 67.6232$ pts**, **$\text{MAE} = 52.8526$ pts**, $\text{RMSE}/\sigma = 0.82558$ ($\Delta R^2 = -0.00293$ frente ao Holdout *in-sample* de 2023), atestando estacionariedade temporal e capacidade de generalização em safras inéditas mesmo com o encerramento censitário em 2023 pela barreira LGPD.
 * **Explicabilidade Sociológica Exata (TreeSHAP em `10.000` candidatos do Holdout):** Valor base $\mathbb{E}[f(X)] = 511.04$ pts (erro de aditividade de Shapley `1,26e-03` pts). Liderança isolada de `RENDA_PER_CAPITA` (**`18,483 pts`** de `|SHAP|` médio, **`30,10%`** do impacto total, amplitude de `127,89 pts` entre `-41,93` e `+85,96` pts com curva côncava de retorno marginal), seguida por `TP_LINGUA` (`10,895 pts` / `17,74%`), `Q024` (`9,487 pts` / `15,45%`), `TP_ANO_CONCLUIU` (`8,958 pts` / `14,59%`), `Q002` (`8,642 pts` / `14,07%`) e `TP_SEXO` (`4,946 pts` / `8,05%`).
-* **Rastreabilidade MLflow e Artefatos de Produção:** Backend **MLflow 3.17.2** (`sqlite:///mlflow.db` + `./mlruns`, **20/20 runs `FINISHED`**) com modelo registrado **`enem_target_m4_producao` Versão 1 (`READY`, `run_id = 8b4ed2c387044363968b6088078bdf2d`)**. Exportação do estimador puro em **`models/enem.pkl`** (`1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`), backup nativo `models/enem_xgboost.ubj` (`1,712 MB`), contrato `models/enem_model_card.json`, auditoria `models/auditoria_holdout_por_ano_2014_2023.csv`, 7 figuras em `media/nb06_figuras/`, guia `docs/passo-a-passo-06.md` e roteiro de defesa `docs/slides-06.md`.
+* **Rastreabilidade MLflow e Artefatos de Produção:** Backend remoto **MLflow 3.17.2** (`PostgreSQL 16` em Docker `:5432` + *Artifact Store* no **Amazon S3** `s3://tcc-enem-saulo-mlops-703671922740/mlflow-artifacts`, substituindo o `sqlite:///mlflow.db` inicial) com modelo registrado **`enem_target_m4_producao` Versão 1 (`URI = models:/m-ea7931423f5141379ff97886636ae0ea`, `run_id = 6490c396b0e04147b156bedb0c8af9f7`, reexecutado em `21/11/2026` com `17` objetos / `~2,49 MiB` auditados no S3)**. Exportação do estimador puro em **`models/enem.pkl`** (`1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`), backup nativo `models/enem_xgboost.ubj` (`1,712 MB`), contrato `models/enem_model_card.json`, auditoria `models/auditoria_holdout_por_ano_2014_2023.csv`, 7 figuras em `media/nb06_figuras/`, guias `docs/passo-a-passo-06.md` e `docs/guia-estudo-mlflow-postgresql-s3.md` e roteiro de defesa `docs/slides-06.md`.
 
 ---
 
-## 4. Detalhamento da Etapa 2: Produtização, CI/CD e Deploy na AWS - *Homologada*
+## 4. Detalhamento da Etapa 2 e Evolução MLOps (Arquitetura Desacoplada por Planos) - *Homologada*
 
-Baseada no diagrama `media/pipeline-2.jpg`, `docs/diagrama_deploy_aws.md`, `docs/passo-a-passo-07-api-docker.md` e `docs/slides-07.md`:
+Baseada em `media/pipeline-2.jpg`, `docs/etapa-02-passo-a-passo.md`, `docs/estudos-futuros.md`, `docs/diagrama_deploy_aws.md`, `docs/passo-a-passo-07-api-docker.md` e nos 3 guias de estudo (`observabilidade`, `terraform-dvc-s3`, `mlflow-postgresql-s3`):
 
-1. **Encapsulamento com FastAPI (`src/api/`):**
-   * Serviço Python modular (`src/api/main.py`, `src/api/model_loader.py` e `src/api/schemas.py`) carregando `models/enem.pkl` e `models/enem_model_card.json` via padrão *Singleton* no `lifespan`.
-   * Validação estrita em Pydantic v2 com `extra="forbid"` (bloqueio automático `HTTP 422` contra variáveis proibidas como `NU_ANO`).
-   * Endpoints REST homologados: `GET /health` (SHA-256), `GET /info` (linhagem MLflow), `POST /predict` (individual), `POST /predict/batch` (vetorial em lote, `6,49 ms`) e `GET /docs` (Swagger UI).
-2. **Suíte Automatizada de Testes (`tests/`):**
-   * `25/25 PASSED` no `pytest` (`tests/test_api_contract.py` e `tests/test_model_inference.py`), validando contrato HTTP, fronteiras psicométricas, paridade matemática bit-a-bit com o estimador puro, direcionalidade sociológica de Bourdieu e SLA de latência.
-3. **Containerização Multi-Stage FinOps (`Dockerfile` & `docker-compose.yml`):**
-   * Manifesto enxuto `requirements-api.txt` (apenas os 8 pacotes de *serving* nas versões exatas do treino) e `.dockerignore` reduzindo o contexto para `~2 MB`.
-   * Imagem OCI `enem-target-m4-api:v1` com **`515 MB` Content Size** (`1,47 GB` em disco), biblioteca OpenMP `libgomp1`, usuário não-root (`appuser`, UID 1000) e `HEALTHCHECK` nativo.
-4. **Automação CI/CD com GitHub Actions (`.github/workflows/deploy.yml`):**
-   * Pipeline em 3 Jobs encadeados: `quality-gate-ci` (SHA-256 + Pytest) $\rightarrow$ `docker-smoke-test` (build e teste HTTP E2E no runner) $\rightarrow$ `deploy-aws` (Amazon ECR + AWS App Runner com trava condicional FinOps).
+1. **Encapsulamento com FastAPI e Observabilidade (`src/api/`, `monitoring/`):**
+   * Serviço Python modular (`src/api/main.py`, `src/api/model_loader.py`, `src/api/schemas.py`, `src/api/metrics.py`) carregando `models/enem.pkl` e `models/enem_model_card.json` via padrão *Singleton* no `lifespan`.
+   * Validação estrita em Pydantic v2 com `extra="forbid"` (bloqueio automático `HTTP 422` contra variáveis proibidas como `NU_ANO`) e instrumentação Prometheus (`prometheus-client==0.26.0`) sem explosão de cardinalidade.
+   * Endpoints REST homologados: `GET /health` (SHA-256), `GET /info` (linhagem MLflow), `GET /metrics` (Prometheus), `POST /predict` (individual), `POST /predict/batch` (vetorial em lote) e `GET /docs` (Swagger UI).
+   * Stack local de observabilidade (`profiles: ["monitoring"]` em `docker-compose.yml`): `Prometheus` (`:9090`, `monitoring/prometheus/prometheus.yml`) + `Grafana` (`:3000`, dashboard provisionado `enem_api_observability.json` com 10 painéis).
+2. **Suíte Automatizada de Testes e Qualidade Estática (`tests/`, `pyproject.toml`):**
+   * `26/26 PASSED` no `pytest` (`tests/test_api_contract.py` e `tests/test_model_inference.py`), validando contrato HTTP, exposição `/metrics`, fronteiras psicométricas, paridade matemática bit-a-bit com o estimador puro, direcionalidade sociológica de Bourdieu e SLA de latência, além de `ruff` e `mypy` configurados em `pyproject.toml`.
+3. **Containerização Multi-Stage, MLflow Remoto & Dados Versionados (`Dockerfile`, `Dockerfile.mlflow`, `.dvc/`):**
+   * Manifesto enxuto `requirements-api.txt` (9 pacotes de *serving*, incluindo `prometheus-client==0.26.0`) e `.dockerignore` reduzindo o contexto para `~2 MB`; imagem OCI `enem-target-m4-api:v1` (`515 MB` Content Size na API base, `libgomp1`, `appuser` não-root, `HEALTHCHECK`).
+   * Profile `mlops` em `docker-compose.yml`: `postgres:16-alpine` (`:5432`) + `Dockerfile.mlflow` (`mlflow==3.17.2`, `:5000`, `--default-artifact-root` em S3).
+   * Versionamento de dados pesados (`.parquet` de `26,8 MiB` e `153,2 MiB`) via `dvc[s3]==3.67.1` (`.dvc/config` apontando para `s3://tcc-enem-saulo-mlops-703671922740/dvc-store`), mantendo `models/enem.pkl` (`1,727 MB`) no Git para não quebrar CI de PRs.
+4. **IaC com Terraform (`infra/`) & CI/CD no GitHub Actions (`.github/workflows/deploy.yml`):**
+   * Provisionamento declarativo FinOps em 2 estágios (`infra/main.tf`, `variables.tf`, `outputs.tf`): Estágio 1 (`create_apprunner = false`) cria `Amazon S3`, `Amazon ECR`, `IAM OIDC` (`Prof-Saulo-Santos/mba-tcc-enem`, `main`) e roles; Estágio 2 (`create_apprunner = true`) ativa o **AWS App Runner** para a apresentação com `terraform destroy` imediato após a banca.
+   * Pipeline em 3 Jobs encadeados: `quality-gate-ci` (SHA-256 + `ruff` + `mypy` + 26 testes Pytest) $\rightarrow$ `docker-smoke-test` (build e teste HTTP E2E no runner) $\rightarrow$ `deploy-aws` (Amazon ECR via OIDC + AWS App Runner com trava condicional FinOps).
 
 ---
 
@@ -163,26 +166,26 @@ Baseada no diagrama `media/pipeline-2.jpg`, `docs/diagrama_deploy_aws.md`, `docs
 3. **Pilha Tecnológica do Repositório:**
    * Ambiente: Linux/WSL (`/home/saulo/mba/tcc/enem`).
    * Gerenciador de Pacotes: `uv` com ambiente virtual ativo em `.venv` (Python 3.13, conforme `.python-version`).
-   * Principais Pacotes: `pandas`, `numpy`, `scikit-learn`, `xgboost`, `shap`, `sentence-transformers`, `torch`, `mlflow`, `fastapi`, `uvicorn`, `docker`, `openpyxl`, `pyarrow`.
+   * Principais Pacotes e Ferramentas: `pandas`, `numpy`, `scikit-learn`, `xgboost`, `shap`, `sentence-transformers`, `torch`, `mlflow`, `psycopg2-binary`, `boto3`, `dvc[s3]`, `fastapi`, `uvicorn`, `prometheus-client`, `docker`, `terraform`, `ruff`, `mypy`, `openpyxl`, `pyarrow`.
 4. **Regra de Ouro da Modelagem:**
    * O Random Forest e o XGBoost são modelos concorrentes sob o mesmo protocolo de validação cruzada; o Random Forest não é apenas um seletor descartável, mas o benchmark de *Bagging*.
    * Nunca use a nota de uma prova para prever outra prova (evitar data leakage inter-target).
    * Manter sempre a explicabilidade por meio de valores SHAP.
 5. **Estado Atual e Próxima Tarefa:**
    * **Etapa 1 Integralmente Concluída e Homologada:** Todos os notebooks da esteira analítica — `01_investigacao_estrutural.ipynb`, `02_eda.ipynb`, `03_engenharia_features.ipynb`, `04_varredura_semantica.ipynb`, `05_consolidacao_historica.ipynb` e `06_treinamento_modelo.ipynb` — estão 100% executados, auditados e homologados (com guias `docs/conclusoes_do_notebook_03.md`, `docs/passo-a-passo-05.md`, `docs/passo-a-passo-06.md` e roteiros de defesa `docs/slides-03.md`, `docs/slides-04.md`, `docs/slides-05.md` e `docs/slides-06.md`, além da documentação histórica introdutória em `docs/onde-tudo-comeca.md`).
-   * **Etapa 2 Integralmente Concluída e Homologada:** Microserviço FastAPI (`src/api/`), suíte de 25 testes `pytest` (`tests/`), containerização multi-stage enxuta (`Dockerfile`, `docker-compose.yml`, `requirements-api.txt`, `515 MB` OCI) e esteira CI/CD GitHub Actions (`.github/workflows/deploy.yml`) 100% implementados, testados e documentados em `docs/passo-a-passo-07-api-docker.md` e `docs/slides-07.md`.
+   * **Etapa 2 & Parte I MLOps (Fases 1 a 4) Integralmente Concluídas e Homologadas:** Microserviço FastAPI (`src/api/`, incluindo `/metrics`), dashboard `Prometheus + Grafana` (`monitoring/`), IaC `Terraform` (`infra/`) + `DVC + S3`, MLflow remoto (`PostgreSQL 16 + S3` em `Dockerfile.mlflow` / `docker-compose.yml`), suíte de 26 testes `pytest` + `ruff` + `mypy` (`tests/`, `pyproject.toml`), containerização multi-stage enxuta (`Dockerfile`, `requirements-api.txt`) e esteira CI/CD GitHub Actions (`.github/workflows/deploy.yml`) 100% implementados, testados e documentados em `docs/etapa-02-passo-a-passo.md`, `docs/passo-a-passo-07-api-docker.md` e nos guias `docs/guia-estudo-*.md`.
    * **Encerramento do Escopo em 2023 (Sem Processamento 2024/2025):** A antiga Etapa 3 (Airflow para 2024/2025) foi removida do escopo porque o INEP desmembrou as tabelas CSV de 2024 e 2025 por LGPD sem chave de junção entre participantes e notas.
    * **Artefatos Canônicos Exportados:**
-     * `data/processed/enem_2023_eda_purificado.parquet` (212.386 concluintes $\times$ 53 colunas, Camada Silver gerada pelo Notebook 02);
+     * `data/processed/enem_2023_eda_purificado.parquet` (212.386 concluintes $\times$ 53 colunas, Camada Silver gerada pelo Notebook 02 — versionado via `dvc` no S3);
      * `data/processed/contrato_features_modelagem.json` (Contrato canônico das 6 features do Esquadrão de Elite + `TARGET_M4`, validado em 212.386 concluintes de 2023);
      * `data/processed/schema_mapping_historico.json` (Contrato canônico de mapeamento semântico gerado pelo Notebook 04: auditoria `2009–2025`, homologação `2014–2023` e registro `integracao_2024_aprovada: false`);
-     * `data/processed/enem_2014_2023_consolidado.parquet` + `data/processed/contrato_consolidacao_2014_2023.json` (37.593.629 candidatos $\times$ 8 colunas, 153,17 MB em disco, 537,78 MB em RAM);
-     * `models/enem.pkl` (`XGBRegressor` campeão puro, `1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`, Holdout `7,52M` $R^2 = 0.33780$, $\text{RMSE} = 57.7439$ pts; OOT `2023` $R^2 = 0.31842$) + `models/enem_xgboost.ubj` + `models/enem_model_card.json` + `models/auditoria_holdout_por_ano_2014_2023.csv` + Model Registry MLflow `enem_target_m4_producao` v1 (`sqlite:///mlflow.db`).
+     * `data/processed/enem_2014_2023_consolidado.parquet` + `data/processed/contrato_consolidacao_2014_2023.json` (37.593.629 candidatos $\times$ 8 colunas, 153,17 MB em disco, 537,78 MB em RAM — versionado via `dvc` no S3);
+     * `models/enem.pkl` (`XGBRegressor` campeão puro, `1,727 MB`, SHA-256 `114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`, Holdout `7,52M` $R^2 = 0.33780$, $\text{RMSE} = 57.7439$ pts; OOT `2023` $R^2 = 0.31842$) + `models/enem_xgboost.ubj` + `models/enem_model_card.json` + `models/auditoria_holdout_por_ano_2014_2023.csv` + Model Registry MLflow `enem_target_m4_producao` v1 em `PostgreSQL 16 + S3` (`run_id = 6490c396b0e04147b156bedb0c8af9f7`).
    * **Alvo Oficial Definido:** `TARGET_M4` (Média das 4 provas objetivas da TRI: MT, LC, CN, CH), com Alfa de Cronbach = 0.865, $R^2 = 0.3743$ (19 features) / $R^2 = 0.3397$ (6 features do Esquadrão de Elite) no ano-base 2023 e $R^2 = 0.33780$ no Holdout do censo decenal (`2014–2023`).
-   * **Próximos Passos para Fechamento do TCC:**
-     * Atualizar o texto da dissertação (`tcc_mba_saulo_santos.md` / `.docx`) para a metodologia e resultados finais (`Notebooks 01–06`, barreira LGPD e Etapa 2);
-     * Consolidar o deck final de slides (`15–20 min`), cobrindo Capítulos `01` e `02` e limpando referências legadas em `docs/criacao-slides.md`;
-     * Realizar treino de sabatina para a banca e, se desejado na apresentação final, ativar pontualmente o deploy na AWS (ECR + App Runner) via `.github/workflows/deploy.yml`.
+   * **Próximos Passos para Fechamento do TCC (Parte II de `docs/etapa-02-passo-a-passo.md`):**
+     * **Passo 5:** Atualizar integralmente o texto da dissertação (`tcc_mba_saulo_santos.md` / `.docx`) para a metodologia e resultados finais (`Notebooks 01–06`, barreira LGPD e Etapa 2 / Fases 1–4);
+     * **Passo 6:** Consolidar o deck final de slides (`15–20 min`), cobrindo Capítulos `01` e `02`, limpando referências legadas em `docs/criacao-slides.md` / `docs/slides-03.md` e incorporando as evoluções das Fases 1–4;
+     * **Passo 7:** Realizar treino de sabatina para a banca e, se desejado na apresentação final, ativar pontualmente o Estágio 2 do Terraform (`create_apprunner = true`) e o deploy na AWS (ECR + App Runner) via `.github/workflows/deploy.yml`, destruindo os recursos logo após a defesa (`terraform destroy`).
 6. **Modo de Colaboração (Regra Mandatória):**
    * O trabalho é feito **em conjunto com o Saulo**, passo a passo. O agente **não** deve agir de forma autônoma.
    * **Toda tomada de decisão** (metodológica, de código, de dados ou de arquitetura) só pode ser aplicada **após o aval explícito do Saulo**.

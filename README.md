@@ -26,29 +26,37 @@ Projeto de Conclusão de Curso de MBA que integra **Sociologia Educacional** (in
 | **Modelo Campeão (`XGBRegressor` `hist`)** | Holdout estratificado (`7.518.726` alunos): **$R^2 = 0{,}33780$** \| **$\text{RMSE} = 57{,}7439\text{ pts}$** \| **$\text{MAE} = 45{,}5904\text{ pts}$** |
 | **Validação *Out-of-Time* (`2014–2022 -> 2023`)** | Safra cega de `2023` (`2.678.264` alunos): **$R^2 = 0{,}31842$** \| **$\text{RMSE} = 67{,}6232\text{ pts}$** \| $\text{MAE} = 52{,}8526\text{ pts}$ |
 | **Explicabilidade (`TreeSHAP`, `N = 10.000`)** | Liderança de `RENDA_PER_CAPITA` (`18,483 pts` de `|SHAP|` médio / **`30,10%`** do impacto total) |
-| **Microserviço & Testes (`src/api/`, `tests/`)** | FastAPI + Pydantic v2 (`extra="forbid"`), **`25/25 PASSED`** no `pytest` e imagem Docker multi-stage (**`515 MB` Content Size**) |
+| **Microserviço & Quality Gate (`src/api/`, `tests/`)** | FastAPI + Pydantic v2 (`extra="forbid"`), **`26/26 PASSED`** no `pytest` (`ruff` & `mypy` limpos), endpoint `/metrics` e imagem Docker multi-stage (**`515 MB` Content Size**) |
+| **Observabilidade (`monitoring/`)** | Endpoint `GET /metrics` (`prometheus-client`) coletado pelo **Prometheus** (`:9090`, scrape `5s`) + dashboard **Grafana** (`:3000`, `10` painéis de SLA, 422 e *drift*) |
+| **IaC & Dados em Nuvem (`infra/`, `.dvc/`)** | **Terraform** (`11` recursos no Estágio 1: `S3`, `ECR`, `IAM OIDC`, `App Runner`) + **DVC + S3** versionando `~180 MiB` em `.parquet` (`dvc-store/`) |
+| **MLflow Remoto (`Dockerfile.mlflow`, `mlops`)** | Backend **PostgreSQL 16** + **Amazon S3** (`mlflow-artifacts/`, `17` objetos / `~2,49 MiB`), `run_id = 6490c396b0e04147b156bedb0c8af9f7` |
 
 > Os metadados completos e o checksum SHA-256 do modelo campeão estão auditados em [`models/enem_model_card.json`](models/enem_model_card.json).
 
 ---
 
-## 🏗️ Arquitetura em 2 Etapas e Estrutura do Repositório
+## 🏗️ Arquitetura Desacoplada por Planos e Estrutura do Repositório
 
-1. **Etapa 1 — Laboratório Científico, NLP, Big Data e Modelagem (`notebooks/01` a `06`):** Investigação estrutural, EDA (`2023`), seleção parcimoniosa, mapeamento semântico SBERT, consolidação histórica em *chunks* e treinamento escalável com rastreamento no **MLflow** (`mlflow.db`).
-2. **Etapa 2 — Produtização, Testes, Containerização e CI/CD (`src/api/`, `Dockerfile`, `.github/workflows/deploy.yml`):** API REST FastAPI, validação estrita anti-leakage (`HTTP 422`), container multi-stage com `uv` e esteira automatizada no GitHub Actions (`quality-gate-ci` $\rightarrow$ `docker-smoke-test` $\rightarrow$ `deploy-aws` condicional para Amazon ECR e AWS App Runner).
+1. **Etapa 1 & Plano Offline (`notebooks/01` a `06`, `DVC + S3`, `PostgreSQL + MLflow`):** Investigação estrutural, EDA (`2023`), seleção parcimoniosa, mapeamento semântico SBERT, consolidação histórica em *chunks* (versionada via **DVC + S3**) e treinamento escalável com rastreamento remoto no **MLflow Server 3.17.2 (`PostgreSQL 16 + S3`)**.
+2. **Etapa 2 & Plano Online/Observabilidade (`src/api/`, `monitoring/`, `infra/`, `.github/workflows/deploy.yml`):** API REST FastAPI com `/metrics`, dashboard **Prometheus + Grafana**, container multi-stage com `uv`, infraestrutura declarativa **Terraform** (`S3`, `ECR`, `IAM OIDC`, `AWS App Runner`) e esteira CI/CD no GitHub Actions (`quality-gate-ci` com `SHA-256 + ruff + mypy + 26 pytest` $\rightarrow$ `docker-smoke-test` $\rightarrow$ `deploy-aws` condicional via OIDC).
 
 ```text
 enem/
-├── .github/workflows/deploy.yml   # CI/CD: Quality Gate (SHA-256 + pytest), Docker Smoke Test e deploy AWS
-├── data/processed/                # Contratos JSON canônicos e bases Parquet (não versionados no Git)
-├── docs/                          # Guias passo a passo, diagramas e roteiros de slides
-├── media/                         # Diagramas arquiteturais e figuras científicas (nb06_figuras/)
+├── .dvc/                          # Configuração do remoto DVC apontando para s3://.../dvc-store
+├── .github/workflows/deploy.yml   # CI/CD: Quality Gate (SHA-256 + ruff + mypy + 26 pytest), Smoke Test e deploy AWS
+├── data/processed/                # Contratos JSON, ponteiros .dvc e bases Parquet (armazenadas no S3 via DVC)
+├── docs/                          # Guias passo a passo, estudos (Fases 1–3), diagramas e roteiros de slides
+├── infra/                         # Terraform (IaC FinOps em 2 estágios: S3, ECR, IAM OIDC e AWS App Runner)
+├── media/                         # Diagramas arquiteturais, infográficos MLOps e figuras (nb06_figuras/)
 ├── models/                        # Artefato campeão (enem.pkl, enem_xgboost.ubj) e Model Card JSON
+├── monitoring/                    # Configurações do Prometheus (:9090) e dashboards provisionados do Grafana (:3000)
 ├── notebooks/                     # Esteira analítica completa (01 a 06)
 ├── scripts/download_microdados.sh # Download dos microdados públicos do INEP
-├── src/api/                       # Microserviço FastAPI (main.py, model_loader.py, schemas.py)
-├── tests/                         # Suíte de contrato HTTP e paridade XGBoost (25 testes)
-├── Dockerfile & docker-compose.yml# Containerização multi-stage FinOps (appuser não-root)
+├── src/api/                       # Microserviço FastAPI (main.py, model_loader.py, schemas.py, metrics.py)
+├── tests/                         # Suíte de contrato HTTP, /metrics e paridade XGBoost (26 testes)
+├── Dockerfile & Dockerfile.mlflow # Imagens Docker da API (515 MB) e do MLflow Tracking Server
+├── docker-compose.yml             # API (:8000), profile "monitoring" (Prometheus/Grafana) e profile "mlops" (PG+MLflow)
+├── pyproject.toml                 # Configuração unificada de Ruff e Mypy para Quality Gate
 ├── AGENT.md                       # Memória técnica e diretrizes operacionais do projeto
 └── visao_geral_projeto.md         # Mapa de etapas, capítulos, guias e roteiros de defesa
 ```
@@ -124,30 +132,39 @@ jupyter lab
 3. `notebooks/03_engenharia_features.ipynb` — Criação de `RENDA_PER_CAPITA`, seleção do `TARGET_M4` e das 6 features (`data/processed/contrato_features_modelagem.json`).
 4. `notebooks/04_varredura_semantica.ipynb` — Harmonização histórica via NLP/SBERT (`data/processed/schema_mapping_historico.json`).
 5. `notebooks/05_consolidacao_historica.ipynb` — Consolidação decenal em *chunks* (`2014–2023`), deflação por Salário Mínimo e *downcasting* (`data/processed/contrato_consolidacao_2014_2023.json`).
-6. `notebooks/06_treinamento_modelo.ipynb` — Treinamento escalável, MLflow, validação OOT `2023`, TreeSHAP e exportação de `models/enem.pkl`.
+6. `notebooks/06_treinamento_modelo.ipynb` — Treinamento escalável, MLflow remoto (`PostgreSQL + S3`), validação OOT `2023`, TreeSHAP e exportação de `models/enem.pkl`.
 
 ---
 
-## ☁️ Executando a Etapa 2 (Testes, API FastAPI e Docker)
+## ☁️ Executando a Etapa 2 (Testes, API FastAPI, Docker, Observabilidade e MLflow)
 
-### 1. Executar a Suíte Automatizada de Testes (`25` testes)
+### 1. Executar o Quality Gate Local (`26` testes + `ruff` + `mypy`)
 ```bash
 pytest tests/ -v
+ruff check src tests
+mypy src/api tests
 ```
 
 ### 2. Subir a API Localmente (sem Docker)
 ```bash
 uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 ```
-Acesse a documentação interativa Swagger em `http://localhost:8000/docs`.
+Acesse a documentação interativa Swagger em `http://localhost:8000/docs` e as métricas Prometheus em `http://localhost:8000/metrics`.
 
-### 3. Subir a API Containerizada com Docker Compose
+### 3. Subir Stacks Containerizadas com Docker Compose
 ```bash
+# Apenas a API FastAPI (:8000)
 docker compose up -d
+
+# API + Observabilidade (Prometheus :9090 + Grafana :3000)
+docker compose --profile monitoring up -d
+
+# Tracking MLflow Remoto (PostgreSQL :5432 + MLflow Server :5000 -> Artifact Store S3)
+docker compose --profile mlops up -d
 ```
 Para encerrar os serviços:
 ```bash
-docker compose down
+docker compose --profile monitoring --profile mlops down
 ```
 
 ### 4. Exemplos de Chamadas aos Endpoints
@@ -178,5 +195,10 @@ docker compose down
 
 * [`visao_geral_projeto.md`](visao_geral_projeto.md) — Mapa completo das etapas, capítulos (`01` a `07`), guias técnicos e roteiros de slides.
 * [`AGENT.md`](AGENT.md) — Guia arquitetural detalhado, métricas oficiais e regras operacionais do repositório.
+* [`docs/etapa-02-passo-a-passo.md`](docs/etapa-02-passo-a-passo.md) — Roteiro mestre de evolução MLOps e fechamento acadêmico do TCC.
+* [`docs/estudos-futuros.md`](docs/estudos-futuros.md) — Análise arquitetural comparada (`Opção A + Cenário 1`) e alternativas tecnológicas por camada.
 * [`docs/passo-a-passo-07-api-docker.md`](docs/passo-a-passo-07-api-docker.md) — Auditoria técnica da API FastAPI, testes, imagem Docker e pipeline CI/CD.
+* [`docs/guia-estudo-observabilidade.md`](docs/guia-estudo-observabilidade.md) — Guia da Fase 1: `/metrics`, Prometheus e dashboard Grafana.
+* [`docs/guia-estudo-terraform-dvc-s3.md`](docs/guia-estudo-terraform-dvc-s3.md) — Guia da Fase 2: IaC AWS (Terraform) e versionamento de datasets (DVC + S3).
+* [`docs/guia-estudo-mlflow-postgresql-s3.md`](docs/guia-estudo-mlflow-postgresql-s3.md) — Guia da Fase 3: MLflow Tracking remoto (`PostgreSQL 16 + S3`) e reexecução do NB06.
 * [`docs/onde-tudo-comeca.md`](docs/onde-tudo-comeca.md) — Histórico didático da fase inicial de ingestão/pipeline (arquivada na tag `archive/pre-faxina-2026-11`).

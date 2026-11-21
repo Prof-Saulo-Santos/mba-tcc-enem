@@ -2,7 +2,7 @@
 
 **Projeto:** TCC MBA — Predição de Desempenho no ENEM (`TARGET_M4`) e Arquitetura MLOps  
 **Autor:** Saulo Santos  
-**Ponto de Partida do Plano:** `main` atualizado + entregas validadas da **Fase 3** (`MLflow PostgreSQL + S3` & `NB06`)  
+**Ponto de Partida do Plano:** `main` atualizado + **Parte I (Fases 1 a 4) 100% concluída e validada** (`Prometheus/Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3`, `CI Ruff + Mypy + Docs`)  
 **Última Atualização:** `21/11/2026`  
 **Objetivo deste Documento:** Servir como **roteiro mestre (*handoff*)** registrando o que já foi concluído e validado e conduzindo, passo a passo junto com o Saulo, as próximas etapas até o fechamento final do TCC.
 
@@ -52,7 +52,7 @@
 ## 3. Parte I — Roteiro Técnico de Execução (4 Fases)
 
 ```text
-[✅ Fase 1: Prometheus + Grafana] ──> [✅ Fase 2: Terraform + S3 + DVC] ──> [✅ Fase 3: MLflow PostgreSQL+S3 & NB06] ──> [⏳ Fase 4: CI Hardening + Docs]
+[✅ Fase 1: Prometheus + Grafana] ──> [✅ Fase 2: Terraform + S3 + DVC] ──> [✅ Fase 3: MLflow PostgreSQL+S3 & NB06] ──> [✅ Fase 4: CI Hardening + Docs]
 ```
 
 ### Fase 1 — Observabilidade na API (`Prometheus + Grafana`, Cenário 1) — ✅ CONCLUÍDA E VALIDADA (`19/11/2026`)
@@ -88,12 +88,14 @@
   * [`media/mlflow_postgresql_s3_fase3.png`](../media/mlflow_postgresql_s3_fase3.png), [`media/producao_ecr_apprunner.png`](../media/producao_ecr_apprunner.png) e [`docs/guia-estudo-mlflow-postgresql-s3.md`](guia-estudo-mlflow-postgresql-s3.md): infográficos `1920×1080` e guia de estudo/slides gerados.
 * **Lembrete para Fase 4:** Atualizar referências antigas a `8b4ed2c387044363968b6088078bdf2d` e `sqlite:///mlflow.db` em [`AGENT.md`](../AGENT.md) e [`docs/passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md).
 
-### Fase 4 — Qualidade Estática no CI e Alinhamento Documental — ⏳ PRÓXIMA ETAPA
-* **Objetivo:** Reforçar governança de código no CI/CD e atualizar a documentação técnica antes da redação final.
-* **Passos:**
-  1. Avaliar com o Saulo a adição de `ruff` e `mypy` no job `quality-gate-ci` em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) (e corrigir eventuais apontamentos em `src/api/` e `tests/`).
-  2. Atualizar [`README.md`](../README.md), [`AGENT.md`](../AGENT.md), [`visao_geral_projeto.md`](../visao_geral_projeto.md), [`docs/passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md) e [`docs/diagrama_deploy_aws.md`](diagrama_deploy_aws.md) (que ainda cita *"esperando pelo momento que o INEP liberará os dados no futuro"*) para refletir a arquitetura final com `DVC + S3`, `MLflow (PostgreSQL + S3)`, `Terraform` e `Prometheus + Grafana`.
-  3. **Checkpoint Git.**
+### Fase 4 — Qualidade Estática no CI e Alinhamento Documental — ✅ CONCLUÍDA E VALIDADA (`21/11/2026`)
+* **O que foi entregue e testado:**
+  * [`pyproject.toml`](../pyproject.toml): configuração unificada de `ruff` (`E4`, `E7`, `E9`, `F`, `I`, `py313`) e `mypy` (`python_version = "3.13"`, `disallow_untyped_defs = true`, `ignore_missing_imports = true`).
+  * Código e tipagem em `src/api/` e `tests/`: removido `import numpy as np` não utilizado e corrigida inferência de `self.model` / `os.getenv` em [`src/api/model_loader.py`](../src/api/model_loader.py); tipagem de `call_next` em [`src/api/main.py`](../src/api/main.py); tipo `Iterator[TestClient]` na fixture `client` em [`tests/test_api_contract.py`](../tests/test_api_contract.py); ordenação de imports validada em todos os módulos.
+  * [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml): job `quality-gate-ci` endurecido com `ruff check src tests` + `mypy src/api tests` + **`26/26` `pytest`**, resumo atualizado para `26/26 PASSED` e gatilhos incluindo `pyproject.toml`.
+  * **Validação local completa:** `ruff check src tests` (`All checks passed!`), `mypy --python-executable .venv/bin/python src/api tests` (`Success: no issues found in 7 source files`) e `pytest tests/test_api_contract.py tests/test_model_inference.py -v` (**`26 passed`**).
+  * **Documentação técnica alinhada (links internos validados):** [`README.md`](../README.md), [`AGENT.md`](../AGENT.md), [`visao_geral_projeto.md`](../visao_geral_projeto.md), [`docs/passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md) e [`docs/diagrama_deploy_aws.md`](diagrama_deploy_aws.md) atualizados para refletir a **Arquitetura Desacoplada por Planos** (`Prometheus + Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3`, `run_id = 6490c396b0e04147b156bedb0c8af9f7`, `26` testes e `Ruff + Mypy`), além de `.gitignore`/`.dockerignore` cobrindo `.ruff_cache/` e `.mypy_cache/`.
+  * **Parte I (`Fases 1 a 4`) encerrada:** Próximo bloco passa a ser a **Parte II — Fechamento Acadêmico do TCC (Passos 5 a 7)**.
 
 ---
 
@@ -128,4 +130,4 @@
 
 Ao abrir um novo chat, você pode enviar:
 
-> *"Leia `AGENT.md`, `visao_geral_projeto.md`, `docs/estudos-futuros.md`, `docs/etapa-02-passo-a-passo.md` e `docs/guia-estudo-mlflow-postgresql-s3.md`. Confirme o estado atual (Fases 1, 2 e 3 concluídas) e siga as regras de colaboração passo a passo: quero [estudar os detalhes da Fase 3 / iniciar a Fase 4 (CI Hardening + alinhamento documental) / atualizar a dissertação]."*
+> *"Leia `AGENT.md`, `visao_geral_projeto.md`, `docs/estudos-futuros.md` e `docs/etapa-02-passo-a-passo.md`. Confirme o estado atual (Parte I — Fases 1, 2, 3 e 4 integralmente concluídas e validadas) e siga as regras de colaboração passo a passo: quero iniciar a Parte II — Passo 5 (atualizar integralmente a dissertação em `tcc_mba_saulo_santos.md` e `.docx`), ou trabalhar nos Passos 6/7 (slides finais / sabatina e deploy pontual AWS)."*
