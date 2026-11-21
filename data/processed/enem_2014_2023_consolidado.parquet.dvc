@@ -1,0 +1,5 @@
+outs:
+- md5: 841dfd3ad2e151882706e3681edae07e
+  size: 160608216
+  hash: md5
+  path: enem_2014_2023_consolidado.parquet

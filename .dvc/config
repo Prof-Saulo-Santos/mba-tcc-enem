@@ -1,0 +1,5 @@
+[core]
+    remote = s3remote
+['remote "s3remote"']
+    url = s3://tcc-enem-saulo-mlops-703671922740/dvc-store
+    region = us-east-1

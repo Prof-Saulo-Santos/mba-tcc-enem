@@ -2,8 +2,8 @@
 
 **Projeto:** TCC MBA — Predição de Desempenho no ENEM (`TARGET_M4`) e Arquitetura MLOps  
 **Autor:** Saulo Santos  
-**Ponto de Partida do Plano:** `77c01fc` (`main`) + alterações validadas da **Fase 1** (`Observabilidade`)  
-**Última Atualização:** `19/11/2026`  
+**Ponto de Partida do Plano:** `0cda332` (`main`) + entregas validadas da **Fase 2** (`Terraform + S3 + DVC`)  
+**Última Atualização:** `21/11/2026`  
 **Objetivo deste Documento:** Servir como **roteiro mestre (*handoff*)** registrando o que já foi concluído e validado e conduzindo, passo a passo junto com o Saulo, as próximas etapas até o fechamento final do TCC.
 
 ---
@@ -52,7 +52,7 @@
 ## 3. Parte I — Roteiro Técnico de Execução (4 Fases)
 
 ```text
-[✅ Fase 1: Prometheus + Grafana] ──> [⏸️ Estudo & Slides Fase 1] ──> [⏳ Fase 2: Terraform + S3 + DVC] ──> [⏳ Fase 3: MLflow PostgreSQL+S3 & NB06] ──> [⏳ Fase 4: CI Hardening + Docs]
+[✅ Fase 1: Prometheus + Grafana] ──> [✅ Fase 2: Terraform + S3 + DVC] ──> [⏳ Fase 3: MLflow PostgreSQL+S3 & NB06] ──> [⏳ Fase 4: CI Hardening + Docs]
 ```
 
 ### Fase 1 — Observabilidade na API (`Prometheus + Grafana`, Cenário 1) — ✅ CONCLUÍDA E VALIDADA (`19/11/2026`)
@@ -65,34 +65,18 @@
   * [`docs/guia-estudo-observabilidade.md`](guia-estudo-observabilidade.md): guia didático detalhado da Fase 1 para estudo, montagem de slides e preparação para sabatina.
 * **Evidência em runtime (Docker Desktop/WSL em `19/11/2026`):** `docker compose --profile monitoring up -d --build` subiu os 3 containers; Prometheus validou `enem-api-local` (`http://enem-api:8000/metrics`) com estado **`1 / 1 up` (`UP`, `4ms`)** e o Data Source `Prometheus` foi confirmado no Grafana.
 
-### ⏸️ Pausa Planejada Antes da Fase 2 — Estudo e Slides da Fase 1 (Próxima Ação Imediata)
-* **Objetivo:** Antes de avançar para AWS/Terraform/DVC, o Saulo deseja **dominar intelectualmente** tudo o que foi implementado na Fase 1 (usando [`docs/guia-estudo-observabilidade.md`](guia-estudo-observabilidade.md)) e **produzir os slides explicativos dessa camada** (atualizando/complementando [`docs/slides-07.md`](slides-07.md) ou o roteiro da apresentação).
-* **Ação pendente no Grafana:** rodar a pequena sequência de chamadas `POST /predict` (documentada na Seção 4 de `docs/guia-estudo-observabilidade.md`) para visualizar as curvas de `rate()` / *Drift* preenchidas no dashboard **`ENEM TARGET_M4 — Observabilidade & Drift (API FastAPI)`**.
+### ⏸️ Estudo e Slides da Fase 1 — ✅ CONCLUÍDO PELO SAULO (`19/11/2026`)
+* Slides da Fase 1 concluídos após validação prática do Docker/Prometheus/Grafana. *(Lembrete opcional: quando quiser visualizar as curvas de `rate()` preenchidas no Grafana ao vivo, use o script da Seção 4 de [`docs/guia-estudo-observabilidade.md`](guia-estudo-observabilidade.md).)*
 
-### Fase 2 — Infraestrutura como Código (`Terraform`) + Versionamento de Dados (`DVC + S3`) — ⏳ PENDENTE
-* **Objetivo:** Eliminar *ClickOps* na criação de recursos AWS e versionar os arquivos `.parquet` pesados fora do Git usando Amazon S3.
-* **Impacto nos notebooks:** **Nenhum código Python alterado** (`02_eda` e `05_consolidacao` apenas têm suas saídas `.parquet` rastreadas via CLI do DVC).
-* **Arquivos alvo:**
-  * Nova pasta `infra/` (`providers.tf`, `variables.tf`, `main.tf`, `outputs.tf`, `terraform.tfvars.example`)
-  * `.gitignore` (ignorar `.terraform/`, `*.tfstate*`, `.env`, caches locais do DVC)
-  * `.dvc/` e arquivos `.dvc` para os Parquets em `data/processed/`
-  * [`requirements.txt`](../requirements.txt) (inclusão de `dvc[s3]` — **não** colocar em `requirements-api.txt`)
-  * [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) (se houver ajuste de variáveis/OIDC)
-* **Passo a passo com o Saulo:**
-  1. **Checklist prévio antes de qualquer comando AWS:**
-     * Verificar credenciais CLI locais (`aws sts get-caller-identity`), região (`us-east-1`), nome único global para o bucket S3 e se o GitHub Actions usará **OIDC (`AWS_ROLE_TO_ASSUME`)** (recomendado) ou Access Keys.
-     * Decidir com o Saulo se o `tfstate` do Terraform ficará local (fora do Git via `.gitignore`) ou em bucket S3 de estado.
-  2. **Desenhar e aprovar os recursos do Terraform (`infra/`):**
-     * **Amazon S3:** bucket privado com versionamento habilitado e *encryption at rest* (prefixos lógicos `dvc-store/` e `mlflow-artifacts/`).
-     * **Amazon ECR:** repositório `enem-target-m4-api` com *scan on push* e *lifecycle policy* FinOps (expirar imagens antigas).
-     * **IAM / OIDC:** role de acesso do AWS App Runner ao ECR e (se escolhido) provedor/role OIDC do GitHub Actions.
-     * **AWS App Runner:** serviço apontando para a imagem do ECR, porta `8000`, `/health` check, variáveis `MODEL_PATH` / `MODEL_CARD_PATH` e limites mínimos de instância/concorrência (FinOps).
-     * **`outputs.tf`:** URL do serviço App Runner, `service_arn` (`AWS_APPRUNNER_SERVICE_ARN`), URL do ECR e nome do bucket S3.
-  3. **Executar `terraform init`, `terraform plan` e (após revisão explícita do Saulo) `terraform apply`**.
-  4. **Configurar DVC (`dvc init` + `dvc remote add -d s3remote s3://<bucket>/dvc-store`):**
-     * Rastrear `data/processed/enem_2023_eda_purificado.parquet` e `data/processed/enem_2014_2023_consolidado.parquet` e enviar via `dvc push`.
-     * **⚠️ Atenção crítica de CI/CD:** O job `quality-gate-ci` e o `Dockerfile` em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) dependem de [`models/enem.pkl`](../models/enem.pkl) (`1,727 MB`) estar disponível imediatamente após `actions/checkout@v4` sem exigir credenciais AWS em Pull Requests. Portanto, **mantenha `models/enem.pkl` versionado no Git** e use o DVC para os datasets `.parquet` (ou só adicione `dvc pull` se optar explicitamente por alterar o CI).
-  5. **Checkpoint Git:** propor commit de `infra/`, `.dvc/` e arquivos `.dvc`.
+### Fase 2 — Infraestrutura como Código (`Terraform`) + Versionamento de Dados (`DVC + S3`) — ✅ CONCLUÍDA E VALIDADA (`19–21/11/2026`)
+* **O que foi entregue e validado:**
+  * [`infra/`](../infra/): `versions.tf`, `variables.tf`, `main.tf`, `outputs.tf`, `terraform.tfvars.example` e `.terraform.lock.hcl` (`Terraform v1.17.2`, provider `hashicorp/aws v5.100.0`).
+  * `terraform apply` (Estágio 1 com `create_apprunner = false`, `< $0,01/dia`): **`11` recursos criados na conta `703671922740` (`us-east-1`)** — Bucket S3 `tcc-enem-saulo-mlops-703671922740` (privado, versionado, `AES256`, `force_destroy=true`), ECR `enem-target-m4-api` (retenção `5` imagens, *scan on push*), OIDC Provider + Role `tcc-enem-saulo-mlops-github-actions` (restrita a `Prof-Saulo-Santos/mba-tcc-enem` em `main`) e Role `tcc-enem-saulo-mlops-apprunner-ecr`.
+  * [`.gitignore`](../.gitignore) e [`requirements.txt`](../requirements.txt): `dvc[s3]==3.67.1` fixado; `data/raw/`, `*.parquet`, `infra/.terraform/`, `*.tfstate*` e `.env` ignorados; contratos JSON e ponteiros `.dvc` liberados; `models/enem.pkl` mantido no Git para não quebrar o CI de PRs.
+  * [`.dvc/config`](../.dvc/config) + [`enem_2023_eda_purificado.parquet.dvc`](../data/processed/enem_2023_eda_purificado.parquet.dvc) (`26.8 MiB`) + [`enem_2014_2023_consolidado.parquet.dvc`](../data/processed/enem_2014_2023_consolidado.parquet.dvc) (`153.2 MiB`): **`2 files pushed`** e confirmados diretamente no bucket via `aws s3 ls` em `dvc-store/files/md5/...`.
+  * [`media/infra_terraform_s3_dvc.png`](../media/infra_terraform_s3_dvc.png): infográfico `1920×1080` gerado e validado.
+  * [`docs/guia-estudo-terraform-dvc-s3.md`](guia-estudo-terraform-dvc-s3.md): guia didático completo da Fase 2, custos FinOps, comandos de operação e roteiro de slides/sabatina.
+* **Observação para a próxima etapa (Fase 3):** O bucket `s3://tcc-enem-saulo-mlops-703671922740/mlflow-artifacts` já está provisionado e pronto para receber o `--default-artifact-root` do MLflow Tracking Server na Fase 3. *(E quando for testar o Estágio 2 do Terraform, após publicar uma imagem no ECR, bastará rodar `terraform -chdir=infra apply -var="create_apprunner=true"` e configurar os secrets `AWS_ROLE_TO_ASSUME` e `AWS_APPRUNNER_SERVICE_ARN` no GitHub.)*
 
 ### Fase 3 — MLflow Tracking Remoto (`PostgreSQL + S3`) e Reexecução do Notebook 06
 * **Objetivo:** Eliminar `sqlite:///mlflow.db` e `./mlruns`, passando a registrar parâmetros, métricas, gráficos, Model Card e modelo registrado em **PostgreSQL + Amazon S3**.
@@ -155,4 +139,4 @@
 
 Ao abrir um novo chat, você pode enviar:
 
-> *"Leia `AGENT.md`, `visao_geral_projeto.md`, `docs/estudos-futuros.md`, `docs/etapa-02-passo-a-passo.md` e `docs/guia-estudo-observabilidade.md`. Confirme o estado atual (Fase 1 concluída) e siga as regras de colaboração passo a passo: quero [estudar os detalhes da Fase 1 / montar os slides da Fase 1 / iniciar a Fase 2 (Terraform + S3 + DVC)]."*
+> *"Leia `AGENT.md`, `visao_geral_projeto.md`, `docs/estudos-futuros.md`, `docs/etapa-02-passo-a-passo.md` e `docs/guia-estudo-terraform-dvc-s3.md`. Confirme o estado atual (Fases 1 e 2 concluídas) e siga as regras de colaboração passo a passo: quero [estudar os detalhes da Fase 2 / montar os slides da Fase 2 / iniciar a Fase 3 (MLflow PostgreSQL + S3 e Notebook 06)]."*

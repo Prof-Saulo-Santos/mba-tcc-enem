@@ -1,0 +1,5 @@
+outs:
+- md5: 1e853180cf7167d2bb652a534d43b736
+  size: 28136523
+  hash: md5
+  path: enem_2023_eda_purificado.parquet

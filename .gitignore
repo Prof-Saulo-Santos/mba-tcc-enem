@@ -1,9 +1,24 @@
 .venv/
 __pycache__/
 .pytest_cache/
-data/
 .ipynb_checkpoints/
 mlruns/
 mlflow.db
 scratch/
 *.docx  # Opcional: Se não quiser versionar o arquivo Word pesado, use apenas o .md
+
+# Dados brutos e binários Parquet pesados (versionados via DVC + S3)
+data/raw/
+data/processed/*.parquet
+data/processed/safras_consolidacao/
+
+# Terraform (nunca versionar estado local, cache de providers, planos ou tfvars reais)
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/terraform.tfvars
+infra/*.tfplan
+infra/crash.log
+
+# Segredos locais
+.env
