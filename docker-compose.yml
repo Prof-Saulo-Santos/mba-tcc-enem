@@ -42,3 +42,47 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: enem-mlflow-postgres
+    profiles: ["mlops"]
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${MLFLOW_PG_USER:-mlflow}
+      - POSTGRES_PASSWORD=${MLFLOW_PG_PASSWORD:-mlflow}
+      - POSTGRES_DB=${MLFLOW_PG_DB:-mlflow}
+    volumes:
+      - postgres_mlflow_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MLFLOW_PG_USER:-mlflow} -d ${MLFLOW_PG_DB:-mlflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    restart: unless-stopped
+
+  mlflow-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    image: enem-mlflow-server:3.17.2
+    container_name: enem-mlflow-server
+    profiles: ["mlops"]
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_BACKEND_URI=postgresql+psycopg2://${MLFLOW_PG_USER:-mlflow}:${MLFLOW_PG_PASSWORD:-mlflow}@postgres:5432/${MLFLOW_PG_DB:-mlflow}
+      - MLFLOW_ARTIFACT_ROOT=${MLFLOW_ARTIFACT_ROOT:-s3://tcc-enem-saulo-mlops-703671922740/mlflow-artifacts}
+      - AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}
+      - AWS_SDK_LOAD_CONFIG=1
+    volumes:
+      - ${HOME}/.aws:/root/.aws:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_mlflow_data:

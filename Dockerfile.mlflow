@@ -1,0 +1,26 @@
+# ==============================================================================
+# Imagem dedicada ao MLflow Tracking Server remoto (Fase 3 - Plano Offline)
+# Alinhada em versão exata com o ambiente de treino (mlflow==3.17.2)
+# ==============================================================================
+FROM python:3.13-slim
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /mlflow
+
+RUN uv venv /opt/venv && \
+    uv pip install --python /opt/venv/bin/python --no-cache \
+      mlflow==3.17.2 \
+      psycopg2-binary==2.9.13 \
+      boto3==1.44.9
+
+ENV PATH="/opt/venv/bin:$PATH"
+
+EXPOSE 5000
+
+CMD ["sh", "-c", "exec mlflow server --backend-store-uri \"${MLFLOW_BACKEND_URI}\" --default-artifact-root \"${MLFLOW_ARTIFACT_ROOT}\" --host 0.0.0.0 --port 5000 --allowed-hosts \"*\""]
