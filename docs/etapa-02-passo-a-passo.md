@@ -2,7 +2,7 @@
 
 **Projeto:** TCC MBA — Predição de Desempenho no ENEM (`TARGET_M4`) e Arquitetura MLOps  
 **Autor:** Saulo Santos  
-**Ponto de Partida do Plano:** `0cda332` (`main`) + entregas validadas da **Fase 2** (`Terraform + S3 + DVC`)  
+**Ponto de Partida do Plano:** `main` atualizado + entregas validadas da **Fase 3** (`MLflow PostgreSQL + S3` & `NB06`)  
 **Última Atualização:** `21/11/2026`  
 **Objetivo deste Documento:** Servir como **roteiro mestre (*handoff*)** registrando o que já foi concluído e validado e conduzindo, passo a passo junto com o Saulo, as próximas etapas até o fechamento final do TCC.
 
@@ -52,7 +52,7 @@
 ## 3. Parte I — Roteiro Técnico de Execução (4 Fases)
 
 ```text
-[✅ Fase 1: Prometheus + Grafana] ──> [✅ Fase 2: Terraform + S3 + DVC] ──> [⏳ Fase 3: MLflow PostgreSQL+S3 & NB06] ──> [⏳ Fase 4: CI Hardening + Docs]
+[✅ Fase 1: Prometheus + Grafana] ──> [✅ Fase 2: Terraform + S3 + DVC] ──> [✅ Fase 3: MLflow PostgreSQL+S3 & NB06] ──> [⏳ Fase 4: CI Hardening + Docs]
 ```
 
 ### Fase 1 — Observabilidade na API (`Prometheus + Grafana`, Cenário 1) — ✅ CONCLUÍDA E VALIDADA (`19/11/2026`)
@@ -78,28 +78,17 @@
   * [`docs/guia-estudo-terraform-dvc-s3.md`](guia-estudo-terraform-dvc-s3.md): guia didático completo da Fase 2, custos FinOps, comandos de operação e roteiro de slides/sabatina.
 * **Observação para a próxima etapa (Fase 3):** O bucket `s3://tcc-enem-saulo-mlops-703671922740/mlflow-artifacts` já está provisionado e pronto para receber o `--default-artifact-root` do MLflow Tracking Server na Fase 3. *(E quando for testar o Estágio 2 do Terraform, após publicar uma imagem no ECR, bastará rodar `terraform -chdir=infra apply -var="create_apprunner=true"` e configurar os secrets `AWS_ROLE_TO_ASSUME` e `AWS_APPRUNNER_SERVICE_ARN` no GitHub.)*
 
-### Fase 3 — MLflow Tracking Remoto (`PostgreSQL + S3`) e Reexecução do Notebook 06
-* **Objetivo:** Eliminar `sqlite:///mlflow.db` e `./mlruns`, passando a registrar parâmetros, métricas, gráficos, Model Card e modelo registrado em **PostgreSQL + Amazon S3**.
-* **Impacto nos notebooks:**
-  * **Notebooks `01` a `05`: zero alterações de código.**
-  * **[`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb): único notebook alterado.**
-* **Arquivos alvo:**
-  * `docker-compose.yml` (ou `docker-compose.mlops.yml`) com serviços `postgres` e `mlflow-server` (conectado ao S3 via credenciais AWS em `.env` não versionado)
-  * [`requirements.txt`](../requirements.txt) (`psycopg2-binary`, `boto3`)
-  * [`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb) (`Bloco 1.5` na Célula 2, diagrama Mermaid na Célula 3 e notas textuais nas Células `0`, `1`, `18`, `19`)
-  * Artefatos atualizados após reexecução: [`models/enem.pkl`](../models/enem.pkl), [`models/enem_xgboost.ubj`](../models/enem_xgboost.ubj), [`models/enem_model_card.json`](../models/enem_model_card.json), [`models/auditoria_holdout_por_ano_2014_2023.csv`](../models/auditoria_holdout_por_ano_2014_2023.csv)
-* **Passo a passo com o Saulo:**
-  1. Subir `postgres + mlflow-server` apontando `--backend-store-uri postgresql+psycopg2://...` e `--default-artifact-root s3://<bucket>/mlflow-artifacts`.
-  2. Alterar `Bloco 1.5` de [`06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb) para ler `MLFLOW_TRACKING_URI` via `os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")` (removendo `sqlite:///mlflow.db` e `./mlruns`).
-  3. **Reexecutar o Notebook 06 (com autorização prévia do Saulo, avisando que a execução completa leva ~35–45 minutos)**.
-  4. **⚠️ Sincronização obrigatória pós-reexecução:** Conferir se o `sha256` de `models/enem.pkl` ou o `mlflow_run_id_campeao` mudaram em `models/enem_model_card.json`. Caso tenham mudado, atualizar de forma consistente:
-     * `EXPECTED_MODEL_SHA256` em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml);
-     * asserções de `sha256` / `run_id` / valor esperado em [`tests/test_api_contract.py`](../tests/test_api_contract.py) e [`tests/test_model_inference.py`](../tests/test_model_inference.py);
-     * referências nos guias (`AGENT.md`, `README.md`, `docs/passo-a-passo-06.md`, `docs/passo-a-passo-07-api-docker.md`).
-  5. Rodar `pytest tests/ -v` e testar o container Docker novamente. Após confirmar tudo no Postgres+S3, decidir com o Saulo se arquiva/remove `mlflow.db` e `mlruns/` locais.
-  6. **Checkpoint Git:** propor commit da stack MLOps + NB06 atualizado + Model Card/artefatos.
+### Fase 3 — MLflow Tracking Remoto (`PostgreSQL + S3`) e Reexecução do Notebook 06 — ✅ CONCLUÍDA E VALIDADA (`21/11/2026`)
+* **O que foi entregue e testado:**
+  * [`Dockerfile.mlflow`](../Dockerfile.mlflow) + [`docker-compose.yml`](../docker-compose.yml) (`profiles: ["mlops"]`): `postgres:16-alpine` (`:5432`, volume `postgres_mlflow_data`, `healthcheck` com `start_period: 60s`) + `mlflow-server` (`mlflow==3.17.2`, `:5000`, `--default-artifact-root s3://tcc-enem-saulo-mlops-703671922740/mlflow-artifacts`, `~/.aws:ro`).
+  * [`requirements.txt`](../requirements.txt): fixado `psycopg2-binary==2.9.13` e `boto3==1.44.9`.
+  * [`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb): atualizado `Bloco 1.5`, diagrama Mermaid e textos para tracking remoto (`http://127.0.0.1:5000`) e reexecutado integralmente sem erros (Notebooks `01` a `05` intactos).
+  * **Reprodutibilidade e Auditoria S3:** `models/enem.pkl` manteve **exatamente o mesmo `SHA-256`** (`114f51959492c89a240f9a64adb5d1365cf7c255b1b95a4cb8510636019bd55f`) e métricas (`R² = 0,33780`, `RMSE = 57,7439`); novo run registrado no PostgreSQL **`6490c396b0e04147b156bedb0c8af9f7`** (`models:/m-ea7931423f5141379ff97886636ae0ea`); **`17` objetos (`~2,49 MiB`)** confirmados no S3 via `aws s3 ls`.
+  * [`tests/test_api_contract.py`](../tests/test_api_contract.py): sincronizado com `mlflow_run_id_campeao = "6490c396b0e04147b156bedb0c8af9f7"`, alcançando **`26/26 PASSED`** no `pytest` e `ruff` limpo.
+  * [`media/mlflow_postgresql_s3_fase3.png`](../media/mlflow_postgresql_s3_fase3.png), [`media/producao_ecr_apprunner.png`](../media/producao_ecr_apprunner.png) e [`docs/guia-estudo-mlflow-postgresql-s3.md`](guia-estudo-mlflow-postgresql-s3.md): infográficos `1920×1080` e guia de estudo/slides gerados.
+* **Lembrete para Fase 4:** Atualizar referências antigas a `8b4ed2c387044363968b6088078bdf2d` e `sqlite:///mlflow.db` em [`AGENT.md`](../AGENT.md) e [`docs/passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md).
 
-### Fase 4 — Qualidade Estática no CI e Alinhamento Documental
+### Fase 4 — Qualidade Estática no CI e Alinhamento Documental — ⏳ PRÓXIMA ETAPA
 * **Objetivo:** Reforçar governança de código no CI/CD e atualizar a documentação técnica antes da redação final.
 * **Passos:**
   1. Avaliar com o Saulo a adição de `ruff` e `mypy` no job `quality-gate-ci` em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) (e corrigir eventuais apontamentos em `src/api/` e `tests/`).
@@ -139,4 +128,4 @@
 
 Ao abrir um novo chat, você pode enviar:
 
-> *"Leia `AGENT.md`, `visao_geral_projeto.md`, `docs/estudos-futuros.md`, `docs/etapa-02-passo-a-passo.md` e `docs/guia-estudo-terraform-dvc-s3.md`. Confirme o estado atual (Fases 1 e 2 concluídas) e siga as regras de colaboração passo a passo: quero [estudar os detalhes da Fase 2 / montar os slides da Fase 2 / iniciar a Fase 3 (MLflow PostgreSQL + S3 e Notebook 06)]."*
+> *"Leia `AGENT.md`, `visao_geral_projeto.md`, `docs/estudos-futuros.md`, `docs/etapa-02-passo-a-passo.md` e `docs/guia-estudo-mlflow-postgresql-s3.md`. Confirme o estado atual (Fases 1, 2 e 3 concluídas) e siga as regras de colaboração passo a passo: quero [estudar os detalhes da Fase 3 / iniciar a Fase 4 (CI Hardening + alinhamento documental) / atualizar a dissertação]."*

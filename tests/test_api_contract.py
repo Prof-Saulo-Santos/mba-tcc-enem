@@ -60,7 +60,7 @@ def test_info_endpoint_matches_model_card(client: TestClient) -> None:
     data = response.json()
     assert data["nome_artefato"] == "enem.pkl"
     assert data["modelo_registrado_mlflow"] == "enem_target_m4_producao"
-    assert data["mlflow_run_id_campeao"] == "8b4ed2c387044363968b6088078bdf2d"
+    assert data["mlflow_run_id_campeao"] == "6490c396b0e04147b156bedb0c8af9f7"
     assert data["classe_modelo_campeao"] == "XGBRegressor"
     assert data["janela_historica"] == "2014-2023"
     assert data["n_total_censo"] == 37593629
