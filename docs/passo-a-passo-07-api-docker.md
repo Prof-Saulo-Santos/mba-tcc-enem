@@ -4,7 +4,7 @@
 **Projeto de TCC:** MBA em Ciência de Dados & MLOps — Predição de Desempenho no ENEM  
 **Autor:** Saulo Santos  
 **Auditoria Inicial do Container:** 08 de Novembro de 2026 (`20:54:58 UTC`)  
-**Última Evolução e Validação (Fases 1–4):** 21 de Novembro de 2026 (`Prometheus/Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3` e `Ruff + Mypy` no CI)  
+**Última Evolução e Validação (Fases 1–4):** 22 de Novembro de 2026 (`Prometheus/Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3`, `Ruff + Mypy` no CI e `como-testar.md`)  
 
 ---
 
@@ -30,7 +30,7 @@ ETAPA 2 — PRODUTIZAÇÃO, TESTES, OBSERVABILIDADE, IaC E CI/CD
 | Decisão de Engenharia | Implementação Técnica | Justificativa Acadêmica e de Produção (FinOps / Segurança) |
 | :--- | :--- | :--- |
 | **Desacoplamento de Dependências (`requirements-api.txt`)** | Manifesto exclusivo com os 9 pacotes de *serving* (`fastapi`, `uvicorn`, `pydantic`, `joblib`, `numpy`, `pandas`, `scikit-learn`, `xgboost`, `prometheus-client`) nas versões exatas do treino. | Exclui pacotes pesados de laboratório (`torch`, `sentence-transformers`, `jupyter`, `shap`, `mlflow`), mantendo transferência enxuta (**`515 MB` Content Size** na imagem base) e instrumentação Prometheus nativa. |
-| **Contexto de Build Mínimo (`.dockerignore`)** | Bloqueio estrito de `data/`, `notebooks/`, `mlruns/`, `media/`, `.venv/` e `.git/`. | Reduz o contexto enviado ao Docker Daemon de **>25 GB** de microdados brutos para **~2 MB**, acelerando o build em CI/CD (GitHub Actions). |
+| **Contexto de Build Mínimo (`.dockerignore`)** | Bloqueio estrito de `data/`, `notebooks/`, `mlruns/`, `mlflow.db`, `media/`, `.venv/`, `.ruff_cache/`, `.mypy_cache/`, `*.md` e `.git/`. | Reduz o contexto enviado ao Docker Daemon de **>25 GB** de microdados brutos para poucos MB, acelerando o build em CI/CD (GitHub Actions). |
 | **Build Multi-Stage com `uv` (`Dockerfile`)** | Estágio `builder` compila bytecode (`UV_COMPILE_BYTECODE=1`) em `/opt/venv`; estágio `runtime` copia apenas o ambiente pronto e os artefatos. | Elimina compiladores e caches da imagem final, acelerando o *cold start* no **AWS App Runner**. |
 | **Suporte OpenMP Nativo (`libgomp1`)** | Instalação explícita de `libgomp1` no estágio `runtime` (`python:3.13-slim`). | Imagens Debian `-slim` omitem a biblioteca compartilhada `libgomp.so.1` exigida pelo motor C++ do XGBoost. Sua inclusão garante execução multithread sem falhas de carregamento dinâmico. |
 | **Segurança Zero-Privilege (`appuser`)** | Criação do grupo e usuário `appuser` (`UID/GID 1000`) sem privilégios de `root`. | Mitiga superfície de ataque em contêineres expostos na nuvem pública (conformidade OWASP Docker Security). |
@@ -223,5 +223,6 @@ A base descrita acima foi expandida nos seguintes guias especializados (consulte
 * **Observabilidade (`Prometheus + Grafana`, Fase 1):** endpoint `GET /metrics` ([`src/api/metrics.py`](../src/api/metrics.py)) + dashboard declarativo com 10 painéis (`profiles: ["monitoring"]`) detalhados em [`docs/guia-estudo-observabilidade.md`](guia-estudo-observabilidade.md).
 * **IaC & Dados (`Terraform + DVC + S3`, Fase 2):** provisionamento AWS sem *ClickOps* ([`infra/`](../infra/)) e versionamento dos `.parquet` no Amazon S3 (`.dvc/config`) detalhados em [`docs/guia-estudo-terraform-dvc-s3.md`](guia-estudo-terraform-dvc-s3.md).
 * **MLflow Remoto (`PostgreSQL 16 + S3`, Fase 3):** servidor containerizado (`profiles: ["mlops"]`, [`Dockerfile.mlflow`](../Dockerfile.mlflow)) e auditoria completa detalhados em [`docs/guia-estudo-mlflow-postgresql-s3.md`](guia-estudo-mlflow-postgresql-s3.md).
+* **CI Hardening, Alinhamento & Testes Práticos (Fase 4):** configuração unificada em [`pyproject.toml`](../pyproject.toml) (`ruff` + `mypy` no `quality-gate-ci`), alinhamento completo da documentação técnica ([`media/qualidade_ci_documentacao_fase4.png`](../media/qualidade_ci_documentacao_fase4.png)) e guia passo a passo de execução de testes em [`docs/como-testar.md`](como-testar.md).
 
 

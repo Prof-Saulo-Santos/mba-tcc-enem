@@ -201,4 +201,5 @@ docker compose --profile monitoring --profile mlops down
 * [`docs/guia-estudo-observabilidade.md`](docs/guia-estudo-observabilidade.md) — Guia da Fase 1: `/metrics`, Prometheus e dashboard Grafana.
 * [`docs/guia-estudo-terraform-dvc-s3.md`](docs/guia-estudo-terraform-dvc-s3.md) — Guia da Fase 2: IaC AWS (Terraform) e versionamento de datasets (DVC + S3).
 * [`docs/guia-estudo-mlflow-postgresql-s3.md`](docs/guia-estudo-mlflow-postgresql-s3.md) — Guia da Fase 3: MLflow Tracking remoto (`PostgreSQL 16 + S3`) e reexecução do NB06.
+* [`docs/como-testar.md`](docs/como-testar.md) — Guia prático de testes (Ruff/Mypy/Pytest, Swagger UI, Docker, `curl`, Prometheus e Grafana).
 * [`docs/onde-tudo-comeca.md`](docs/onde-tudo-comeca.md) — Histórico didático da fase inicial de ingestão/pipeline (arquivada na tag `archive/pre-faxina-2026-11`).

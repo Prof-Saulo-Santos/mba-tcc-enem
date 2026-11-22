@@ -95,6 +95,7 @@
   * [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml): job `quality-gate-ci` endurecido com `ruff check src tests` + `mypy src/api tests` + **`26/26` `pytest`**, resumo atualizado para `26/26 PASSED` e gatilhos incluindo `pyproject.toml`.
   * **Validação local completa:** `ruff check src tests` (`All checks passed!`), `mypy --python-executable .venv/bin/python src/api tests` (`Success: no issues found in 7 source files`) e `pytest tests/test_api_contract.py tests/test_model_inference.py -v` (**`26 passed`**).
   * **Documentação técnica alinhada (links internos validados):** [`README.md`](../README.md), [`AGENT.md`](../AGENT.md), [`visao_geral_projeto.md`](../visao_geral_projeto.md), [`docs/passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md) e [`docs/diagrama_deploy_aws.md`](diagrama_deploy_aws.md) atualizados para refletir a **Arquitetura Desacoplada por Planos** (`Prometheus + Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3`, `run_id = 6490c396b0e04147b156bedb0c8af9f7`, `26` testes e `Ruff + Mypy`), além de `.gitignore`/`.dockerignore` cobrindo `.ruff_cache/` e `.mypy_cache/`.
+  * [`docs/como-testar.md`](como-testar.md) & [`media/qualidade_ci_documentacao_fase4.png`](../media/qualidade_ci_documentacao_fase4.png): guia prático de testes (Pytest/Ruff/Mypy, Swagger UI, Docker, `curl`, Prometheus/Grafana e App Runner) e infográfico `1920×1080` da Fase 4 gerados e validados.
   * **Parte I (`Fases 1 a 4`) encerrada:** Próximo bloco passa a ser a **Parte II — Fechamento Acadêmico do TCC (Passos 5 a 7)**.
 
 ---
