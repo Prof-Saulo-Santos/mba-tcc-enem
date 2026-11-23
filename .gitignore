@@ -24,3 +24,7 @@ infra/crash.log
 
 # Segredos locais
 .env
+
+# Ambiente virtual isolado do front-end
+frontend/.venv/
+frontend/.env

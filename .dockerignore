@@ -25,3 +25,6 @@ scripts/
 models/*.csv
 models/*.ubj
 
+# Front-end isolado (Streamlit + RAG)
+frontend/
+
