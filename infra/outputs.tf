@@ -37,3 +37,16 @@ output "apprunner_service_url" {
   description = "Endpoint HTTPS público do AWS App Runner (disponível quando create_apprunner = true)"
   value       = try("https://${aws_apprunner_service.api[0].service_url}", null)
 }
+
+output "apprunner_schedule_timezone" {
+  description = "Fuso horário IANA configurado para disponibilidade do AWS App Runner"
+  value       = local.scheduler_enabled ? var.schedule_timezone : null
+}
+
+output "apprunner_schedules" {
+  description = "Expressões cron ativas no EventBridge Scheduler para o AWS App Runner"
+  value = {
+    for key, cfg in aws_scheduler_schedule.apprunner_window :
+    key => cfg.schedule_expression
+  }
+}

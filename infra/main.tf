@@ -8,6 +8,29 @@ locals {
     ? aws_iam_openid_connect_provider.github[0].arn
     : var.existing_github_oidc_provider_arn
   )
+  scheduler_enabled = var.create_apprunner && var.enable_apprunner_schedule
+  apprunner_schedules = local.scheduler_enabled ? {
+    resume_weekdays = {
+      action      = "resumeService"
+      cron        = "cron(0 9 ? * MON-FRI *)"
+      description = "Disponibiliza o AWS App Runner de segunda a sexta-feira as 09:00"
+    }
+    pause_weekdays = {
+      action      = "pauseService"
+      cron        = "cron(0 17 ? * MON-FRI *)"
+      description = "Pausa o AWS App Runner de segunda a sexta-feira as 17:00 (custo compute zero)"
+    }
+    resume_saturday = {
+      action      = "resumeService"
+      cron        = "cron(0 16 ? * SAT *)"
+      description = "Disponibiliza o AWS App Runner aos sabados as 16:00"
+    }
+    pause_saturday = {
+      action      = "pauseService"
+      cron        = "cron(0 19 ? * SAT *)"
+      description = "Pausa o AWS App Runner aos sabados as 19:00 (custo compute zero ate segunda 09:00)"
+    }
+  } : {}
 }
 
 # ==============================================================================
@@ -224,5 +247,91 @@ resource "aws_apprunner_service" "api" {
     timeout             = 5
     healthy_threshold   = 1
     unhealthy_threshold = 5
+  }
+}
+
+# ==============================================================================
+# 5. EVENTBRIDGE SCHEDULER — Janela FinOps do App Runner (Seg-Sex 9h-17h, Sab 16h-19h)
+# ==============================================================================
+resource "aws_scheduler_schedule_group" "apprunner" {
+  count = local.scheduler_enabled ? 1 : 0
+
+  name = "${var.project_name}-apprunner-window"
+}
+
+data "aws_iam_policy_document" "scheduler_assume" {
+  count = local.scheduler_enabled ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["scheduler.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [local.account_id]
+    }
+  }
+}
+
+resource "aws_iam_role" "scheduler_apprunner" {
+  count = local.scheduler_enabled ? 1 : 0
+
+  name               = "${var.project_name}-scheduler-apprunner"
+  assume_role_policy = data.aws_iam_policy_document.scheduler_assume[0].json
+}
+
+data "aws_iam_policy_document" "scheduler_apprunner_permissions" {
+  count = local.scheduler_enabled ? 1 : 0
+
+  statement {
+    sid    = "AppRunnerPauseResume"
+    effect = "Allow"
+    actions = [
+      "apprunner:PauseService",
+      "apprunner:ResumeService"
+    ]
+    resources = [aws_apprunner_service.api[0].arn]
+  }
+}
+
+resource "aws_iam_role_policy" "scheduler_apprunner" {
+  count = local.scheduler_enabled ? 1 : 0
+
+  name   = "${var.project_name}-scheduler-apprunner-policy"
+  role   = aws_iam_role.scheduler_apprunner[0].id
+  policy = data.aws_iam_policy_document.scheduler_apprunner_permissions[0].json
+}
+
+resource "aws_scheduler_schedule" "apprunner_window" {
+  for_each = local.apprunner_schedules
+
+  name                         = "${var.project_name}-${replace(each.key, "_", "-")}"
+  description                  = each.value.description
+  group_name                   = aws_scheduler_schedule_group.apprunner[0].name
+  schedule_expression          = each.value.cron
+  schedule_expression_timezone = var.schedule_timezone
+  state                        = "ENABLED"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:apprunner:${each.value.action}"
+    role_arn = aws_iam_role.scheduler_apprunner[0].arn
+    input = jsonencode({
+      ServiceArn = aws_apprunner_service.api[0].arn
+    })
+
+    retry_policy {
+      maximum_event_age_in_seconds = 300
+      maximum_retry_attempts       = 2
+    }
   }
 }

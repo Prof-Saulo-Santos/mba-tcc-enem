@@ -8,7 +8,9 @@ create_github_oidc_provider = true
 
 # Estágio 1 (sem imagem no ECR ainda): mantenha false
 # Estágio 2 (após push da imagem no ECR): altere para true e rode terraform apply
-create_apprunner = false
-image_tag        = "latest"
-apprunner_cpu    = "1024"
-apprunner_memory = "2048"
+create_apprunner          = false
+image_tag                 = "latest"
+apprunner_cpu             = "1024"
+apprunner_memory          = "2048"
+enable_apprunner_schedule = true
+schedule_timezone         = "America/Sao_Paulo"

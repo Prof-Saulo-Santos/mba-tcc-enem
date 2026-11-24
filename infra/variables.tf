@@ -57,3 +57,15 @@ variable "apprunner_memory" {
   type        = string
   default     = "2048"
 }
+
+variable "enable_apprunner_schedule" {
+  description = "Ativa janela automática (EventBridge Scheduler) para pausar e retomar o AWS App Runner"
+  type        = bool
+  default     = true
+}
+
+variable "schedule_timezone" {
+  description = "Fuso horário IANA utilizado nas expressões cron do EventBridge Scheduler"
+  type        = string
+  default     = "America/Sao_Paulo"
+}
