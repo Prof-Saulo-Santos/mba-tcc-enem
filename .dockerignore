@@ -28,3 +28,6 @@ models/*.ubj
 # Front-end isolado (Streamlit + RAG)
 frontend/
 
+# Space isolado do Hugging Face (Gradio + ZeroGPU + RAG)
+hf_rag_space/
+

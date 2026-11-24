@@ -28,3 +28,12 @@ infra/crash.log
 # Ambiente virtual isolado do front-end
 frontend/.venv/
 frontend/.env
+
+# Arquivos locais/temporários do Space Hugging Face
+hf_rag_space/.venv/
+hf_rag_space/.env
+hf_rag_space/faiss_index/
+
+# Notas e rascunhos locais pessoais (não versionar no GitHub)
+*nao-enviar-github.md
+*MLOps-nao-enviar-github.md
