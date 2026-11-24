@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import pandas as pd
+import streamlit as st
 from api_client import (
     MAX_CANDIDATOS_LOTE,
     MEDIA_HISTORICA_DECADA,
@@ -19,8 +21,6 @@ from api_client import (
     gerar_alunos_aleatorios,
 )
 from dotenv import load_dotenv
-import pandas as pd
-import streamlit as st
 
 FRONTEND_DIR = Path(__file__).resolve().parent
 load_dotenv(FRONTEND_DIR / ".env")

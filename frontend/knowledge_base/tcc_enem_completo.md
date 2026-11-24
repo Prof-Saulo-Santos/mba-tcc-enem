@@ -112,11 +112,14 @@ Especificadas em `data/processed/contrato_features_modelagem.json`, `data/proces
   * **`df_val_es` (`8%`):** `3.007.490` candidatos dedicados exclusivamente ao *Early Stopping* do XGBoost e à medição da Curva de Aprendizado.
   * **`df_test` (`20%`):** `7.518.726` candidatos lacrados como **Holdout Cego Final** (abertos apenas na Seção 6).
 
-### 6.2 Estágio 1 — Benchmark `5-Fold CV` (`N = 1.000.000`) & *Tuning* (`3-Fold CV`, `11` Nested Runs)
-* `DummyRegressor`: $R^2 = 0{,}0000$, $\text{RMSE} = 71{,}00\text{ pts}$, $\text{MAE} = 56{,}83\text{ pts}$.
-* `Ridge` (Linear L2): $R^2 = 0{,}2836$, $\text{RMSE} = 60{,}09\text{ pts}$, $\text{MAE} = 47{,}52\text{ pts}$.
-* `RandomForestRegressor`: $R^2 = 0{,}3337$, $\text{RMSE} = 57{,}95\text{ pts}$, $\text{MAE} = 45{,}76\text{ pts}$.
-* `XGBRegressor` (`hist`): $R^2 = 0{,}3359$, $\text{RMSE} = 57{,}86\text{ pts}$, $\text{MAE} = 45{,}67\text{ pts}$.
+### 6.2 Modelos Avaliados e Benchmark `5-Fold CV` (Estágio 1, `N = 1.000.000`) & *Tuning* (`3-Fold CV`, `11` Nested Runs)
+* **Lista exata dos 4 modelos concorrentes avaliados oficialmente no Notebook `06_treinamento_modelo.ipynb`:**
+  1. `DummyRegressor` (Baseline nulo): $R^2 = 0{,}0000$, $\text{RMSE} = 71{,}00\text{ pts}$, $\text{MAE} = 56{,}83\text{ pts}$.
+  2. `Ridge` (Regressão Linear L2): $R^2 = 0{,}2836$, $\text{RMSE} = 60{,}09\text{ pts}$, $\text{MAE} = 47{,}52\text{ pts}$.
+  3. `RandomForestRegressor` (*Bagging*): $R^2 = 0{,}3337$, $\text{RMSE} = 57{,}95\text{ pts}$, $\text{MAE} = 45{,}76\text{ pts}$.
+  4. `XGBRegressor` (`hist` — *Boosting* campeão de produção): $R^2 = 0{,}3359$, $\text{RMSE} = 57{,}86\text{ pts}$, $\text{MAE} = 45{,}67\text{ pts}$.
+* **Modelo auxiliar na engenharia de atributos (`Notebook 03`):** apenas `HistGradientBoostingRegressor` (`5-Fold CV` em `2023`) foi utilizado como avaliador fixo para selecionar o alvo `TARGET_M4` e validar a ablação de `19 -> 6` features.
+* **Algoritmos NÃO avaliados neste TCC:** modelos como `LightGBM` e `CatBoost` constam exclusivamente como **trabalhos futuros** (Seção 8); nenhum outro algoritmo (`ExtraTrees`, `Lasso`, `ElasticNet`, `SGDRegressor`, `Huber`, `LinearSVR` ou redes neurais) foi avaliado no estudo.
 * **Conclusão:** algoritmos de árvore superam a regressão linear nas mesmas 6 features em **`+5,23 p.p.` no $R^2$ de CV** (**`+19,1%` relativo em variância explicada no Holdout final** vs. `Ridge`), provando não-linearidade sociológica.
 * **Melhores configurações no *Tuning*:**
   * `XGB-01` (vencedor Boosting): `max_depth=5`, `learning_rate=0.10`, `min_child_weight=30`, `subsample=0.80`, `colsample_bytree=0.80`, `reg_lambda=1.0`, elevado no treino final do censo para `n_estimators=650` com `early_stopping_rounds=25`.

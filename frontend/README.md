@@ -3,21 +3,23 @@ title: ENEM TARGET_M4 — Cliente Simulador
 emoji: 🎓
 colorFrom: blue
 colorTo: green
-sdk: streamlit
-app_file: app.py
+sdk: docker
+app_port: 7860
 pinned: false
 ---
 
 # 🎓 Front-end Isolado (`frontend/`) — Cliente Streamlit da API ENEM `TARGET_M4`
 
-Aplicação cliente leve em **Streamlit** construída de forma **100% desacoplada** da esteira de MLOps (`src/api/`, `tests/`, `Dockerfile`, `.github/workflows/deploy.yml`).
+Aplicação cliente leve em **Streamlit** (empacotada via **Docker SDK** na porta `7860` para **Hugging Face Spaces**) e construída de forma **100% desacoplada** da esteira de MLOps (`src/api/`, `tests/`, `Dockerfile` raiz e `.github/workflows/deploy.yml`).
 
-## Funcionalidades
+## Estrutura
 
-* **Botão 1 — Consultar 1 Aluno (`POST /predict`):** formulário em português mapeando as 6 variáveis do *Esquadrão de Elite* (`RENDA_PER_CAPITA`, `Q024`, `TP_ANO_CONCLUIU`, `TP_LINGUA`, `TP_SEXO`, `Q002`) para os códigos exatos do contrato Pydantic da API.
-* **Botão 2 — Gerar e Consultar `N` Alunos Aleatórios (`POST /predict/batch`):** gera de `1` a `10.000` candidatos sintéticos válidos, consulta o endpoint vetorial em lote, mostra estatísticas/distribuição das notas `TARGET_M4` e gera tráfego real para o **Prometheus + Grafana**.
-* **Monitor de Saúde & Governança (`GET /health` & `GET /info`):** exibe ao vivo o hash `SHA-256`, `mlflow_run_id_campeao` e métricas oficiais da API conectada.
-* **Acesso ao RAG/LLM no Hugging Face (Link Externo):** botão de acesso direto para o seu Space RAG/LLM publicado no Hugging Face + download do dossiê [`knowledge_base/tcc_enem_completo.md`](knowledge_base/tcc_enem_completo.md).
+* `Dockerfile` — Imagem Docker dedicada para o Hugging Face Spaces (`python:3.13-slim`, usuário não-root UID `1000`, Streamlit na porta `7860`).
+* `app.py` — Interface web Streamlit (Botão 1 individual, Botão 2 lote aleatório `1..10.000`, aba de Governança `/health` & `/info` e aba de acesso por link externo ao Space RAG/LLM).
+* `api_client.py` — Cliente HTTP (`httpx`) e gerador sintético compatível com o contrato Pydantic da API.
+* `requirements.txt` — Dependências enxutas exclusivas do front-end (`streamlit`, `httpx`, `pandas`, `python-dotenv`).
+* `knowledge_base/tcc_enem_completo.md` — Dossiê técnico completo do TCC consolidando todos os notebooks (`01` a `06`), métricas oficiais, decisões metodológicas e arquitetura MLOps (`Fases 1 a 4`), pronto para alimentar seu Space RAG.
+* `.env.example` — Variáveis de configuração (`API_BASE_URL` e `HF_RAG_SPACE_URL`).
 
 ## Execução Local em Ambiente Virtual Isolado (`frontend/.venv`)
 
