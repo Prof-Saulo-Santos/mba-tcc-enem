@@ -141,8 +141,15 @@ No navegador (`http://localhost:8501`):
 
 ### Passo 3.4 — Conferir Prometheus e Grafana no navegador
 
-* **Prometheus (`http://localhost:9090`):** acesse `Status -> Targets` e confirme `enem-api-local` (`http://enem-api:8000/metrics`) como **`UP`**.
-* **Grafana (`http://localhost:3000`):** faça login (`admin` / `admin`, definido em [`docker-compose.yml`](../docker-compose.yml#L37-L38)) e abra **`Dashboards` $\rightarrow$ pasta `ENEM TARGET_M4`**.
+* **Prometheus (`http://localhost:9090`):**
+  * **Targets (saúde da coleta):** abra direto **`http://localhost:9090/targets`** (ou clique no menu **`≡`** no canto superior direito $\rightarrow$ `Status` $\rightarrow$ `Target health` / `Targets`) e confirme `enem-api-local` (`http://enem-api:8000/metrics`) como **`UP`**.
+  * **Consulta manual (`http://localhost:9090/query`):** a tela abre vazia (*"No data queried yet"*) até você executar uma expressão. No campo **`>_ Enter expression`**, digite uma das métricas abaixo e clique em **`Execute`**:
+    * `enem_api_predictions_total` *(total de candidatos escorados)*
+    * `enem_api_http_requests_total` *(requisições HTTP por rota e status)*
+    * `enem_api_model_info` *(status `1` do modelo carregado e hash SHA-256 ativo)*
+    * *Outras métricas disponíveis em [`src/api/metrics.py`](../src/api/metrics.py):* `enem_api_validation_errors_total`, `enem_api_http_request_duration_seconds`, `enem_api_model_inference_duration_seconds`, `enem_api_predicted_target_m4`, `enem_api_input_renda_per_capita` e `enem_api_input_categorical_total`.
+  * *(Se continuar zerado no Cenário A, confirme na barra lateral do Streamlit que `URL base da API FastAPI` está em `http://localhost:8000`, e não em uma URL antiga da AWS.)*
+* **Grafana (`http://localhost:3000`):** faça login (`admin` / `admin`, definido em [`docker-compose.yml`](../docker-compose.yml#L37-L38)) e abra **`Dashboards` $\rightarrow$ pasta `ENEM TARGET_M4`**. *(Para os gráficos de taxa `rate()` desenharem curvas contínuas, faça 2 a 4 cliques seguidos no Streamlit com alguns segundos de intervalo.)*
 
 ### Passo 3.5 — Encerrar os ambientes locais
 
@@ -202,7 +209,7 @@ curl -s https://<SEU_DOMINIO_ECS>/health | python3 -m json.tool
    docker compose --profile monitoring up -d
    docker compose --profile monitoring restart prometheus
    ```
-3. Confirme em `http://localhost:9090` (`Status -> Targets`) se **`enem-api-aws-ecs`** aparece como **`UP`**, e deixe aberto o Grafana em `http://localhost:3000` (`Dashboards -> ENEM TARGET_M4`).
+3. Confirme em **`http://localhost:9090/targets`** (ou `≡` $\rightarrow$ `Status` $\rightarrow$ `Target health` / `Targets`) se **`enem-api-aws-ecs`** aparece como **`UP`**, teste consultas em **`http://localhost:9090/query`** (`enem_api_predictions_total`, `enem_api_http_requests_total`, `enem_api_model_info`), e deixe aberto o Grafana em `http://localhost:3000` (`Dashboards -> ENEM TARGET_M4`).
 
 ### Passo 4.5 — Testar os endpoints pelos botões do Front-end (**Terminal 2 — pasta `frontend/`**)
 
@@ -246,7 +253,7 @@ No navegador (`http://localhost:8501`):
   source .venv/bin/activate
   streamlit run app.py
   ```
-* **Acessar:** Front-end `http://localhost:8501` (`http://localhost:8000`) | Prometheus `http://localhost:9090` | Grafana `http://localhost:3000`
+* **Acessar:** Front-end `http://localhost:8501` (`http://localhost:8000`) | Prometheus `http://localhost:9090/targets` e `http://localhost:9090/query` (`enem_api_predictions_total`, `enem_api_http_requests_total`, `enem_api_model_info`) | Grafana `http://localhost:3000`
 * **Encerrar:** `Ctrl+C` no Terminal 2; `docker compose --profile monitoring down` no Terminal 1.
 
 ### Cenário B — Testar tudo na AWS (Ligar $\rightarrow$ Testar $\rightarrow$ Desligar)
@@ -265,7 +272,7 @@ No navegador (`http://localhost:8501`):
   source .venv/bin/activate
   streamlit run app.py
   ```
-  *(Colar `ecs_service_url` COM `https://` na barra lateral do Streamlit, clicar nos botões e conferir Prometheus `:9090` / Grafana `:3000`.)*
+  *(Colar `ecs_service_url` COM `https://` na barra lateral do Streamlit, clicar nos botões e conferir `http://localhost:9090/targets`, `http://localhost:9090/query` (`enem_api_predictions_total`, `enem_api_http_requests_total`, `enem_api_model_info`) e Grafana `http://localhost:3000`.)*
 * **Encerrar (obrigatório!):** `Ctrl+C` no Terminal 2; recomentar bloco AWS em `prometheus.yml`; e no **Terminal 1 (`/home/saulo/mba/tcc/enem`)**:
   ```bash
   docker compose --profile monitoring down
