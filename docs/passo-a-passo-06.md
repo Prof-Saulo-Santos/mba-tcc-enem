@@ -17,7 +17,7 @@ ETAPA 1 — LABORATÓRIO CIENTÍFICO, NLP E MLFLOW (Concluída neste Notebook)
                                                                                                   │
                                                                                                   ▼
 ETAPA 2 — PRODUTIZAÇÃO, TESTES, DOCKER E DEPLOY CONTÍNUO (AWS)
-[models/enem.pkl + enem_model_card.json] ─> FastAPI ─> Pytest ─> Docker ─> GitHub Actions ─> AWS App Runner
+[models/enem.pkl + enem_model_card.json] ─> FastAPI ─> Pytest ─> Docker ─> GitHub Actions ─> AWS ECS Express Mode
 ```
 
 ---
