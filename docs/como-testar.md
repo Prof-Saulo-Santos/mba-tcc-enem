@@ -1,56 +1,70 @@
-# 🧪 Guia Prático — Como Testar a Aplicação (`ENEM TARGET_M4 API` & Stack MLOps)
+# 🧪 Guia Prático — Como Testar a Aplicação (`ENEM TARGET_M4 API`, Front-end & Stack AWS/MLOps)
 
-**Módulos Testados:** [`src/api/`](../src/api/), [`tests/`](../tests/), [`models/enem.pkl`](../models/enem.pkl), [`Dockerfile`](../Dockerfile), [`docker-compose.yml`](../docker-compose.yml), [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)  
-**Última Atualização:** 22 de Novembro de 2026 (Pós-Fases 1 a 4)
-
-Você pode validar a aplicação em **4 níveis**, indo dos testes automatizados locais até a observabilidade ao vivo em containers e o pipeline na nuvem.
+**Módulos Testados:** [`src/api/`](../src/api/), [`tests/`](../tests/), [`models/enem.pkl`](../models/enem.pkl), [`frontend/`](../frontend/), [`Dockerfile`](../Dockerfile), [`docker-compose.yml`](../docker-compose.yml), [`infra/`](../infra/), [`monitoring/`](../monitoring/), [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)  
+**Última Atualização:** 25 de Novembro de 2026 (Alinhado ao **AWS ECS Express Mode** e **Front-end Streamlit**)
 
 ---
 
-## 1. Teste Automatizado Completo (Quality Gate Local — sem subir servidor)
+## ⚠️ Regra de Ouro Antes de Começar: Use 2 Terminais Separados
 
-Executa a análise estática de código/tipos e os **`26` testes automatizados** cobrindo contrato HTTP, blindagem Anti-Leakage (`HTTP 422`), exposição `/metrics`, integridade `SHA-256`, paridade bit-a-bit com [`models/enem.pkl`](../models/enem.pkl), direcionalidade sociológica de Bourdieu e SLA de latência ([`tests/test_api_contract.py`](../tests/test_api_contract.py) e [`tests/test_model_inference.py`](../tests/test_model_inference.py)):
+Este repositório possui **dois ambientes Python isolados** (raiz vs. `frontend/`) e comandos que exigem estar na **pasta raiz** (`docker compose` e `terraform -chdir=infra`). Misturar os diretórios gera erros como `chdir infra: no such file or directory`.
+
+| Terminal | Pasta onde deve ficar | O que você executa nele |
+| :--- | :--- | :--- |
+| **Terminal 1 (Raiz)** | `/home/saulo/mba/tcc/enem` | `.venv/bin/pytest`, `uvicorn`, `docker compose`, `aws`, `terraform -chdir=infra` |
+| **Terminal 2 (Front-end)** | `/home/saulo/mba/tcc/enem/frontend` | `source .venv/bin/activate` e `streamlit run app.py` |
+
+> **Dica rápida:** antes de rodar qualquer comando `docker compose` ou `terraform`, confirme com `pwd` no Terminal 1 que você está em `/home/saulo/mba/tcc/enem`.
+
+---
+
+## 1. Quality Gate Automatizado (Local — sem subir servidor)
+
+**Onde rodar:** **Terminal 1** (raiz `/home/saulo/mba/tcc/enem`).
+
+Executa análise estática (`ruff`, `mypy`) e os **`26` testes automatizados** cobrindo contrato HTTP, blindagem Anti-Leakage (`HTTP 422`), exposição `/metrics`, integridade `SHA-256`, paridade bit-a-bit com [`models/enem.pkl`](../models/enem.pkl), direcionalidade sociológica de Bourdieu e SLA de latência ([`tests/test_api_contract.py`](../tests/test_api_contract.py) e [`tests/test_model_inference.py`](../tests/test_model_inference.py)):
 
 ```bash
-ruff check src tests
-mypy --python-executable .venv/bin/python src/api tests
+.venv/bin/ruff check src tests
+.venv/bin/mypy --python-executable .venv/bin/python src/api tests
 .venv/bin/pytest tests/ -v
 ```
 
-*(Esse é o mesmo conjunto de validações executado no job `quality-gate-ci` de [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml), usando as regras definidas em [`pyproject.toml`](../pyproject.toml).)*
+*(Esse é o mesmo conjunto de validações executado no job `quality-gate-ci` de [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml), usando as regras de [`pyproject.toml`](../pyproject.toml).)*
 
 ---
 
-## 2. Teste Interativo Direto no Python (Swagger UI)
+## 2. Teste Rápido Direto no Python (Swagger UI)
 
-Sobe a API FastAPI diretamente pelo ambiente virtual `.venv` executando [`src/api/main.py`](../src/api/main.py):
+**Onde rodar:** **Terminal 1** (raiz `/home/saulo/mba/tcc/enem`).
+
+Sobe apenas a API FastAPI localmente via [`src/api/main.py`](../src/api/main.py):
 
 ```bash
 .venv/bin/uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 ```
 
-* **Documentação interativa (Swagger UI):** abra `http://localhost:8000/docs` no navegador para enviar payloads manualmente pelo botão *Try it out*.
-* **Endpoint de métricas Prometheus:** `http://localhost:8000/metrics`.
-* Pressione `Ctrl + C` no terminal para encerrar o servidor.
+* **Swagger UI (testar pelo navegador):** `http://localhost:8000/docs`
+* **Endpoint de métricas Prometheus:** `http://localhost:8000/metrics`
+* Pressione `Ctrl + C` no Terminal 1 para encerrar antes de passar ao Nível 3.
 
 ---
 
-## 3. Teste no Container Docker Oficial + Prometheus & Grafana (Ambiente Completo)
+## 3. Teste Completo Local: API Docker + Prometheus + Grafana + Front-end (Custo Zero)
 
-Valida exatamente a imagem OCI de produção definida no [`Dockerfile`](../Dockerfile) e orquestrada pelo [`docker-compose.yml`](../docker-compose.yml):
+Siga **exatamente esta ordem** para validar o sistema inteiro na sua máquina sem tocar na AWS:
 
-* **Subir apenas a API (`:8000`):**
-  ```bash
-  docker compose up -d --build
-  ```
-* **Subir a API + Stack de Observabilidade (`Prometheus :9090` + `Grafana :3000`):**
-  ```bash
-  docker compose --profile monitoring up -d --build
-  ```
+### Passo 3.1 — Subir API + Prometheus + Grafana (**Terminal 1 — raiz**)
 
-### 3.1 Chamadas `curl` para validar todos os endpoints (`http://localhost:8000`)
+```bash
+docker compose --profile monitoring up -d --build
+```
 
-1. **Saúde do serviço e integridade SHA-256 (`GET /health`):**
+*(Sobe os 3 containers: `enem-api` na porta `:8000`, `prometheus` na `:9090` e `grafana` na `:3000`.)*
+
+### Passo 3.2 — (Opcional) Validar endpoints via `curl` (**Terminal 1 — raiz**)
+
+1. **Saúde e hash SHA-256 (`GET /health`):**
    ```bash
    curl -s http://localhost:8000/health | python3 -m json.tool
    ```
@@ -60,7 +74,7 @@ Valida exatamente a imagem OCI de produção definida no [`Dockerfile`](../Docke
    ```bash
    curl -s http://localhost:8000/info | python3 -m json.tool
    ```
-   *(Esperado: `"mlflow_run_id_campeao": "6490c396b0e04147b156bedb0c8af9f7"` e métricas oficiais do Model Card.)*
+   *(Esperado: `"mlflow_run_id_campeao": "6490c396b0e04147b156bedb0c8af9f7"`.)*
 
 3. **Predição individual (`POST /predict`):**
    ```bash
@@ -90,35 +104,170 @@ Valida exatamente a imagem OCI de produção definida no [`Dockerfile`](../Docke
    ```
    *(Deve rejeitar `"NU_ANO"` com `HTTP/1.1 422` e `"type": "extra_forbidden"`.)*
 
-### 3.2 Conferência ao vivo no Prometheus e Grafana
+6. **Popular gráficos `rate()` e *drift* rapidamente via terminal (opcional):**
+   ```bash
+   for i in $(seq 1 20); do
+     curl -s -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
+       -d '{"RENDA_PER_CAPITA": 0.5, "Q024": 0, "TP_ANO_CONCLUIU": 1, "TP_LINGUA": 1, "TP_SEXO": 0, "Q002": 2}' > /dev/null
+     curl -s -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
+       -d '{"RENDA_PER_CAPITA": 4.5, "Q024": 3, "TP_ANO_CONCLUIU": 0, "TP_LINGUA": 0, "TP_SEXO": 1, "Q002": 6}' > /dev/null
+     curl -s -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
+       -d '{"RENDA_PER_CAPITA": 1.5, "Q024": 1, "TP_ANO_CONCLUIU": 0, "TP_LINGUA": 0, "TP_SEXO": 0, "Q002": 4, "NU_ANO": 2023}' > /dev/null
+     sleep 1
+   done
+   ```
 
-* **Prometheus (`http://localhost:9090`):** acesse `Status -> Targets` e confirme o target `enem-api-local` (`http://enem-api:8000/metrics`) no estado **`UP`**.
-* **Grafana (`http://localhost:3000`):** faça login com usuário `admin` e senha `admin` (padrão definido em [`docker-compose.yml`](../docker-compose.yml#L37-L38)) e abra `Dashboards` → pasta **`ENEM TARGET_M4`**.
-* **Popular gráficos de taxa (`rate()`) e *drift* em tempo real** (detalhes em [`docs/guia-estudo-observabilidade.md`](guia-estudo-observabilidade.md#L116-L125)):
+### Passo 3.3 — Abrir o Front-end Streamlit (**Terminal 2 — pasta `frontend/`**)
+
+* **Apenas na 1ª vez** (caso `frontend/.venv` ainda não exista):
   ```bash
-  for i in $(seq 1 20); do
-    curl -s -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
-      -d '{"RENDA_PER_CAPITA": 0.5, "Q024": 0, "TP_ANO_CONCLUIU": 1, "TP_LINGUA": 1, "TP_SEXO": 0, "Q002": 2}' > /dev/null
-    curl -s -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
-      -d '{"RENDA_PER_CAPITA": 4.5, "Q024": 3, "TP_ANO_CONCLUIU": 0, "TP_LINGUA": 0, "TP_SEXO": 1, "Q002": 6}' > /dev/null
-    curl -s -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
-      -d '{"RENDA_PER_CAPITA": 1.5, "Q024": 1, "TP_ANO_CONCLUIU": 0, "TP_LINGUA": 0, "TP_SEXO": 0, "Q002": 4, "NU_ANO": 2023}' > /dev/null
-    sleep 1
-  done
+  cd frontend
+  uv venv .venv
+  source .venv/bin/activate
+  uv pip install -r requirements.txt
+  cp .env.example .env
+  streamlit run app.py
   ```
-* **Encerrar os containers com segurança:**
+* **Nos próximos testes (quando `frontend/.venv` já existe):**
   ```bash
-  docker compose --profile monitoring down
+  cd frontend
+  source .venv/bin/activate
+  streamlit run app.py
   ```
+
+No navegador (`http://localhost:8501`):
+1. Na barra lateral esquerda, mantenha **`URL base da API FastAPI`** em `http://localhost:8000`.
+2. Clique em **`🩺 Verificar saúde da API (/health)`** e depois dispare inferências com **`🔍 Consultar 1 Aluno`** e **`🎲 Gerar e Consultar N Alunos Aleatórios`**.
+
+### Passo 3.4 — Conferir Prometheus e Grafana no navegador
+
+* **Prometheus (`http://localhost:9090`):** acesse `Status -> Targets` e confirme `enem-api-local` (`http://enem-api:8000/metrics`) como **`UP`**.
+* **Grafana (`http://localhost:3000`):** faça login (`admin` / `admin`, definido em [`docker-compose.yml`](../docker-compose.yml#L37-L38)) e abra **`Dashboards` $\rightarrow$ pasta `ENEM TARGET_M4`**.
+
+### Passo 3.5 — Encerrar os ambientes locais
+
+1. No **Terminal 2 (`frontend/`)**: pressione `Ctrl + C` para parar o Streamlit.
+2. No **Terminal 1 (raiz)**: derrube os containers:
+   ```bash
+   docker compose --profile monitoring down
+   ```
 
 ---
 
-## 4. Teste em CI/CD (GitHub Actions) e Nuvem (AWS App Runner)
+## 4. Teste Completo na Nuvem AWS (ECS Express Mode + Front-end + Prometheus/Grafana)
 
-* **GitHub Actions (custo zero):** qualquer `git push` para a branch `main` (ou Pull Request) tocando nos arquivos da API, testes, modelo, `Dockerfile` ou `pyproject.toml` executa automaticamente os jobs `quality-gate-ci` e `docker-smoke-test` definidos em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
-* **AWS App Runner (deploy pontual para demonstração/banca):** caso queira testar via URL HTTPS pública na AWS, habilite o Estágio 2 do Terraform conforme [`docs/etapa-02-passo-a-passo.md`](etapa-02-passo-a-passo.md#L79) e destrua os recursos de computação logo após os testes para evitar custos:
+Siga **rigorosamente a ordem cronológica abaixo** (do Passo `4.1` ao `4.6`):
+
+### Passo 4.1 — (Informativo) CI/CD automático no GitHub Actions
+* Qualquer `git push` para a branch `main` (ou Pull Request) nos arquivos da API, testes, modelo, `Dockerfile` ou `pyproject.toml` roda gratuitamente os jobs `quality-gate-ci` e `docker-smoke-test` de [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
+* O Job 3 (`deploy-aws`) só atualiza o serviço na AWS se os Secrets `AWS_ROLE_TO_ASSUME` e `AWS_ECS_SERVICE_ARN` estiverem cadastrados no GitHub.
+
+### Passo 4.2 — Enviar a imagem Docker ao Amazon ECR (**Terminal 1 — raiz**)
+
+*(Necessário na 1ª vez ou sempre que você alterar o código da API em `src/api/`, o `Dockerfile` ou o `models/enem.pkl`. Se a tag `:latest` já está atualizada no ECR, pule direto para o Passo 4.3.)*
+
+```bash
+aws sts get-caller-identity
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin 703671922740.dkr.ecr.us-east-1.amazonaws.com
+
+docker build -t enem-target-m4-api:latest .
+docker tag enem-target-m4-api:latest 703671922740.dkr.ecr.us-east-1.amazonaws.com/enem-target-m4-api:latest
+docker push 703671922740.dkr.ecr.us-east-1.amazonaws.com/enem-target-m4-api:latest
+```
+
+### Passo 4.3 — Ligar o AWS ECS Express Mode via Terraform (**Terminal 1 — raiz**)
+
+```bash
+terraform -chdir=infra apply -var="create_ecs=true"
+```
+Confirme digitando `yes`. Como `wait_for_steady_state = true` está ativo em [`infra/main.tf`](../infra/main.tf), o Terraform aguardará o container passar no `/health` antes de concluir.
+
+Ao terminar, pegue a URL HTTPS pública gerada:
+
+```bash
+terraform -chdir=infra output ecs_service_url
+```
+
+*(Opcional) Valide direto no terminal ou abra `https://<SEU_DOMINIO_ECS>/docs` no navegador:*
+```bash
+curl -s https://<SEU_DOMINIO_ECS>/health | python3 -m json.tool
+```
+
+### Passo 4.4 — Conectar Prometheus e Grafana locais na AWS (**Terminal 1 — raiz**)
+
+1. Abra [`monitoring/prometheus/prometheus.yml`](../monitoring/prometheus/prometheus.yml), descomente as linhas do bloco **`enem-api-aws-ecs`** e substitua `SEU-SERVICO.ecs.us-east-1.on.aws` pelo domínio de `ecs_service_url` **SEM `https://`** e sem barra no final (pois `scheme: https` já adiciona o protocolo).
+2. Na **raiz `/home/saulo/mba/tcc/enem`**, suba e reinicie o Prometheus para ler a nova configuração:
+   ```bash
+   docker compose --profile monitoring up -d
+   docker compose --profile monitoring restart prometheus
+   ```
+3. Confirme em `http://localhost:9090` (`Status -> Targets`) se **`enem-api-aws-ecs`** aparece como **`UP`**, e deixe aberto o Grafana em `http://localhost:3000` (`Dashboards -> ENEM TARGET_M4`).
+
+### Passo 4.5 — Testar os endpoints pelos botões do Front-end (**Terminal 2 — pasta `frontend/`**)
+
+```bash
+cd frontend
+source .venv/bin/activate
+streamlit run app.py
+```
+*(Se ainda não criou `frontend/.venv`, execute antes o bloco de 1ª vez do Passo 3.3.)*
+
+No navegador (`http://localhost:8501`):
+1. Na barra lateral esquerda, em **`URL base da API FastAPI`**, cole o valor completo de `ecs_service_url` (**COM `https://`**, ex.: `https://tc-xxxx.ecs.us-east-1.on.aws`) e aperte `Enter`.
+2. Clique em **`🩺 Verificar saúde da API (/health)`** para confirmar conexão saudável (`healthy`).
+3. Na aba **`🛡️ Governança & Métricas`**, clique em **`🔄 Atualizar dados de governança da API`** (`GET /info`).
+4. Na aba **`🎯 Simulador`**, clique em **`🔍 Consultar 1 Aluno`** (`POST /predict`) e dispare algumas vezes **`🎲 Gerar e Consultar N Alunos Aleatórios`** (`POST /predict/batch`, por exemplo com 100 alunos) com alguns segundos de intervalo para ver as curvas de `rate()`, latência e *drift* atualizando ao vivo no Grafana (`http://localhost:3000`)!
+
+### Passo 4.6 — Desligamento Obrigatório Pós-Teste (**Volte ao Terminal 1 — raiz!**)
+
+1. No **Terminal 2 (`frontend/`)**: pare o Streamlit com `Ctrl + C`.
+2. Em [`monitoring/prometheus/prometheus.yml`](../monitoring/prometheus/prometheus.yml): recomente com `#` o bloco `enem-api-aws-ecs` (evita erros de target `DOWN` no próximo teste local).
+3. No **Terminal 1 (confira que `pwd` é `/home/saulo/mba/tcc/enem`)**:
+   ```bash
+   docker compose --profile monitoring down
+   terraform -chdir=infra apply -var="create_ecs=false"
+   ```
+   *(Confirme com `yes`. Isso desliga **apenas** o cluster ECS Express Mode e o Load Balancer ALB, zerando o custo de computação e mantendo intactos seu bucket **S3** com DVC/MLflow e o repositório **ECR** — custo residual `< $0,01/dia`.)*
+
+> **⚠️ CUIDADO COM `terraform destroy`:** Não rode `terraform -chdir=infra destroy` entre testes! Como [`infra/main.tf`](../infra/main.tf) possui `force_destroy = true` no bucket S3 e `force_delete = true` no ECR, `terraform destroy` apaga **tudo** (inclusive `dvc-store/`, `mlflow-artifacts/` e imagens Docker no ECR). Use `terraform -chdir=infra destroy` **somente** para encerramento definitivo após a banca.
+
+---
+
+## 5. Cola Rápida Para Repetir os Testes em Outro Dia
+
+### Cenário A — Testar tudo localmente (Custo Zero)
+* **Terminal 1 (`/home/saulo/mba/tcc/enem`):**
   ```bash
-  terraform -chdir=infra apply -var="create_apprunner=true"
-  # ... testes HTTP/HTTPS na URL pública ...
-  terraform -chdir=infra destroy
+  docker compose --profile monitoring up -d
+  ```
+* **Terminal 2 (`/home/saulo/mba/tcc/enem/frontend`):**
+  ```bash
+  source .venv/bin/activate
+  streamlit run app.py
+  ```
+* **Acessar:** Front-end `http://localhost:8501` (`http://localhost:8000`) | Prometheus `http://localhost:9090` | Grafana `http://localhost:3000`
+* **Encerrar:** `Ctrl+C` no Terminal 2; `docker compose --profile monitoring down` no Terminal 1.
+
+### Cenário B — Testar tudo na AWS (Ligar $\rightarrow$ Testar $\rightarrow$ Desligar)
+* **Terminal 1 (`/home/saulo/mba/tcc/enem`):**
+  ```bash
+  terraform -chdir=infra apply -var="create_ecs=true"
+  terraform -chdir=infra output ecs_service_url
+  ```
+  *(Colar o domínio sem `https://` em `monitoring/prometheus/prometheus.yml` e rodar:)*
+  ```bash
+  docker compose --profile monitoring up -d
+  docker compose --profile monitoring restart prometheus
+  ```
+* **Terminal 2 (`/home/saulo/mba/tcc/enem/frontend`):**
+  ```bash
+  source .venv/bin/activate
+  streamlit run app.py
+  ```
+  *(Colar `ecs_service_url` COM `https://` na barra lateral do Streamlit, clicar nos botões e conferir Prometheus `:9090` / Grafana `:3000`.)*
+* **Encerrar (obrigatório!):** `Ctrl+C` no Terminal 2; recomentar bloco AWS em `prometheus.yml`; e no **Terminal 1 (`/home/saulo/mba/tcc/enem`)**:
+  ```bash
+  docker compose --profile monitoring down
+  terraform -chdir=infra apply -var="create_ecs=false"
   ```
