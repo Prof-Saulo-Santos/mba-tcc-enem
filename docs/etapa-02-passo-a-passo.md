@@ -2,8 +2,8 @@
 
 **Projeto:** TCC MBA — Predição de Desempenho no ENEM (`TARGET_M4`) e Arquitetura MLOps  
 **Autor:** Saulo Santos  
-**Ponto de Partida do Plano:** `main` atualizado + **Parte I (Fases 1 a 4) 100% concluída e validada** (`Prometheus/Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3`, `CI Ruff + Mypy + Docs`)  
-**Última Atualização:** `21/11/2026`  
+**Ponto de Partida do Plano:** `main` atualizado + **Parte I (Fases 1 a 4) + Migração para AWS ECS Express Mode + Front-end Streamlit/RAG concluídos**  
+**Última Atualização:** `25/11/2026`  
 **Objetivo deste Documento:** Servir como **roteiro mestre (*handoff*)** registrando o que já foi concluído e validado e conduzindo, passo a passo junto com o Saulo, as próximas etapas até o fechamento final do TCC.
 
 ---
@@ -44,8 +44,8 @@
 * **Classificação técnica para a banca:** **Arquitetura Desacoplada por Planos (*Decoupled Training & Serving Planes* / *Local-to-Cloud MLOps*)** — **não** classificar como *Hybrid Cloud* (segundo o NIST, workstation local com Docker/WSL2 não constitui nuvem privada corporativa).
 * **Os 3 Planos:**
   1. **Plano Offline / Governança (Workstation Containerizada + Storage S3):** `PostgreSQL + MLflow Tracking Server + DVC` sob demanda em Docker, eliminando o `SQLite` e persistindo dados/artefatos no **Amazon S3**.
-  2. **Plano Online / *Serving* (AWS via Terraform):** `Terraform` (`infra/`) provisiona **Amazon S3**, **Amazon ECR**, **IAM/OIDC** e **AWS App Runner**, servindo a API FastAPI de forma independente da máquina local.
-  3. **Plano de Observabilidade (Cenário 1 — `Prometheus + Grafana`):** a API expõe `/metrics` (localmente e no App Runner) e containers `prometheus + grafana` consomem as métricas para validação e demonstração ao vivo (com registro explícito de que em operação 24/7 migraria para **AMP + AMG**).
+  2. **Plano Online / *Serving* (AWS via Terraform):** `Terraform` (`infra/`) provisiona **Amazon S3**, **Amazon ECR**, **IAM/OIDC** e **AWS ECS Express Mode** *(em substituição ao App Runner por restrição da conta AWS)*, servindo a API FastAPI com URL HTTPS pública de forma independente da máquina local.
+  3. **Plano de Observabilidade (Cenário 1 — `Prometheus + Grafana`):** a API expõe `/metrics` (localmente e no ECS Express Mode) e containers `prometheus + grafana` consomem as métricas para validação e demonstração ao vivo (com registro explícito de que em operação 24/7 migraria para **AMP + AMG**), apoiados pelos clientes web desacoplados em [`frontend/`](../frontend/) (Streamlit) e [`hf_rag_space/`](../hf_rag_space/) (Gradio RAG).
 
 ---
 
@@ -76,7 +76,7 @@
   * [`.dvc/config`](../.dvc/config) + [`enem_2023_eda_purificado.parquet.dvc`](../data/processed/enem_2023_eda_purificado.parquet.dvc) (`26.8 MiB`) + [`enem_2014_2023_consolidado.parquet.dvc`](../data/processed/enem_2014_2023_consolidado.parquet.dvc) (`153.2 MiB`): **`2 files pushed`** e confirmados diretamente no bucket via `aws s3 ls` em `dvc-store/files/md5/...`.
   * [`media/infra_terraform_s3_dvc.png`](../media/infra_terraform_s3_dvc.png): infográfico `1920×1080` gerado e validado.
   * [`docs/guia-estudo-terraform-dvc-s3.md`](guia-estudo-terraform-dvc-s3.md): guia didático completo da Fase 2, custos FinOps, comandos de operação e roteiro de slides/sabatina.
-* **Observação para a próxima etapa (Fase 3):** O bucket `s3://tcc-enem-saulo-mlops-703671922740/mlflow-artifacts` já está provisionado e pronto para receber o `--default-artifact-root` do MLflow Tracking Server na Fase 3. *(E quando for testar o Estágio 2 do Terraform, após publicar uma imagem no ECR, bastará rodar `terraform -chdir=infra apply -var="create_apprunner=true"` e configurar os secrets `AWS_ROLE_TO_ASSUME` e `AWS_APPRUNNER_SERVICE_ARN` no GitHub.)*
+* **Observação para o Estágio 2 (atualizada em `24–25/11/2026`):** O bucket `s3://tcc-enem-saulo-mlops-703671922740/mlflow-artifacts` foi provisionado e validado na Fase 3. Na migração posterior para **AWS ECS Express Mode**, para ativar o Estágio 2 após publicar a imagem no ECR basta rodar `terraform -chdir=infra apply -var="create_ecs=true"` (e configurar os secrets `AWS_ROLE_TO_ASSUME` e `AWS_ECS_SERVICE_ARN` no GitHub se quiser deploy automático pelo CI), desligando após os testes com `terraform -chdir=infra apply -var="create_ecs=false"`.
 
 ### Fase 3 — MLflow Tracking Remoto (`PostgreSQL + S3`) e Reexecução do Notebook 06 — ✅ CONCLUÍDA E VALIDADA (`21/11/2026`)
 * **O que foi entregue e testado:**
@@ -95,8 +95,13 @@
   * [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml): job `quality-gate-ci` endurecido com `ruff check src tests` + `mypy src/api tests` + **`26/26` `pytest`**, resumo atualizado para `26/26 PASSED` e gatilhos incluindo `pyproject.toml`.
   * **Validação local completa:** `ruff check src tests` (`All checks passed!`), `mypy --python-executable .venv/bin/python src/api tests` (`Success: no issues found in 7 source files`) e `pytest tests/test_api_contract.py tests/test_model_inference.py -v` (**`26 passed`**).
   * **Documentação técnica alinhada (links internos validados):** [`README.md`](../README.md), [`AGENT.md`](../AGENT.md), [`visao_geral_projeto.md`](../visao_geral_projeto.md), [`docs/passo-a-passo-07-api-docker.md`](passo-a-passo-07-api-docker.md) e [`docs/diagrama_deploy_aws.md`](diagrama_deploy_aws.md) atualizados para refletir a **Arquitetura Desacoplada por Planos** (`Prometheus + Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3`, `run_id = 6490c396b0e04147b156bedb0c8af9f7`, `26` testes e `Ruff + Mypy`), além de `.gitignore`/`.dockerignore` cobrindo `.ruff_cache/` e `.mypy_cache/`.
-  * [`docs/como-testar.md`](como-testar.md) & [`media/qualidade_ci_documentacao_fase4.png`](../media/qualidade_ci_documentacao_fase4.png): guia prático de testes (Pytest/Ruff/Mypy, Swagger UI, Docker, `curl`, Prometheus/Grafana e App Runner) e infográfico `1920×1080` da Fase 4 gerados e validados.
-  * **Parte I (`Fases 1 a 4`) encerrada:** Próximo bloco passa a ser a **Parte II — Fechamento Acadêmico do TCC (Passos 5 a 7)**.
+  * [`docs/como-testar.md`](como-testar.md) & [`media/qualidade_ci_documentacao_fase4.png`](../media/qualidade_ci_documentacao_fase4.png): guia prático de testes (Pytest/Ruff/Mypy, Swagger UI, Docker, `curl`, Prometheus/Grafana e nuvem AWS) e infográfico `1920×1080` da Fase 4 gerados e validados.
+
+### Evolução Pós-Fase 4 — Migração para AWS ECS Express Mode & Clientes Web Desacoplados — ✅ CONCLUÍDA E VALIDADA (`24–25/11/2026`)
+* **Substituição do App Runner pelo AWS ECS Express Mode:** após retorno da AWS (`InvalidRequestException: Account 703671922740 can't create new App Runner services`), [`infra/`](../infra/) foi migrado para **AWS ECS Express Mode** (`hashicorp/aws v6.74.0`, `aws_ecs_cluster` + `aws_ecs_express_gateway_service` com URL HTTPS nativa, roles `ecs_execution` e `ecs_infrastructure`, controle FinOps por `create_ecs = true/false`), com o Job 3 de [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) atualizado para `aws ecs update-express-gateway-service` via `AWS_ECS_SERVICE_ARN`.
+* **Front-end Simulador (`frontend/`) & Assistente RAG (`hf_rag_space/`):** adicionados o cliente **Streamlit** isolado ([`frontend/app.py`](../frontend/app.py), [`frontend/Dockerfile`](../frontend/Dockerfile) para Hugging Face Spaces ou execução local em `:8501`) e o agente conversacional **RAG/Gradio** ([`hf_rag_space/app.py`](../hf_rag_space/app.py) com `gemini-2.5-flash` + FAISS + embeddings SBERT), ambos excluídos do build da API no `.dockerignore`.
+* **Observabilidade e Guia de Testes Alinhados:** [`monitoring/prometheus/prometheus.yml`](../monitoring/prometheus/prometheus.yml) atualizado para `enem-api-aws-ecs`, dashboard **Grafana** validado ao vivo (`10` painéis) e [`docs/como-testar.md`](como-testar.md) reorganizado cronologicamente (Cenário A local e Cenário B AWS ECS Express Mode).
+* **Parte I + Evoluções de Produção encerradas:** Próximo bloco passa a ser a **Parte II — Fechamento Acadêmico do TCC (Passos 5 a 7)**.
 
 ---
 
@@ -107,23 +112,22 @@
 * **O que revisar e incorporar em conjunto com o Saulo:**
   1. Reescrever Resumo, Introdução, Problema e Objetivos alinhados ao projeto real: determinismo socioeconômico (Pierre Bourdieu) + esteira longitudinal `2014–2023` + MLOps em nuvem.
   2. Metodologia e Resultados da **Etapa 1**: EDA (`212.386`, *Cohen's d* em Matemática: Escola `1,079`, Raça `0,625`, Sexo `0,377`), Notebook 03 (`6` alvos TRI, `19 -> 6` features, `TARGET_M4` com $\alpha = 0{,}865$), SBERT (NB04), consolidação de `37.593.629` elegíveis em `15 bytes/linha` (NB05), justificativa formal da barreira LGPD em `2024–2025`, treinamento escalável `XGBRegressor` + OOT `2023` + TreeSHAP (NB06) e MLflow remoto (`PostgreSQL + S3`) + `DVC + S3`.
-  3. Metodologia e Resultados da **Etapa 2**: FastAPI + Pydantic v2 (`extra="forbid"`), testes automatizados `pytest`, observabilidade (`Prometheus + Grafana`), containerização Docker multi-stage, GitHub Actions CI/CD e IaC com **Terraform** na AWS (S3, ECR, App Runner), incluindo discussão de **Arquitetura Desacoplada por Planos** e análise comparativa de tecnologias ([`docs/estudos-futuros.md`](estudos-futuros.md)).
+  3. Metodologia e Resultados da **Etapa 2**: FastAPI + Pydantic v2 (`extra="forbid"`), testes automatizados `pytest`, observabilidade (`Prometheus + Grafana`), containerização Docker multi-stage, GitHub Actions CI/CD, IaC com **Terraform** na AWS (`S3`, `ECR`, `IAM OIDC` e **ECS Express Mode** em substituição ao App Runner) e interfaces desacopladas (`frontend/` em Streamlit e `hf_rag_space/` em Gradio/RAG), incluindo discussão de **Arquitetura Desacoplada por Planos** e análise comparativa de tecnologias ([`docs/estudos-futuros.md`](estudos-futuros.md)).
   4. Estruturar corretamente **Conclusões / Considerações Finais** e **Trabalhos Futuros** (`Polars`/`DuckDB`, `LightGBM`/`CatBoost`, `Evidently AI`, `AMP`/`AMG`) e converter/sincronizar para `.docx` conforme norma da instituição.
 
 ### Passo 6 — Fechar e Consolidar os Slides Finais de Defesa (`15 a 20 minutos`)
 * **Pendências já mapeadas:**
   1. Criar/cobrir os roteiros dos **Capítulos `01` e `02`** (substituindo o arquivo legado [`docs/resumo-apresentacao-tcc-19-09-26.md`](resumo-apresentacao-tcc-19-09-26.md)).
   2. Limpar divergências legadas em [`docs/criacao-slides.md`](criacao-slides.md) (menções à extinta Etapa 3 / `slides-08`, `29/29 PASSED`, valores divergentes de *Cohen's d* e SHAP) e alinhar [`docs/slides-03.md`](slides-03.md) aos números atuais do Notebook 03 (`6` alvos TRI, `19 -> 6` features, $R^2 = 0{,}3743 \rightarrow 0{,}3397$).
-  3. Incorporar os novos slides de **Arquitetura Desacoplada (`DVC + S3`, `MLflow PostgreSQL + S3`, `Terraform`, `Prometheus + Grafana`)** vindos da Parte I.
+  3. Incorporar os novos slides de **Arquitetura Desacoplada (`DVC + S3`, `MLflow PostgreSQL + S3`, `Terraform`, `AWS ECS Express Mode`, `Prometheus + Grafana`, `Streamlit + RAG`)**.
   4. Consolidar tudo em um deck executivo enxuto (~16 a 18 slides principais para `15–20 min` + apêndice de backup para perguntas da banca).
 
 ### Passo 7 — Treino de Sabatina e Deploy Pontual na AWS para a Banca
-* **Treino de Sabatina:** Simular arguição rigorosa cobrindo Bourdieu, TRI vs. TCT, interpretação de $R^2 \approx 0{,}34$, desvio de 2018 na TRI, barreira LGPD 2024–2025, escolha de *Single-Node Chunked Streaming* vs. Spark, *Decoupled Training & Serving Planes* (vs. *Hybrid Cloud*), proteção contra *Leakage* (`HTTP 422`) e monitoramento de drift/latência via Prometheus/Grafana.
-* **Deploy FinOps ao vivo (se o Saulo optar):**
-  1. Rodar `terraform apply` em `infra/` e confirmar secrets/vars no GitHub;
-  2. Executar workflow `.github/workflows/deploy.yml` para publicar na AWS App Runner;
-  3. Testar URL pública + `/metrics` coletado pelo Grafana + UI do MLflow;
-  4. **Executar `terraform destroy` imediatamente após a defesa** para manter custo zero na AWS.
+* **Treino de Sabatina:** Simular arguição rigorosa cobrindo Bourdieu, TRI vs. TCT, interpretação de $R^2 \approx 0{,}34$, desvio de 2018 na TRI, barreira LGPD 2024–2025, escolha de *Single-Node Chunked Streaming* vs. Spark, *Decoupled Training & Serving Planes* (vs. *Hybrid Cloud*), migração App Runner $\rightarrow$ **ECS Express Mode** (e trade-off ALB vs. Lambda), proteção contra *Leakage* (`HTTP 422`) e monitoramento de drift/latência via Prometheus/Grafana.
+* **Deploy FinOps ao vivo (para a banca, seguindo [`docs/como-testar.md`](como-testar.md)):**
+  1. Rodar `terraform -chdir=infra apply -var="create_ecs=true"` em `infra/` e capturar `ecs_service_url` (e opcionalmente atualizar Secrets no GitHub se usar o workflow);
+  2. Testar a URL HTTPS pública no Front-end Streamlit (`frontend/`) + `/metrics` coletado pelo Prometheus/Grafana locais + UI do MLflow;
+  3. Logo após a apresentação, desligar o ECS/ALB com `terraform -chdir=infra apply -var="create_ecs=false"` (mantendo S3 e ECR) ou executar **`terraform -chdir=infra destroy`** para encerramento definitivo com custo zero na AWS.
 
 ---
 
