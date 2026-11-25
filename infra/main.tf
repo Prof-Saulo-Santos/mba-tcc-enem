@@ -8,29 +8,6 @@ locals {
     ? aws_iam_openid_connect_provider.github[0].arn
     : var.existing_github_oidc_provider_arn
   )
-  scheduler_enabled = var.create_apprunner && var.enable_apprunner_schedule
-  apprunner_schedules = local.scheduler_enabled ? {
-    resume_weekdays = {
-      action      = "resumeService"
-      cron        = "cron(0 9 ? * MON-FRI *)"
-      description = "Disponibiliza o AWS App Runner de segunda a sexta-feira as 09:00"
-    }
-    pause_weekdays = {
-      action      = "pauseService"
-      cron        = "cron(0 17 ? * MON-FRI *)"
-      description = "Pausa o AWS App Runner de segunda a sexta-feira as 17:00 (custo compute zero)"
-    }
-    resume_saturday = {
-      action      = "resumeService"
-      cron        = "cron(0 16 ? * SAT *)"
-      description = "Disponibiliza o AWS App Runner aos sabados as 16:00"
-    }
-    pause_saturday = {
-      action      = "pauseService"
-      cron        = "cron(0 19 ? * SAT *)"
-      description = "Pausa o AWS App Runner aos sabados as 19:00 (custo compute zero ate segunda 09:00)"
-    }
-  } : {}
 }
 
 # ==============================================================================
@@ -168,13 +145,36 @@ data "aws_iam_policy_document" "github_actions_permissions" {
   }
 
   statement {
-    sid    = "AppRunnerDeployTrigger"
+    sid    = "ECSExpressDeployTrigger"
     effect = "Allow"
     actions = [
-      "apprunner:DescribeService",
-      "apprunner:StartDeployment"
+      "ecs:DescribeClusters",
+      "ecs:DescribeExpressGatewayService",
+      "ecs:DescribeServiceDeployments",
+      "ecs:DescribeServices",
+      "ecs:ListServiceDeployments",
+      "ecs:UpdateExpressGatewayService"
     ]
-    resources = ["arn:aws:apprunner:${var.aws_region}:${local.account_id}:service/${var.project_name}-api/*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid     = "ECSPassRoles"
+    effect  = "Allow"
+    actions = ["iam:PassRole"]
+    resources = [
+      aws_iam_role.ecs_execution.arn,
+      aws_iam_role.ecs_infrastructure.arn
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PassedToService"
+      values = [
+        "ecs.amazonaws.com",
+        "ecs-tasks.amazonaws.com"
+      ]
+    }
   }
 }
 
@@ -185,153 +185,89 @@ resource "aws_iam_role_policy" "github_actions" {
 }
 
 # ==============================================================================
-# 4. AWS APP RUNNER — Plano Online de Serving (criado somente com imagem no ECR)
+# 4. AMAZON ECS EXPRESS MODE — Plano Online de Serving (ligado sob demanda FinOps)
 # ==============================================================================
-data "aws_iam_policy_document" "apprunner_assume" {
+data "aws_iam_policy_document" "ecs_tasks_assume" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
 
     principals {
       type        = "Service"
-      identifiers = ["build.apprunner.amazonaws.com"]
+      identifiers = ["ecs-tasks.amazonaws.com"]
     }
   }
 }
 
-resource "aws_iam_role" "apprunner_ecr_access" {
-  name               = "${var.project_name}-apprunner-ecr"
-  assume_role_policy = data.aws_iam_policy_document.apprunner_assume.json
+resource "aws_iam_role" "ecs_execution" {
+  name               = "${var.project_name}-ecs-execution"
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
 }
 
-resource "aws_iam_role_policy_attachment" "apprunner_ecr_access" {
-  role       = aws_iam_role.apprunner_ecr_access.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess"
+resource "aws_iam_role_policy_attachment" "ecs_execution" {
+  role       = aws_iam_role.ecs_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_apprunner_service" "api" {
-  count = var.create_apprunner ? 1 : 0
-
-  service_name = "${var.project_name}-api"
-
-  source_configuration {
-    auto_deployments_enabled = false
-
-    authentication_configuration {
-      access_role_arn = aws_iam_role.apprunner_ecr_access.arn
-    }
-
-    image_repository {
-      image_identifier      = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
-      image_repository_type = "ECR"
-
-      image_configuration {
-        port = "8000"
-        runtime_environment_variables = {
-          MODEL_PATH      = "/app/models/enem.pkl"
-          MODEL_CARD_PATH = "/app/models/enem_model_card.json"
-        }
-      }
-    }
-  }
-
-  instance_configuration {
-    cpu    = var.apprunner_cpu
-    memory = var.apprunner_memory
-  }
-
-  health_check_configuration {
-    protocol            = "HTTP"
-    path                = "/health"
-    interval            = 10
-    timeout             = 5
-    healthy_threshold   = 1
-    unhealthy_threshold = 5
-  }
-}
-
-# ==============================================================================
-# 5. EVENTBRIDGE SCHEDULER — Janela FinOps do App Runner (Seg-Sex 9h-17h, Sab 16h-19h)
-# ==============================================================================
-resource "aws_scheduler_schedule_group" "apprunner" {
-  count = local.scheduler_enabled ? 1 : 0
-
-  name = "${var.project_name}-apprunner-window"
-}
-
-data "aws_iam_policy_document" "scheduler_assume" {
-  count = local.scheduler_enabled ? 1 : 0
-
+data "aws_iam_policy_document" "ecs_infrastructure_assume" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
 
     principals {
       type        = "Service"
-      identifiers = ["scheduler.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [local.account_id]
+      identifiers = ["ecs.amazonaws.com"]
     }
   }
 }
 
-resource "aws_iam_role" "scheduler_apprunner" {
-  count = local.scheduler_enabled ? 1 : 0
-
-  name               = "${var.project_name}-scheduler-apprunner"
-  assume_role_policy = data.aws_iam_policy_document.scheduler_assume[0].json
+resource "aws_iam_role" "ecs_infrastructure" {
+  name               = "${var.project_name}-ecs-infrastructure"
+  assume_role_policy = data.aws_iam_policy_document.ecs_infrastructure_assume.json
 }
 
-data "aws_iam_policy_document" "scheduler_apprunner_permissions" {
-  count = local.scheduler_enabled ? 1 : 0
-
-  statement {
-    sid    = "AppRunnerPauseResume"
-    effect = "Allow"
-    actions = [
-      "apprunner:PauseService",
-      "apprunner:ResumeService"
-    ]
-    resources = [aws_apprunner_service.api[0].arn]
-  }
+resource "aws_iam_role_policy_attachment" "ecs_infrastructure" {
+  role       = aws_iam_role.ecs_infrastructure.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices"
 }
 
-resource "aws_iam_role_policy" "scheduler_apprunner" {
-  count = local.scheduler_enabled ? 1 : 0
+resource "aws_ecs_cluster" "api" {
+  count = var.create_ecs ? 1 : 0
 
-  name   = "${var.project_name}-scheduler-apprunner-policy"
-  role   = aws_iam_role.scheduler_apprunner[0].id
-  policy = data.aws_iam_policy_document.scheduler_apprunner_permissions[0].json
+  name = "${var.project_name}-cluster"
 }
 
-resource "aws_scheduler_schedule" "apprunner_window" {
-  for_each = local.apprunner_schedules
+resource "aws_ecs_express_gateway_service" "api" {
+  count = var.create_ecs ? 1 : 0
 
-  name                         = "${var.project_name}-${replace(each.key, "_", "-")}"
-  description                  = each.value.description
-  group_name                   = aws_scheduler_schedule_group.apprunner[0].name
-  schedule_expression          = each.value.cron
-  schedule_expression_timezone = var.schedule_timezone
-  state                        = "ENABLED"
+  service_name            = "${var.project_name}-api"
+  cluster                 = aws_ecs_cluster.api[0].name
+  execution_role_arn      = aws_iam_role.ecs_execution.arn
+  infrastructure_role_arn = aws_iam_role.ecs_infrastructure.arn
+  cpu                     = var.ecs_cpu
+  memory                  = var.ecs_memory
+  health_check_path       = "/health"
+  wait_for_steady_state   = true
 
-  flexible_time_window {
-    mode = "OFF"
-  }
+  primary_container {
+    image          = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
+    container_port = 8000
 
-  target {
-    arn      = "arn:aws:scheduler:::aws-sdk:apprunner:${each.value.action}"
-    role_arn = aws_iam_role.scheduler_apprunner[0].arn
-    input = jsonencode({
-      ServiceArn = aws_apprunner_service.api[0].arn
-    })
-
-    retry_policy {
-      maximum_event_age_in_seconds = 300
-      maximum_retry_attempts       = 2
+    environment {
+      name  = "MODEL_PATH"
+      value = "/app/models/enem.pkl"
     }
+
+    environment {
+      name  = "MODEL_CARD_PATH"
+      value = "/app/models/enem_model_card.json"
+    }
+  }
+
+  scaling_target {
+    auto_scaling_metric       = "AVERAGE_CPU"
+    auto_scaling_target_value = 70
+    min_task_count            = 1
+    max_task_count            = 2
   }
 }

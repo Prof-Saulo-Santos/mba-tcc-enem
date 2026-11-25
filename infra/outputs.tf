@@ -28,25 +28,22 @@ output "github_actions_role_arn" {
   value       = aws_iam_role.github_actions.arn
 }
 
-output "apprunner_service_arn" {
-  description = "ARN do serviço AWS App Runner (disponível quando create_apprunner = true)"
-  value       = try(aws_apprunner_service.api[0].arn, null)
+output "ecs_cluster_name" {
+  description = "Nome do cluster Amazon ECS (disponível quando create_ecs = true)"
+  value       = try(aws_ecs_cluster.api[0].name, null)
 }
 
-output "apprunner_service_url" {
-  description = "Endpoint HTTPS público do AWS App Runner (disponível quando create_apprunner = true)"
-  value       = try("https://${aws_apprunner_service.api[0].service_url}", null)
+output "ecs_service_arn" {
+  description = "ARN do serviço AWS ECS Express Mode (disponível quando create_ecs = true)"
+  value       = try(aws_ecs_express_gateway_service.api[0].service_arn, null)
 }
 
-output "apprunner_schedule_timezone" {
-  description = "Fuso horário IANA configurado para disponibilidade do AWS App Runner"
-  value       = local.scheduler_enabled ? var.schedule_timezone : null
-}
-
-output "apprunner_schedules" {
-  description = "Expressões cron ativas no EventBridge Scheduler para o AWS App Runner"
-  value = {
-    for key, cfg in aws_scheduler_schedule.apprunner_window :
-    key => cfg.schedule_expression
-  }
+output "ecs_service_url" {
+  description = "Endpoint HTTPS público do AWS ECS Express Mode (disponível quando create_ecs = true)"
+  value = try(
+    startswith(aws_ecs_express_gateway_service.api[0].ingress_paths[0].endpoint, "https://")
+    ? aws_ecs_express_gateway_service.api[0].ingress_paths[0].endpoint
+    : "https://${aws_ecs_express_gateway_service.api[0].ingress_paths[0].endpoint}",
+    null
+  )
 }

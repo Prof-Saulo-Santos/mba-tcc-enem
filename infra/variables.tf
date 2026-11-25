@@ -1,5 +1,5 @@
 variable "aws_region" {
-  description = "Região AWS para provisionamento de S3, ECR, IAM e App Runner"
+  description = "Região AWS para provisionamento de S3, ECR, IAM e ECS Express Mode"
   type        = string
   default     = "us-east-1"
 }
@@ -34,38 +34,26 @@ variable "existing_github_oidc_provider_arn" {
   default     = ""
 }
 
-variable "create_apprunner" {
-  description = "Habilita a criação do serviço AWS App Runner (manter false até que exista uma imagem publicada no ECR)"
+variable "create_ecs" {
+  description = "Habilita a criação do serviço AWS ECS Express Mode (manter false quando não estiver em teste/banca para custo zero de compute/ALB)"
   type        = bool
   default     = false
 }
 
 variable "image_tag" {
-  description = "Tag da imagem Docker no Amazon ECR consumida pelo AWS App Runner"
+  description = "Tag da imagem Docker no Amazon ECR consumida pelo AWS ECS Express Mode"
   type        = string
   default     = "latest"
 }
 
-variable "apprunner_cpu" {
-  description = "Capacidade de vCPU do AWS App Runner (1024 = 1 vCPU)"
+variable "ecs_cpu" {
+  description = "Unidades de vCPU da task Fargate no ECS Express Mode (256, 512, 1024 = 1 vCPU)"
   type        = string
   default     = "1024"
 }
 
-variable "apprunner_memory" {
-  description = "Memória RAM do AWS App Runner em MB (2048 = 2 GB)"
+variable "ecs_memory" {
+  description = "Memória RAM da task Fargate em MiB no ECS Express Mode (512, 1024, 2048 = 2 GB)"
   type        = string
   default     = "2048"
-}
-
-variable "enable_apprunner_schedule" {
-  description = "Ativa janela automática (EventBridge Scheduler) para pausar e retomar o AWS App Runner"
-  type        = bool
-  default     = true
-}
-
-variable "schedule_timezone" {
-  description = "Fuso horário IANA utilizado nas expressões cron do EventBridge Scheduler"
-  type        = string
-  default     = "America/Sao_Paulo"
 }

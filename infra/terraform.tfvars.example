@@ -6,11 +6,9 @@ github_repo                 = "Prof-Saulo-Santos/mba-tcc-enem"
 create_github_oidc_provider = true
 # existing_github_oidc_provider_arn = "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
 
-# Estágio 1 (sem imagem no ECR ainda): mantenha false
-# Estágio 2 (após push da imagem no ECR): altere para true e rode terraform apply
-create_apprunner          = false
-image_tag                 = "latest"
-apprunner_cpu             = "1024"
-apprunner_memory          = "2048"
-enable_apprunner_schedule = true
-schedule_timezone         = "America/Sao_Paulo"
+# Estágio 1 (sem custo de compute/ALB): mantenha false
+# Estágio 2 (após push da imagem no ECR): altere para true ou passe -var="create_ecs=true"
+create_ecs = false
+image_tag  = "latest"
+ecs_cpu    = "1024"
+ecs_memory = "2048"
