@@ -149,7 +149,14 @@ No navegador (`http://localhost:8501`):
     * `enem_api_model_info` *(status `1` do modelo carregado e hash SHA-256 ativo)*
     * *Outras métricas disponíveis em [`src/api/metrics.py`](../src/api/metrics.py):* `enem_api_validation_errors_total`, `enem_api_http_request_duration_seconds`, `enem_api_model_inference_duration_seconds`, `enem_api_predicted_target_m4`, `enem_api_input_renda_per_capita` e `enem_api_input_categorical_total`.
   * *(Se continuar zerado no Cenário A, confirme na barra lateral do Streamlit que `URL base da API FastAPI` está em `http://localhost:8000`, e não em uma URL antiga da AWS.)*
-* **Grafana (`http://localhost:3000`):** faça login (`admin` / `admin`, definido em [`docker-compose.yml`](../docker-compose.yml#L37-L38)) e abra **`Dashboards` $\rightarrow$ pasta `ENEM TARGET_M4`**. *(Para os gráficos de taxa `rate()` desenharem curvas contínuas, faça 2 a 4 cliques seguidos no Streamlit com alguns segundos de intervalo.)*
+* **Grafana (`http://localhost:3000`):** faça login (`admin` / `admin`, definido em [`docker-compose.yml`](../docker-compose.yml#L37-L38)) e abra **`Dashboards` $\rightarrow$ pasta `ENEM TARGET_M4`**.
+  * *(Para os gráficos de taxa `rate()` desenharem curvas contínuas, faça 2 a 4 cliques seguidos no Streamlit com alguns segundos de intervalo.)*
+  * **Testar o alerta visual `Bloqueios Anti-Leakage` (cartão sobe e fica laranja em ~5s):** execute no **Terminal 1 (raiz)** (trocando `http://localhost:8000` por `https://<SEU_DOMINIO_ECS>` caso esteja testando na AWS):
+    ```bash
+    curl -i -X POST http://localhost:8000/predict \
+      -H "Content-Type: application/json" \
+      -d '{"RENDA_PER_CAPITA": 1.5, "Q024": 1, "TP_ANO_CONCLUIU": 0, "TP_LINGUA": 0, "TP_SEXO": 0, "Q002": 4, "NU_ANO": 2023}'
+    ```
 
 ### Passo 3.5 — Encerrar os ambientes locais
 
