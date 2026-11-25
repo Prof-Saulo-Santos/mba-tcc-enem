@@ -4,7 +4,7 @@
 **Projeto de TCC:** MBA em Ciência de Dados & MLOps — Predição de Desempenho no ENEM  
 **Autor:** Saulo Santos  
 **Auditoria Inicial do Container:** 08 de Novembro de 2026 (`20:54:58 UTC`)  
-**Última Evolução e Validação (Fases 1–4):** 22 de Novembro de 2026 (`Prometheus/Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3`, `Ruff + Mypy` no CI e `como-testar.md`)  
+**Última Evolução e Validação (Fases 1–4 + ECS Express Mode & Front-end):** 25 de Novembro de 2026 (`Prometheus/Grafana`, `Terraform + DVC + S3`, `MLflow PostgreSQL + S3`, `Ruff + Mypy`, `AWS ECS Express Mode`, `frontend/`, `hf_rag_space/` e `como-testar.md`)
 
 ---
 
@@ -19,8 +19,8 @@ ETAPA 2 — PRODUTIZAÇÃO, TESTES, OBSERVABILIDADE, IaC E CI/CD
         ├──> Marco 2.1: Microserviço REST FastAPI + Esquemas Pydantic v2 (src/api/)
         ├──> Marco 2.2: Quality Gate Estático & Funcional (Ruff + Mypy + 26/26 PASSED em pytest)
         ├──> Marco 2.3: Imagem Docker Multi-Stage Enxuta (515 MB OCI / appuser não-root)
-        ├──> Marco 2.4: Esteira CI/CD GitHub Actions (OIDC) ──> Amazon ECR / AWS App Runner (Terraform)
-        └──> Marco 2.5: Observabilidade GET /metrics ──> Prometheus + Grafana (10 painéis)
+        ├──> Marco 2.4: Esteira CI/CD GitHub Actions (OIDC) ──> Amazon ECR / AWS ECS Express Mode (Terraform)
+        └──> Marco 2.5: Observabilidade GET /metrics ──> Prometheus + Grafana (10 painéis) & Front-end (frontend/)
 ```
 
 ---
@@ -30,8 +30,8 @@ ETAPA 2 — PRODUTIZAÇÃO, TESTES, OBSERVABILIDADE, IaC E CI/CD
 | Decisão de Engenharia | Implementação Técnica | Justificativa Acadêmica e de Produção (FinOps / Segurança) |
 | :--- | :--- | :--- |
 | **Desacoplamento de Dependências (`requirements-api.txt`)** | Manifesto exclusivo com os 9 pacotes de *serving* (`fastapi`, `uvicorn`, `pydantic`, `joblib`, `numpy`, `pandas`, `scikit-learn`, `xgboost`, `prometheus-client`) nas versões exatas do treino. | Exclui pacotes pesados de laboratório (`torch`, `sentence-transformers`, `jupyter`, `shap`, `mlflow`), mantendo transferência enxuta (**`515 MB` Content Size** na imagem base) e instrumentação Prometheus nativa. |
-| **Contexto de Build Mínimo (`.dockerignore`)** | Bloqueio estrito de `data/`, `notebooks/`, `mlruns/`, `mlflow.db`, `media/`, `.venv/`, `.ruff_cache/`, `.mypy_cache/`, `*.md` e `.git/`. | Reduz o contexto enviado ao Docker Daemon de **>25 GB** de microdados brutos para poucos MB, acelerando o build em CI/CD (GitHub Actions). |
-| **Build Multi-Stage com `uv` (`Dockerfile`)** | Estágio `builder` compila bytecode (`UV_COMPILE_BYTECODE=1`) em `/opt/venv`; estágio `runtime` copia apenas o ambiente pronto e os artefatos. | Elimina compiladores e caches da imagem final, acelerando o *cold start* no **AWS App Runner**. |
+| **Contexto de Build Mínimo (`.dockerignore`)** | Bloqueio estrito de `data/`, `notebooks/`, `mlruns/`, `mlflow.db`, `media/`, `frontend/`, `hf_rag_space/`, `.venv/`, `.ruff_cache/`, `.mypy_cache/`, `*.md` e `.git/`. | Reduz o contexto enviado ao Docker Daemon de **>25 GB** de microdados brutos para poucos MB, mantendo os clientes web isolados da imagem da API e acelerando o build em CI/CD. |
+| **Build Multi-Stage com `uv` (`Dockerfile`)** | Estágio `builder` compila bytecode (`UV_COMPILE_BYTECODE=1`) em `/opt/venv`; estágio `runtime` copia apenas o ambiente pronto e os artefatos. | Elimina compiladores e caches da imagem final, acelerando o *cold start* em nuvem (**AWS ECS Express Mode** / Fargate). |
 | **Suporte OpenMP Nativo (`libgomp1`)** | Instalação explícita de `libgomp1` no estágio `runtime` (`python:3.13-slim`). | Imagens Debian `-slim` omitem a biblioteca compartilhada `libgomp.so.1` exigida pelo motor C++ do XGBoost. Sua inclusão garante execução multithread sem falhas de carregamento dinâmico. |
 | **Segurança Zero-Privilege (`appuser`)** | Criação do grupo e usuário `appuser` (`UID/GID 1000`) sem privilégios de `root`. | Mitiga superfície de ataque em contêineres expostos na nuvem pública (conformidade OWASP Docker Security). |
 | **Blindagem Anti-Leakage (`extra="forbid"`)** | Configurada em `CandidatoInput` ([`src/api/schemas.py`](../src/api/schemas.py)). | Rejeita imediatamente com **`HTTP 422`** qualquer tentativa de envio de variáveis proibidas (como `NU_ANO` ou notas parciais), protegendo o modelo em produção. |
@@ -213,16 +213,17 @@ Para fechar o ciclo da **Etapa 2**, o arquivo legado `.github/workflows/pipeline
 | :--- | :--- | :--- | :--- |
 | **Job 1** | `quality-gate-ci` | 1. Calcula o `sha256sum` de `models/enem.pkl` e confronta com o hash oficial (`114f51959492...`);<br>2. Instala `requirements-api.txt`, `pytest`, `httpx`, `ruff` e `mypy` via `astral-sh/setup-uv@v5`;<br>3. Executa `ruff check src tests`, `mypy src/api tests` e os **26 testes `pytest`**, publicando relatório no `$GITHUB_STEP_SUMMARY`. | **Fail-Fast:** Qualquer alteração acidental no binário do modelo, falha de tipagem/lint ou quebra de contrato Pydantic bloqueia o pipeline imediatamente. |
 | **Job 2** | `docker-smoke-test` | 1. Depende do Job 1 (`needs: quality-gate-ci`);<br>2. Constrói a imagem Docker multi-stage;<br>3. Sobe o container e executa chamadas HTTP reais em `/health`, `/predict` (`547.12`) e teste de bloqueio `HTTP 422` (`NU_ANO`). | Garante que o `Dockerfile` nunca quebre silenciosamente e que o container responda perfeitamente antes de qualquer envio à nuvem. |
-| **Job 3** | `deploy-aws` | 1. Depende do Job 2 (`needs: docker-smoke-test`);<br>2. Autentica na AWS via **IAM OIDC** (`AWS_ROLE_TO_ASSUME` provisionado pelo Terraform, ou fallback Access Keys);<br>3. Faz login no **Amazon ECR**, envia as tags `$GITHUB_SHA` e `latest`, e aciona `aws apprunner start-deployment`. | **Trava FinOps Inteligente:** Condicionado à presença dos *Secrets* da AWS. Com o Estágio 1 do Terraform (`create_apprunner = false`), os Jobs 1 e 2 rodam gratuitamente e o deploy em nuvem só é ativado quando o serviço for provisionado para a banca. |
+| **Job 3** | `deploy-aws` | 1. Depende do Job 2 (`needs: docker-smoke-test`);<br>2. Autentica na AWS via **IAM OIDC** (`AWS_ROLE_TO_ASSUME` provisionado pelo Terraform, ou fallback Access Keys);<br>3. Faz login no **Amazon ECR**, envia as tags `$GITHUB_SHA` e `latest`, e aciona `aws ecs update-express-gateway-service` (usando `AWS_ECS_SERVICE_ARN`). | **Trava FinOps Inteligente:** Condicionado à presença dos *Secrets* da AWS. Com o Estágio 1 do Terraform (`create_ecs = false`), os Jobs 1 e 2 rodam gratuitamente e o deploy em nuvem só é ativado quando o serviço ECS for provisionado para testes/banca. |
 
 ---
 
-## 6. Evoluções Integradas Após o Marco Inicial (Fases 1 a 4)
+## 6. Evoluções Integradas Após o Marco Inicial (Fases 1 a 4 e Pós-Fase 4)
 
 A base descrita acima foi expandida nos seguintes guias especializados (consulte o mapa mestre em [`docs/etapa-02-passo-a-passo.md`](etapa-02-passo-a-passo.md)):
 * **Observabilidade (`Prometheus + Grafana`, Fase 1):** endpoint `GET /metrics` ([`src/api/metrics.py`](../src/api/metrics.py)) + dashboard declarativo com 10 painéis (`profiles: ["monitoring"]`) detalhados em [`docs/guia-estudo-observabilidade.md`](guia-estudo-observabilidade.md).
 * **IaC & Dados (`Terraform + DVC + S3`, Fase 2):** provisionamento AWS sem *ClickOps* ([`infra/`](../infra/)) e versionamento dos `.parquet` no Amazon S3 (`.dvc/config`) detalhados em [`docs/guia-estudo-terraform-dvc-s3.md`](guia-estudo-terraform-dvc-s3.md).
 * **MLflow Remoto (`PostgreSQL 16 + S3`, Fase 3):** servidor containerizado (`profiles: ["mlops"]`, [`Dockerfile.mlflow`](../Dockerfile.mlflow)) e auditoria completa detalhados em [`docs/guia-estudo-mlflow-postgresql-s3.md`](guia-estudo-mlflow-postgresql-s3.md).
 * **CI Hardening, Alinhamento & Testes Práticos (Fase 4):** configuração unificada em [`pyproject.toml`](../pyproject.toml) (`ruff` + `mypy` no `quality-gate-ci`), alinhamento completo da documentação técnica ([`media/qualidade_ci_documentacao_fase4.png`](../media/qualidade_ci_documentacao_fase4.png)) e guia passo a passo de execução de testes em [`docs/como-testar.md`](como-testar.md).
+* **Migração para AWS ECS Express Mode & Clientes Web Desacoplados (`24–25/11/2026`):** devido à restrição da AWS para criação de novos serviços App Runner na conta, a camada online de [`infra/`](../infra/) e o Job 3 de [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) foram migrados para **AWS ECS Express Mode** (`hashicorp/aws v6.74.0`, `create_ecs = true/false`, URL HTTPS nativa); além disso, foram criados os clientes isolados [`frontend/`](../frontend/) (Streamlit + Docker para Hugging Face Spaces) e [`hf_rag_space/`](../hf_rag_space/) (assistente RAG em Gradio com `gemini-2.5-flash` + FAISS) e alinhados [`docs/como-testar.md`](como-testar.md) e [`monitoring/prometheus/prometheus.yml`](../monitoring/prometheus/prometheus.yml).
 
 
