@@ -26,7 +26,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent
 load_dotenv(FRONTEND_DIR / ".env")
 
 DEFAULT_API_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
-DEFAULT_HF_RAG_URL = os.getenv("HF_RAG_SPACE_URL", "").strip()
+HF_RAG_SPACE_URL = "https://huggingface.co/spaces/Prof-Saulo-Santos/agente-tcc-enem-gemini"
 KB_PATH = FRONTEND_DIR / "knowledge_base" / "tcc_enem_completo.md"
 
 st.set_page_config(
@@ -72,24 +72,13 @@ with st.sidebar:
 
     st.divider()
     st.header("🤖 Assistente RAG do TCC (Hugging Face)")
-    hf_rag_url = st.text_input(
-        "URL do Space RAG/LLM no Hugging Face",
-        value=DEFAULT_HF_RAG_URL,
-        placeholder="https://huggingface.co/spaces/usuario/space-rag",
-        help="Cole a URL do seu Space publicado no Hugging Face para abrir em nova aba.",
-    ).strip()
-
-    if hf_rag_url and not hf_rag_url.endswith(("SEU_SPACE_RAG", "SEU_USUARIO/SEU_SPACE_RAG")):
-        st.link_button(
-            "🔗 Abrir RAG/LLM no Hugging Face",
-            url=hf_rag_url,
-            use_container_width=True,
-        )
-    else:
-        st.info(
-            "Informe a URL pública do seu Space RAG/LLM acima (ou em `HF_RAG_SPACE_URL` no `.env`) "
-            "para habilitar o botão de acesso direto."
-        )
+    st.link_button(
+        "🔗 Abrir RAG/LLM no Hugging Face",
+        url=HF_RAG_SPACE_URL,
+        help=f"Abre em nova aba o Space oficial: {HF_RAG_SPACE_URL}",
+        use_container_width=True,
+    )
+    st.caption("Space oficial: `Prof-Saulo-Santos/agente-tcc-enem-gemini`")
 
     if KB_PATH.exists():
         kb_bytes = KB_PATH.read_bytes()
@@ -343,18 +332,14 @@ with tab_rag:
 
     c_link, c_dl = st.columns(2)
     with c_link:
-        if hf_rag_url and not hf_rag_url.endswith(("SEU_SPACE_RAG", "SEU_USUARIO/SEU_SPACE_RAG")):
-            st.link_button(
-                "🚀 Acessar Assistente RAG/LLM no Hugging Face",
-                url=hf_rag_url,
-                type="primary",
-                use_container_width=True,
-            )
-        else:
-            st.info(
-                "Cole a URL do seu Space RAG/LLM na barra lateral esquerda (ou defina "
-                "`HF_RAG_SPACE_URL` em `frontend/.env`) para exibir o botão de redirecionamento."
-            )
+        st.link_button(
+            "🚀 Acessar Assistente RAG/LLM no Hugging Face",
+            url=HF_RAG_SPACE_URL,
+            type="primary",
+            help=f"Abre em nova aba o Space oficial: {HF_RAG_SPACE_URL}",
+            use_container_width=True,
+        )
+        st.caption(f"URL fixa do Space: `{HF_RAG_SPACE_URL}`")
     with c_dl:
         if KB_PATH.exists():
             st.download_button(

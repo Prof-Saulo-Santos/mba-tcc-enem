@@ -15,11 +15,11 @@ Aplicação cliente leve em **Streamlit** (empacotada via **Docker SDK** na port
 ## Estrutura
 
 * `Dockerfile` — Imagem Docker dedicada para o Hugging Face Spaces (`python:3.13-slim`, usuário não-root UID `1000`, Streamlit na porta `7860`).
-* `app.py` — Interface web Streamlit (Botão 1 individual, Botão 2 lote aleatório `1..10.000`, aba de Governança `/health` & `/info` e aba de acesso por link externo ao Space RAG/LLM).
+* `app.py` — Interface web Streamlit (Botão 1 individual, Botão 2 lote aleatório `1..10.000`, aba de Governança `/health` & `/info` e link fixo para o Space RAG/LLM `Prof-Saulo-Santos/agente-tcc-enem-gemini`).
 * `api_client.py` — Cliente HTTP (`httpx`) e gerador sintético compatível com o contrato Pydantic da API.
 * `requirements.txt` — Dependências enxutas exclusivas do front-end (`streamlit`, `httpx`, `pandas`, `python-dotenv`).
 * `knowledge_base/tcc_enem_completo.md` — Dossiê técnico completo do TCC consolidando todos os notebooks (`01` a `06`), métricas oficiais, decisões metodológicas e arquitetura MLOps (`Fases 1 a 4`), pronto para alimentar seu Space RAG.
-* `.env.example` — Variáveis de configuração (`API_BASE_URL` e `HF_RAG_SPACE_URL`).
+* `.env.example` — Variável de configuração local (`API_BASE_URL`).
 
 ## Execução Local em Ambiente Virtual Isolado (`frontend/.venv`)
 
@@ -28,7 +28,7 @@ cd frontend
 uv venv .venv
 source .venv/bin/activate
 uv pip install -r requirements.txt
-cp .env.example .env   # ajuste API_BASE_URL e HF_RAG_SPACE_URL se desejar
+cp .env.example .env   # ajuste API_BASE_URL se desejar
 streamlit run app.py
 ```
 
