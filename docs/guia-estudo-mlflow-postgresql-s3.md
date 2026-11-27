@@ -84,7 +84,7 @@ docker compose --profile mlops down
 
 ### Perguntas Prováveis da Banca
 1. **"Por que não subir o MLflow e o PostgreSQL em um Amazon RDS na AWS?"**
-   * *Resposta:* Pela nossa **Arquitetura Desacoplada por Planos**: o plano de treinamento e governança de experimentos roda sob demanda durante o ciclo de treino, enquanto a persistência dos dados (DVC) e artefatos (MLflow) já fica segura e imutável no Amazon S3. Evitamos pagar um RDS 24/7 sem afetar em nada a autonomia da API de produção no App Runner.
+   * *Resposta:* Pela nossa **Arquitetura Desacoplada por Planos**: o plano de treinamento e governança de experimentos roda sob demanda durante o ciclo de treino, enquanto a persistência dos dados (DVC) e artefatos (MLflow) já fica segura e imutável no Amazon S3. Evitamos pagar um RDS 24/7 sem afetar em nada a autonomia da API de produção no **AWS ECS Express Mode**.
 2. **"Qual a diferença prática entre Backend Store e Artifact Store no MLflow?"**
    * *Resposta:* O *Backend Store* (PostgreSQL) guarda dados tabulares leves e consultáveis por SQL (runs, tags, hiperparâmetros, métricas, versões do Registry). O *Artifact Store* (S3) guarda objetos binários pesados (`model.ubj`, imagens PNG, JSONs de contrato), evitando inflar o banco relacional.
 3. **"Por que foi necessário atualizar `tests/test_api_contract.py` após a reexecução se o `SHA-256` do modelo não mudou?"**

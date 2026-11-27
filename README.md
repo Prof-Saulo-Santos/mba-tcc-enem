@@ -28,7 +28,7 @@ Projeto de Conclusão de Curso de MBA que integra **Sociologia Educacional** (in
 | **Explicabilidade (`TreeSHAP`, `N = 10.000`)** | Liderança de `RENDA_PER_CAPITA` (`18,483 pts` de `|SHAP|` médio / **`30,10%`** do impacto total) |
 | **Microserviço & Quality Gate (`src/api/`, `tests/`)** | FastAPI + Pydantic v2 (`extra="forbid"`), **`26/26 PASSED`** no `pytest` (`ruff` & `mypy` limpos), endpoint `/metrics` e imagem Docker multi-stage (**`515 MB` Content Size**) |
 | **Observabilidade (`monitoring/`)** | Endpoint `GET /metrics` (`prometheus-client`) coletado pelo **Prometheus** (`:9090`, scrape `5s`) + dashboard **Grafana** (`:3000`, `10` painéis de SLA, 422 e *drift*) |
-| **IaC & Dados em Nuvem (`infra/`, `.dvc/`)** | **Terraform** (`11` recursos no Estágio 1: `S3`, `ECR`, `IAM OIDC`, `App Runner`) + **DVC + S3** versionando `~180 MiB` em `.parquet` (`dvc-store/`) |
+| **IaC & Dados em Nuvem (`infra/`, `.dvc/`)** | **Terraform** (`13` recursos base no Estágio 1: `S3`, `ECR`, `IAM OIDC`, roles ECS + `2` sob demanda para **AWS ECS Express Mode**) + **DVC + S3** versionando `~180 MiB` em `.parquet` (`dvc-store/`) |
 | **MLflow Remoto (`Dockerfile.mlflow`, `mlops`)** | Backend **PostgreSQL 16** + **Amazon S3** (`mlflow-artifacts/`, `17` objetos / `~2,49 MiB`), `run_id = 6490c396b0e04147b156bedb0c8af9f7` |
 
 > Os metadados completos e o checksum SHA-256 do modelo campeão estão auditados em [`models/enem_model_card.json`](models/enem_model_card.json).
@@ -38,7 +38,7 @@ Projeto de Conclusão de Curso de MBA que integra **Sociologia Educacional** (in
 ## 🏗️ Arquitetura Desacoplada por Planos e Estrutura do Repositório
 
 1. **Etapa 1 & Plano Offline (`notebooks/01` a `06`, `DVC + S3`, `PostgreSQL + MLflow`):** Investigação estrutural, EDA (`2023`), seleção parcimoniosa, mapeamento semântico SBERT, consolidação histórica em *chunks* (versionada via **DVC + S3**) e treinamento escalável com rastreamento remoto no **MLflow Server 3.17.2 (`PostgreSQL 16 + S3`)**.
-2. **Etapa 2 & Plano Online/Observabilidade (`src/api/`, `monitoring/`, `infra/`, `.github/workflows/deploy.yml`):** API REST FastAPI com `/metrics`, dashboard **Prometheus + Grafana**, container multi-stage com `uv`, infraestrutura declarativa **Terraform** (`S3`, `ECR`, `IAM OIDC`, `AWS App Runner`) e esteira CI/CD no GitHub Actions (`quality-gate-ci` com `SHA-256 + ruff + mypy + 26 pytest` $\rightarrow$ `docker-smoke-test` $\rightarrow$ `deploy-aws` condicional via OIDC).
+2. **Etapa 2 & Plano Online/Observabilidade (`src/api/`, `monitoring/`, `infra/`, `.github/workflows/deploy.yml`):** API REST FastAPI com `/metrics`, dashboard **Prometheus + Grafana**, container multi-stage com `uv`, infraestrutura declarativa **Terraform** (`S3`, `ECR`, `IAM OIDC`, **AWS ECS Express Mode** — em substituição ao App Runner) e esteira CI/CD no GitHub Actions (`quality-gate-ci` com `SHA-256 + ruff + mypy + 26 pytest` $\rightarrow$ `docker-smoke-test` $\rightarrow$ `deploy-aws` condicional via OIDC).
 
 ```text
 enem/
@@ -46,7 +46,7 @@ enem/
 ├── .github/workflows/deploy.yml   # CI/CD: Quality Gate (SHA-256 + ruff + mypy + 26 pytest), Smoke Test e deploy AWS
 ├── data/processed/                # Contratos JSON, ponteiros .dvc e bases Parquet (armazenadas no S3 via DVC)
 ├── docs/                          # Guias passo a passo, estudos (Fases 1–3), diagramas e roteiros de slides
-├── infra/                         # Terraform (IaC FinOps em 2 estágios: S3, ECR, IAM OIDC e AWS App Runner)
+├── infra/                         # Terraform (IaC FinOps em 2 estágios: S3, ECR, IAM OIDC e AWS ECS Express Mode)
 ├── media/                         # Diagramas arquiteturais, infográficos MLOps e figuras (nb06_figuras/)
 ├── models/                        # Artefato campeão (enem.pkl, enem_xgboost.ubj) e Model Card JSON
 ├── monitoring/                    # Configurações do Prometheus (:9090) e dashboards provisionados do Grafana (:3000)

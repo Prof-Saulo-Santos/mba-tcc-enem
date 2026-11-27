@@ -38,7 +38,7 @@ A esteira de desenvolvimento do projeto está estruturada em **duas etapas conso
                                             ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ ETAPA 2: PRODUTIZAÇÃO, CONTAINERIZAÇÃO, CI/CD E NUVEM AWS (media/pipeline-2.jpg)       │
-│ [enem.pkl] ──> [API FastAPI] ──> [Docker] ──> [GitHub Actions] ──> [AWS App Runner] ──> Endpoints │
+│ [enem.pkl] ─> [API FastAPI] ─> [Docker] ─> [GitHub Actions] ─> [ECS Express] ─> Endpoints│
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -146,8 +146,8 @@ Baseada em `media/pipeline-2.jpg`, `docs/etapa-02-passo-a-passo.md`, `docs/estud
    * Profile `mlops` em `docker-compose.yml`: `postgres:16-alpine` (`:5432`) + `Dockerfile.mlflow` (`mlflow==3.17.2`, `:5000`, `--default-artifact-root` em S3).
    * Versionamento de dados pesados (`.parquet` de `26,8 MiB` e `153,2 MiB`) via `dvc[s3]==3.67.1` (`.dvc/config` apontando para `s3://tcc-enem-saulo-mlops-703671922740/dvc-store`), mantendo `models/enem.pkl` (`1,727 MB`) no Git para não quebrar CI de PRs.
 4. **IaC com Terraform (`infra/`) & CI/CD no GitHub Actions (`.github/workflows/deploy.yml`):**
-   * Provisionamento declarativo FinOps em 2 estágios (`infra/main.tf`, `variables.tf`, `outputs.tf`): Estágio 1 (`create_apprunner = false`) cria `Amazon S3`, `Amazon ECR`, `IAM OIDC` (`Prof-Saulo-Santos/mba-tcc-enem`, `main`) e roles; Estágio 2 (`create_apprunner = true`) ativa o **AWS App Runner** para a apresentação com `terraform destroy` imediato após a banca.
-   * Pipeline em 3 Jobs encadeados: `quality-gate-ci` (SHA-256 + `ruff` + `mypy` + 26 testes Pytest) $\rightarrow$ `docker-smoke-test` (build e teste HTTP E2E no runner) $\rightarrow$ `deploy-aws` (Amazon ECR via OIDC + AWS App Runner com trava condicional FinOps).
+   * Provisionamento declarativo FinOps em 2 estágios (`infra/main.tf`, `variables.tf`, `outputs.tf`, substituindo o App Runner após restrição/descontinuação da criação de novos serviços na conta AWS): Estágio 1 (`create_ecs = false`, `13` recursos base) cria `Amazon S3`, `Amazon ECR`, `IAM OIDC` (`Prof-Saulo-Santos/mba-tcc-enem`, `main`) e roles do ECS (`ecs_execution`, `ecs_infrastructure`); Estágio 2 (`create_ecs = true`, `+2` recursos) ativa o **AWS ECS Express Mode** (`aws_ecs_cluster` + `aws_ecs_express_gateway_service`) sob demanda para testes/banca, retornando a `create_ecs = false` entre testes ou `terraform destroy` após a defesa.
+   * Pipeline em 3 Jobs encadeados: `quality-gate-ci` (SHA-256 + `ruff` + `mypy` + 26 testes Pytest) $\rightarrow$ `docker-smoke-test` (build e teste HTTP E2E no runner) $\rightarrow$ `deploy-aws` (Amazon ECR via OIDC + atualização do **AWS ECS Express Mode** via `AWS_ECS_SERVICE_ARN` com trava condicional FinOps).
 
 ---
 
@@ -185,7 +185,7 @@ Baseada em `media/pipeline-2.jpg`, `docs/etapa-02-passo-a-passo.md`, `docs/estud
    * **Próximos Passos para Fechamento do TCC (Parte II de `docs/etapa-02-passo-a-passo.md`):**
      * **Passo 5:** Atualizar integralmente o texto da dissertação (`tcc_mba_saulo_santos.md` / `.docx`) para a metodologia e resultados finais (`Notebooks 01–06`, barreira LGPD e Etapa 2 / Fases 1–4);
      * **Passo 6:** Consolidar o deck final de slides (`15–20 min`), cobrindo Capítulos `01` e `02`, limpando referências legadas em `docs/criacao-slides.md` / `docs/slides-03.md` e incorporando as evoluções das Fases 1–4;
-     * **Passo 7:** Realizar treino de sabatina para a banca e, se desejado na apresentação final, ativar pontualmente o Estágio 2 do Terraform (`create_apprunner = true`) e o deploy na AWS (ECR + App Runner) via `.github/workflows/deploy.yml`, destruindo os recursos logo após a defesa (`terraform destroy`).
+     * **Passo 7:** Realizar treino de sabatina para a banca e, se desejado na apresentação final, ativar pontualmente o Estágio 2 do Terraform (`create_ecs = true`) e o deploy na AWS (ECR + **ECS Express Mode**) via `.github/workflows/deploy.yml`, desligando os recursos logo após a defesa (`create_ecs = false` ou `terraform destroy`).
 6. **Modo de Colaboração (Regra Mandatória):**
    * O trabalho é feito **em conjunto com o Saulo**, passo a passo. O agente **não** deve agir de forma autônoma.
    * **Toda tomada de decisão** (metodológica, de código, de dados ou de arquitetura) só pode ser aplicada **após o aval explícito do Saulo**.

@@ -16,7 +16,7 @@ RUN uv venv /opt/venv && \
     uv pip install --python /opt/venv/bin/python --no-cache -r requirements-api.txt
 
 # ==============================================================================
-# Stage 2: Runtime (Imagem enxuta e segura para AWS App Runner / ECS)
+# Stage 2: Runtime (Imagem enxuta e segura para AWS ECS Express Mode)
 # ==============================================================================
 FROM python:3.13-slim AS runtime
 

@@ -68,7 +68,7 @@ EXAMPLE_QUESTIONS = [
     "Quais modelos foram avaliados no TCC e por que o XGBoost foi escolhido para produção?",
     "Como é calculado o TARGET_M4 e por que ele é mais adequado para a TRI?",
     "Quais estratégias garantem ausência de data leakage nas 6 features?",
-    "Como funciona a arquitetura MLOps com FastAPI, Docker, MLflow e AWS App Runner?",
+    "Como funciona a arquitetura MLOps com FastAPI, Docker, MLflow e AWS ECS Express Mode?",
 ]
 
 CONTEXTUALIZE_Q_PROMPT = (

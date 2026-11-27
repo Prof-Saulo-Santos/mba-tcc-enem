@@ -3,7 +3,7 @@
 **Projeto de TCC:** MBA em Ciência de Dados / MLOps — Predição de Desempenho no ENEM  
 **Autor:** Saulo Santos  
 **Módulos de Referência:** [`src/api/`](file:///home/saulo/mba/tcc/enem/src/api/), [`tests/`](file:///home/saulo/mba/tcc/enem/tests/), [`Dockerfile`](file:///home/saulo/mba/tcc/enem/Dockerfile), [`.github/workflows/deploy.yml`](file:///home/saulo/mba/tcc/enem/.github/workflows/deploy.yml) e [`docs/passo-a-passo-07-api-docker.md`](file:///home/saulo/mba/tcc/enem/docs/passo-a-passo-07-api-docker.md)  
-**Foco da Defesa:** Produtização do Modelo Campeão (`models/enem.pkl`), Governança de Contrato via **Pydantic v2**, Testes Automatizados (**Pytest 25/25**), Containerização Multi-Stage Enxuta (**FinOps `515 MB`**) e Esteira **CI/CD GitHub Actions $\rightarrow$ Amazon ECR / AWS App Runner**.
+**Foco da Defesa:** Produtização do Modelo Campeão (`models/enem.pkl`), Governança de Contrato via **Pydantic v2**, Testes Automatizados (**Pytest 25/25**), Containerização Multi-Stage Enxuta (**FinOps `515 MB`**) e Esteira **CI/CD GitHub Actions $\rightarrow$ Amazon ECR / AWS ECS Express Mode**.
 
 ---
 
@@ -13,7 +13,7 @@
 2. **Governança e Defesa *Anti-Leakage* em Produção:** Uso do `models/enem_model_card.json` e do **Pydantic v2** (`extra="forbid"`) para bloquear em tempo real entradas fora de domínio ou variáveis proibidas como `NU_ANO` (`HTTP 422`).
 3. **Engenharia de Testes em Machine Learning:** Auditoria automatizada com **25 testes no Pytest** cobrindo integridade criptográfica (`SHA-256`), fronteiras psicométricas, paridade numérica bit-a-bit e coerência sociológica de Bourdieu.
 4. **Arquitetura FinOps em Contêineres:** Separação entre o plano pesado de laboratório (`>5 GB` com PyTorch/SBERT) e o plano leve de inferência (`requirements-api.txt` + `Dockerfile` *multi-stage* com `uv`), reduzindo a imagem OCI para **`515 MB`** sob usuário não-privilegiado (`appuser`).
-5. **Automação CI/CD e Nuvem AWS:** Pipeline em 3 estágios no **GitHub Actions** com *Quality Gate*, *Smoke Test Docker E2E* e publicação automatizada no **Amazon ECR / AWS App Runner**.
+5. **Automação CI/CD e Nuvem AWS:** Pipeline em 3 estágios no **GitHub Actions** com *Quality Gate*, *Smoke Test Docker E2E* e publicação automatizada no **Amazon ECR / AWS ECS Express Mode**.
 
 ---
 
@@ -141,11 +141,11 @@ CONTAINER ID   STATUS                    PORTS                    NAMES
 * **Segurança em Nuvem (`appuser`):** Execução sob UID/GID `1000` sem privilégios de `root` e `HEALTHCHECK` nativo em Python.
 
 ### Roteiro de Fala do Apresentador
-> *"Para que o deploy no AWS App Runner seja rápido e econômico, aplicamos engenharia FinOps rigorosa no Docker. Separamos um manifesto exclusivo de inferência sem o peso do PyTorch, do SBERT e do Jupyter, que pertencem apenas ao laboratório offline da Etapa 1. Usando um Dockerfile multi-stage com o gerenciador `uv`, a biblioteca OpenMP `libgomp1` e usuário não-root, comprimimos a imagem para 515 megabytes. Os testes em container real confirmaram status healthy imediato e inferência em lote para três perfis socioeconômicos em apenas 6,49 milissegundos."*
+> *"Para que o deploy no AWS ECS Express Mode seja rápido e econômico, aplicamos engenharia FinOps rigorosa no Docker. Separamos um manifesto exclusivo de inferência sem o peso do PyTorch, do SBERT e do Jupyter, que pertencem apenas ao laboratório offline da Etapa 1. Usando um Dockerfile multi-stage com o gerenciador `uv`, a biblioteca OpenMP `libgomp1` e usuário não-root, comprimimos a imagem para 515 megabytes. Os testes em container real confirmaram status healthy imediato e inferência em lote para três perfis socioeconômicos em apenas 6,49 milissegundos."*
 
 ---
 
-## ☁️ Slide 5 — Esteira CI/CD no GitHub Actions, Amazon ECR e AWS App Runner
+## ☁️ Slide 5 — Esteira CI/CD no GitHub Actions, Amazon ECR e AWS ECS Express Mode
 > **Mapeamento no Repositório:** [`.github/workflows/deploy.yml`](file:///home/saulo/mba/tcc/enem/.github/workflows/deploy.yml) e [`docs/diagrama_deploy_aws.md`](file:///home/saulo/mba/tcc/enem/docs/diagrama_deploy_aws.md)
 
 ### Mensagem Central
@@ -153,22 +153,22 @@ CONTAINER ID   STATUS                    PORTS                    NAMES
 
 ### Layout Visual Recomendado
 * **Fluxo dos 3 Jobs Encadeados em `.github/workflows/deploy.yml`:**
-  `git push origin main` $\longrightarrow$ **`[Job 1: Quality Gate CI (SHA-256 + 25 Testes Pytest)]`** $\longrightarrow$ **`[Job 2: Docker Build & Smoke Test E2E (HTTP 200 & 422)]`** $\longrightarrow$ **`[Job 3: Push Amazon ECR + Deploy AWS App Runner (Trava FinOps)]`**.
+  `git push origin main` $\longrightarrow$ **`[Job 1: Quality Gate CI (SHA-256 + 25 Testes Pytest)]`** $\longrightarrow$ **`[Job 2: Docker Build & Smoke Test E2E (HTTP 200 & 422)]`** $\longrightarrow$ **`[Job 3: Push Amazon ECR + Deploy AWS ECS Express Mode (Trava FinOps)]`**.
 
 ### Conteúdo dos Tópicos no Slide (Bullets Curtos)
 * **Job 1 (`quality-gate-ci`):** Verifica com `sha256sum` a integridade de `models/enem.pkl` e roda os 25 testes em ~15 segundos;
 * **Job 2 (`docker-smoke-test`):** Constrói a imagem no runner Ubuntu, sobe o container e testa `/health`, `/predict` (`547,12 pts`) e o bloqueio `HTTP 422` antes de autorizar o envio para a nuvem;
-* **Job 3 (`deploy-aws` com Governança FinOps):** Autentica via OIDC/IAM, envia a imagem taggeada com `$GITHUB_SHA` para o **Amazon ECR** (com *Scan on Push* ativo) e aciona o **AWS App Runner**. Possui trava condicional inteligente que mantém a esteira **100% verde** e a custo zero enquanto o ambiente de nuvem não está em apresentação.
+* **Job 3 (`deploy-aws` com Governança FinOps):** Autentica via OIDC/IAM, envia a imagem taggeada com `$GITHUB_SHA` para o **Amazon ECR** (com *Scan on Push* ativo) e atualiza o **AWS ECS Express Mode** (`aws ecs update-express-gateway-service`). Possui trava condicional inteligente que mantém a esteira **100% verde** e a custo zero enquanto o ambiente de nuvem não está em apresentação.
 
 ### Roteiro de Fala do Apresentador
-> *"Fechamos a Etapa 2 automatizando toda a entrega contínua no GitHub Actions. A esteira possui três barreiras de segurança: o Job 1 audita o hash SHA-256 do modelo e roda o Pytest; o Job 2 constrói o container e faz chamadas HTTP reais dentro do próprio GitHub; e somente após essa dupla aprovação o Job 3 publica a imagem no Amazon ECR e atualiza o AWS App Runner. Com isso, nosso plano de inferência está completo, homologado e pronto para demonstração em nuvem."*
+> *"Fechamos a Etapa 2 automatizando toda a entrega contínua no GitHub Actions. A esteira possui três barreiras de segurança: o Job 1 audita o hash SHA-256 do modelo e roda o Pytest; o Job 2 constrói o container e faz chamadas HTTP reais dentro do próprio GitHub; e somente após essa dupla aprovação o Job 3 publica a imagem no Amazon ECR e atualiza o AWS ECS Express Mode. Com isso, nosso plano de inferência está completo, homologado e pronto para demonstração em nuvem."*
 
 ---
 
 ## ❓ Perguntas Prováveis da Banca sobre a Etapa 2 (e Respostas Blindadas)
 
 **1. "Por que não colocar o modelo SBERT (NLP) e o pipeline de treinamento dentro dessa mesma imagem Docker na AWS?"**
-> *Resposta:* "Por uma decisão arquitetural fundamentada em **FinOps e Separação de Responsabilidades (Treino/Laboratório vs. Inferência)**. A API recebe requisições online leves de 6 variáveis numéricas e precisa escalar rápido no AWS App Runner, exigindo uma imagem enxuta (`515 MB`) e *stateless*. Já o SBERT (PyTorch) e o processamento de 37,6 milhões de registros da Etapa 1 exigem gigabytes de bibliotecas neurais e alto processamento em lote, que não precisam rodar em produção na nuvem — evitando desperdício financeiro crônico na AWS."
+> *Resposta:* "Por uma decisão arquitetural fundamentada em **FinOps e Separação de Responsabilidades (Treino/Laboratório vs. Inferência)**. A API recebe requisições online leves de 6 variáveis numéricas e precisa escalar rápido no AWS ECS Express Mode, exigindo uma imagem enxuta (`515 MB`) e *stateless*. Já o SBERT (PyTorch) e o processamento de 37,6 milhões de registros da Etapa 1 exigem gigabytes de bibliotecas neurais e alto processamento em lote, que não precisam rodar em produção na nuvem — evitando desperdício financeiro crônico na AWS."
 
 **2. "Por que travar versões exatas (`==`) no `requirements-api.txt` em vez de usar `>=`?"**
 > *Resposta:* "Artefatos serializados em árvores binárias (`pickle`/`joblib`) dependem da estabilidade da ABI (*Application Binary Interface*) entre `xgboost`, `scikit-learn`, `numpy` e `pandas`. Travar na imagem Docker exatamente as mesmas versões registradas no `enem_model_card.json` durante o treinamento (`xgboost==3.4.1`, `scikit-learn==1.9.0`, `numpy==2.5.3`) garante reprodutibilidade determinística até a última casa decimal e elimina riscos de incompatibilidade em produção."
@@ -188,7 +188,7 @@ CONTAINER ID   STATUS                    PORTS                    NAMES
 │ Suíte Automatizada (Pytest)  │ 25/25 testes aprovados (Contrato, Paridade, Bourdieu e SLA)   │
 │ Imagem Docker Multi-Stage    │ enem-target-m4-api:v1 (515 MB Content Size | appuser UID 1000)│
 │ Latência Real em Container   │ 6,49 ms (lote vetorial de 3 perfis socioeconômicos)           │
-│ Esteira CI/CD                │ .github/workflows/deploy.yml (3 Jobs -> ECR & App Runner)     │
+│ Esteira CI/CD                │ .github/workflows/deploy.yml (3 Jobs -> ECR & ECS Express)    │
 └──────────────────────────────┴───────────────────────────────────────────────────────────────┘
 ```
 

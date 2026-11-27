@@ -238,7 +238,7 @@ assert "NU_ANO" not in FEATURES_ELITE, "Violação: NU_ANO jamais entra em X!"
 
 ### Layout Visual Recomendado
 * **Fluxo de Transição Etapa 1 $\longrightarrow$ Etapa 2:**
-  `MLflow Model Registry (enem_target_m4_producao v1 - READY)` $\longrightarrow$ `models/enem.pkl (1,73 MB)` + `models/enem_model_card.json` $\longrightarrow$ **`FastAPI (/predict) + Docker + GitHub Actions + AWS App Runner`**.
+  `MLflow Model Registry (enem_target_m4_producao v1 - READY)` $\longrightarrow$ `models/enem.pkl (1,73 MB)` + `models/enem_model_card.json` $\longrightarrow$ **`FastAPI (/predict) + Docker + GitHub Actions + AWS ECS Express Mode`**.
 * **Mini-Tabela do *Smoke Test* de Inferência REST (Célula 16):**
   * *Payload JSON Vulnerável* (`0,25 SM`, `0 PC`, `Espanhol`, `Mãe Fund. I`): **`476,08 pts`**
   * *Payload JSON Alto Capital* (`3,50 SM`, `3+ PCs`, `Inglês`, `Mãe Pós-Grad`): **`612,26 pts`** (`+136,18 pts`)
@@ -259,7 +259,7 @@ nota_prevista = float(modelo_prod.predict(X_api)[0])  # Latência < 1 ms
 ```
 
 ### Roteiro de Fala do Apresentador
-> *"Concluímos o Notebook 06 com engenharia de produção real: nosso modelo campeão está versionado no MLflow Registry, possui backup binário universal `.ubj`, contrato JSON para validação Pydantic e um arquivo `enem.pkl` de apenas 1,73 MB validado com hash SHA-256. Com isso, encerramos 100% da Etapa 1 e entregamos o motor pronto para ser encapsulado em FastAPI, Docker e AWS App Runner na Etapa 2."*
+> *"Concluímos o Notebook 06 com engenharia de produção real: nosso modelo campeão está versionado no MLflow Registry, possui backup binário universal `.ubj`, contrato JSON para validação Pydantic e um arquivo `enem.pkl` de apenas 1,73 MB validado com hash SHA-256. Com isso, encerramos 100% da Etapa 1 e entregamos o motor pronto para ser encapsulado em FastAPI, Docker e AWS ECS Express Mode na Etapa 2."*
 
 ---
 

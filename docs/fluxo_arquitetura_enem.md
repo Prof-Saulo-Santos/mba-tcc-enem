@@ -49,7 +49,7 @@ graph TD
         D1 -->|"Push / Release Tag"| D2[["GitHub Actions (CI Pipeline)"]]
         D2 -->|"Build, Test & Package"| D3("Docker Compose (Imagem: FastAPI + Modelo)")
         D3 -->|"Push Imagem Docker"| D4[("AWS ECR")]
-        D4 -->|"Deploy Contínuo (CD)"| D5(("AWS App Runner / ECS"))
+        D4 -->|"Deploy Contínuo (CD)"| D5(("AWS ECS Express Mode"))
         D5 --> D6["API REST Disponível"]
     end
     class D1,D2,D3 cicd;

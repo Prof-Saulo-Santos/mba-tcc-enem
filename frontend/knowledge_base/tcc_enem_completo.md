@@ -14,7 +14,7 @@ Este Trabalho de Conclusão de Curso (MBA em Ciência de Dados & MLOps) investig
 
 1. **Sociologia Educacional (Pierre Bourdieu):** comprovação empírica de como o **capital econômico** (renda per capita domiciliar) e o **capital cultural e digital** (escolaridade materna, língua estrangeira escolhida e posse de computador) condicionam o desempenho acadêmico antes mesmo de o candidato abrir a prova.
 2. **Ciência de Dados e Machine Learning em Larga Escala:** consolidação longitudinal de uma década completa de microdados públicos do INEP (`2014–2023`, `56.568.785` inscritos varridos e `37.593.629` registros elegíveis consolidados), harmonização de deriva semântica via NLP (SBERT) e modelagem não linear com explicabilidade exata via **TreeSHAP**.
-3. **Engenharia MLOps Ponta a Ponta:** rastreabilidade remota com **MLflow (`PostgreSQL 16 + Amazon S3`)**, versionamento de datasets com **DVC + S3**, infraestrutura declarativa com **Terraform** (`S3`, `ECR`, `IAM OIDC`, `AWS App Runner`), microserviço REST **FastAPI** containerizado (`Docker multi-stage`), qualidade estática/funcional no CI/CD (**GitHub Actions**: `SHA-256 + Ruff + Mypy + 26 Pytest + Docker Smoke Test`) e observabilidade em tempo real (**Prometheus + Grafana**).
+3. **Engenharia MLOps Ponta a Ponta:** rastreabilidade remota com **MLflow (`PostgreSQL 16 + Amazon S3`)**, versionamento de datasets com **DVC + S3**, infraestrutura declarativa com **Terraform** (`S3`, `ECR`, `IAM OIDC`, **AWS ECS Express Mode**), microserviço REST **FastAPI** containerizado (`Docker multi-stage`), qualidade estática/funcional no CI/CD (**GitHub Actions**: `SHA-256 + Ruff + Mypy + 26 Pytest + Docker Smoke Test`) e observabilidade em tempo real (**Prometheus + Grafana**).
 
 ---
 
@@ -163,7 +163,7 @@ Especificadas em `data/processed/contrato_features_modelagem.json`, `data/proces
 ### 7.1 Enquadramento Conceitual (Por que *não* chamar de *Hybrid Cloud*)
 Segundo o padrão NIST, *Hybrid Cloud* exige integração orquestrada entre uma Nuvem Privada corporativa (*datacenter on-premises*) e uma Nuvem Pública. Como uma estação de trabalho local (WSL2 + Docker Compose) não configura datacenter corporativo, a arquitetura aprovada classifica-se rigorosamente como **Arquitetura Desacoplada por Planos (*Decoupled Training & Serving Planes* / *Local-to-Cloud MLOps*)**:
 1. **Plano Offline / Governança (Workstation Containerizada + Amazon S3):** `PostgreSQL 16` + `MLflow Server 3.17.2` + `DVC 3.67.1`, persistindo dados `.parquet` (`dvc-store/`) e artefatos (`mlflow-artifacts/`) no S3 com custo RDS `$0,00`.
-2. **Plano Online / *Serving* (AWS via Terraform + CI/CD):** API **FastAPI** empacotada em Docker servindo de modo 100% autônomo na nuvem via **Amazon ECR + IAM OIDC + AWS App Runner**.
+2. **Plano Online / *Serving* (AWS via Terraform + CI/CD):** API **FastAPI** empacotada em Docker servindo de modo 100% autônomo na nuvem via **Amazon ECR + IAM OIDC + AWS ECS Express Mode** (`Fargate + ALB` com endpoint HTTPS nativo, em substituição ao AWS App Runner).
 3. **Plano de Observabilidade (`Prometheus + Grafana`):** endpoint `GET /metrics` na API, monitorado localmente em desenvolvimento/apresentação com evolução documentada para **Amazon Managed Service for Prometheus (AMP) + Amazon Managed Grafana (AMG)** em operação 24/7.
 
 ### 7.2 Microserviço FastAPI e Containerização (`src/api/`, `Dockerfile`)
@@ -182,11 +182,11 @@ Segundo o padrão NIST, *Hybrid Cloud* exige integração orquestrada entre uma 
 * **Proteção contra explosão de cardinalidade:** middleware HTTP usa a rota casada (`route.path` ou `"unmatched"`, ignorando `/metrics`), histogramas usam buckets fixos para contínuas e contadores categóricos somam apenas `26` séries discretas.
 * **Stack (`docker compose --profile monitoring up -d`):** Prometheus (`:9090`, `scrape_interval: 5s`, TSDB `7d`) + Grafana (`:3000`) com datasource e dashboard **`ENEM TARGET_M4`** (`10` painéis) provisionados via código (*Zero ClickOps*).
 
-### 7.4 Fase 2 — Infraestrutura como Código (`Terraform`) & `DVC + S3`
-* **Terraform (`infra/`):** provisionou **`11` recursos na conta AWS (`us-east-1`)**: bucket S3 `tcc-enem-saulo-mlops-703671922740` (privado, versionado, criptografia `AES256`, `force_destroy=true`), repositório ECR `enem-target-m4-api` (*scan on push* + política de retenção FinOps de `5` imagens), provedor **IAM OIDC** + role `tcc-enem-saulo-mlops-github-actions` (restrita a `Prof-Saulo-Santos/mba-tcc-enem` em `main`, sem Access Keys estáticas) e role `tcc-enem-saulo-mlops-apprunner-ecr`.
-* **Estratégia FinOps em 2 Estágios (`create_apprunner`):**
-  * **Estágio 1 (`create_apprunner = false`):** mantém S3 + ECR + OIDC por `< US$ 0,01/dia`, evitando erro de bootstrap antes da imagem existir no ECR e evitando compute ocioso.
-  * **Estágio 2 (`create_apprunner = true`):** sobe o AWS App Runner (`~ US$ 0,40/dia`, ou `~ US$ 0,12` em janela de apresentação de 4h) e destrói com `terraform destroy` após a banca.
+### 7.4 Fase 2 — Infraestrutura como Código (`Terraform`) & `DVC + S3` (com Migração para ECS Express Mode)
+* **Terraform (`infra/` — `hashicorp/aws v6.74.0`):** provisiona **`13` recursos base permanentes na conta AWS (`us-east-1`)** + **`2` condicionais sob demanda**: bucket S3 `tcc-enem-saulo-mlops-703671922740` (privado, versionado, criptografia `AES256`, `force_destroy=true`), repositório ECR `enem-target-m4-api` (*scan on push* + política de retenção FinOps de `5` imagens), provedor **IAM OIDC** + role `tcc-enem-saulo-mlops-github-actions` (restrita a `Prof-Saulo-Santos/mba-tcc-enem` em `main`, sem Access Keys estáticas) e as roles do ECS Express Mode (`tcc-enem-saulo-mlops-ecs-execution` e `tcc-enem-saulo-mlops-ecs-infrastructure`).
+* **Estratégia FinOps em 2 Estágios (`create_ecs`):**
+  * **Estágio 1 (`create_ecs = false`, padrão entre testes):** mantém S3 + ECR + OIDC + roles por `< US$ 0,01/dia`, evitando erro de bootstrap antes da imagem existir no ECR e mantendo custo zero de computação/ALB ociosa.
+  * **Estágio 2 (`create_ecs = true`, sob demanda):** sobe `aws_ecs_cluster` (`tcc-enem-saulo-mlops-cluster`) e `aws_ecs_express_gateway_service` (`tcc-enem-saulo-mlops-api`, `1024` CPU / `2048` MiB, auto-scaling `1..2` tasks) com URL HTTPS pública; após os testes, volta a `create_ecs = false` (ou `terraform destroy` definitivo após a banca).
 * **DVC + S3:** `.dvc/config` aponta para `s3://tcc-enem-saulo-mlops-703671922740/dvc-store`, versionando os Parquets Silver (`26,8 MiB`) e Gold (`153,2 MiB`), enquanto `models/enem.pkl` (`1,727 MB`) permanece no Git para que testes e Docker Smoke Tests em PRs rodem sem credenciais AWS.
 
 ### 7.5 Fase 3 & Fase 4 — MLflow Remoto & CI Quality Gate
@@ -194,12 +194,12 @@ Segundo o padrão NIST, *Hybrid Cloud* exige integração orquestrada entre uma 
 * **Fase 4:** criação de `pyproject.toml` (`Ruff 0.14.8` + `Mypy 2.4.1`), limpeza de tipagem em `src/api/` e `tests/`, e endurecimento do workflow `.github/workflows/deploy.yml` em 3 jobs:
   1. `quality-gate-ci`: checksum `SHA-256` + `ruff check src tests` + `mypy src/api tests` + **`26/26` testes `pytest`** (contrato HTTP, `/metrics`, paridade numérica, Bourdieu e SLA `< 500 ms` para 1.000 linhas).
   2. `docker-smoke-test`: build Docker real + teste HTTP E2E em `/health`, `/predict` (`547.12`) e bloqueio `422` (`NU_ANO`).
-  3. `deploy-aws`: push para Amazon ECR via OIDC e disparo no AWS App Runner (com trava FinOps condicional aos secrets).
+  3. `deploy-aws`: push para Amazon ECR via OIDC e atualização no **AWS ECS Express Mode** (`aws ecs update-express-gateway-service`, com trava FinOps condicional aos secrets `AWS_ROLE_TO_ASSUME` e `AWS_ECS_SERVICE_ARN`).
 
 ---
 
 ## 8. Perguntas Frequentes de Sabatina & Trabalhos Futuros
 
 * **Por que o $R^2$ fica em torno de `0,34` (`33,78%`) e isso é bom?** Em fenômenos educacionais e sociológicos humanos, a nota depende fortemente de fatores individuais não observados nos microdados públicos (esforço individual, qualidade docente específica de cada sala, saúde emocional no dia da prova). Explicar cerca de **um terço de toda a variância cognitiva nacional** usando apenas **6 variáveis socioeconômicas** sem qualquer dado escolar prévio comprova o peso estrutural da desigualdade de origem (Bourdieu).
-* **Por que `AWS App Runner` em vez de Lambda, ECS/EKS ou SageMaker?** Para uma única API leve de `1,727 MB` embarcada em `515 MB` OCI, **EKS/ECS** trariam *overengineering* operacional, **Lambda** exigiria gestão de *cold start* com camada científica XGBoost/Pandas, e **SageMaker Endpoints** teria custo fixo por hora muito maior; **App Runner** entrega HTTPS gerenciado, escala automática e integração direta com ECR por fração do custo.
+* **Por que `AWS ECS Express Mode` em vez de App Runner, Lambda, EKS ou SageMaker?** O plano inicial previa o AWS App Runner, mas a AWS descontinuou/restringiu a criação de novos serviços App Runner na conta (`InvalidRequestException: Account 703671922740 can't create new App Runner services`) e passou a recomendar o **AWS ECS Express Mode**. Para uma única API leve de `1,727 MB` embarcada em `515 MB` OCI, **EKS** traria *overengineering* de Kubernetes, **Lambda** exigiria gestão de *cold start* com camada científica XGBoost/Pandas, e **SageMaker Endpoints** teria custo fixo por hora muito maior; já o **ECS Express Mode** entrega Fargate + ALB gerenciado + HTTPS nativo + escala automática em um único recurso Terraform (`create_ecs = true/false`).
 * **Trabalhos futuros mapeados (`docs/estudos-futuros.md`):** avaliar `Polars`/`DuckDB` no ETL por blocos, comparar `LightGBM` e `CatBoost` sob o mesmo protocolo de validação, exportar inferência interoperável para `ONNX Runtime` e migrar observabilidade 24/7 para `Evidently AI + AMP + AMG`.

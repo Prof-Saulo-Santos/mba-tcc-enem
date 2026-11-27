@@ -11,15 +11,15 @@
 ### 1.1 Onde o Terraform se encaixa no estado atual do projeto
 Ao analisar o workflow de CI/CD em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml), observa-se uma fronteira clara entre automação de entrega (CI/CD) e provisionamento de infraestrutura:
 
-* A esteira atual automatiza o *Quality Gate* (`SHA-256` + `pytest`), o *Docker Smoke Test* E2E, a criação/uso do repositório **Amazon ECR** via AWS CLI (`aws ecr create-repository`), o *push* da imagem e o disparo de atualização no **AWS App Runner** (`aws apprunner start-deployment`).
-* Contudo, o pipeline pressupõe que recursos fundacionais já existam previamente na conta AWS — especificamente o serviço do **AWS App Runner (`AWS_APPRUNNER_SERVICE_ARN`)**, as **IAM Roles** de leitura no ECR e a configuração de autenticação **OIDC** entre GitHub Actions e AWS. Caso criados manualmente no console (*ClickOps*), esses recursos não ficam versionados em código.
+* A esteira atual automatiza o *Quality Gate* (`SHA-256` + `pytest`), o *Docker Smoke Test* E2E, a criação/uso do repositório **Amazon ECR** via AWS CLI (`aws ecr create-repository`), o *push* da imagem e o disparo de atualização no **AWS ECS Express Mode** (`aws ecs update-express-gateway-service`).
+* Contudo, antes da criação do módulo `infra/`, o pipeline pressuporia que recursos fundacionais já existissem previamente na conta AWS — especificamente o serviço **AWS ECS Express Mode (`AWS_ECS_SERVICE_ARN`)**, o cluster ECS, as **IAM Roles** (`ecs_execution` e `ecs_infrastructure`) e a configuração de autenticação **OIDC** entre GitHub Actions e AWS. Caso criados manualmente no console (*ClickOps*), esses recursos não ficam versionados em código.
 
-Com o **Terraform** (por exemplo, em um diretório `infra/` contendo `main.tf`, `variables.tf` e `outputs.tf`), toda essa infraestrutura passaria a ser declarada em **HCL (*HashiCorp Configuration Language*)**:
+Com o **Terraform** em [`infra/`](../infra/) (`main.tf`, `variables.tf`, `outputs.tf` e `versions.tf`), toda essa infraestrutura é declarada em **HCL (*HashiCorp Configuration Language*)**:
 
 1. `aws_ecr_repository` + política de ciclo de vida (*lifecycle policy* para expirar imagens antigas e reduzir custo de armazenamento).
-2. Provedor OIDC e `aws_iam_role` com privilégios mínimos (*Least Privilege*) para o GitHub Actions e para o App Runner.
-3. `aws_apprunner_service` (definição declarativa de vCPU, memória RAM, porta `8000`, endpoint `/health` e limites de *autoscaling*).
-4. Alertas básicos de observabilidade e orçamento FinOps (CloudWatch Logs / AWS Budgets).
+2. Provedor OIDC e `aws_iam_role` com privilégios mínimos (*Least Privilege*) para o GitHub Actions e para as roles `ecs_execution` e `ecs_infrastructure` do **ECS Express Mode**.
+3. `aws_ecs_cluster` + `aws_ecs_express_gateway_service` (definição declarativa de vCPU, memória RAM, porta `8000`, endpoint `/health` e limites de *autoscaling*, com trava FinOps `create_ecs = true/false`).
+4. Controle declarativo de custo por hora via flag `create_ecs` (`false` entre testes; `terraform destroy` definitivo pós-banca).
 
 ### 1.2 Análise de Prós e Contras para o TCC
 
@@ -31,7 +31,7 @@ Com o **Terraform** (por exemplo, em um diretório `infra/` contendo `main.tf`, 
 
 ### 1.3 Posicionamento Recomendado
 * **Para o fechamento atual do TCC:** manter a arquitetura enxuta existente e posicionar o **Terraform (IaC)** como evolução natural no capítulo de **Trabalhos Futuros** (ou na subseção de limitações operacionais de *ClickOps*).
-* **Em caso de evolução futura / demonstração ao vivo recorrente na AWS:** criar um módulo mínimo em `infra/` para automatizar `ECR + IAM OIDC + App Runner` e garantir criação/destruição reprodutível em 1 comando.
+* **Em caso de evolução futura / demonstração ao vivo recorrente na AWS:** o módulo em `infra/` automatiza `S3 + ECR + IAM OIDC + ECS Express Mode` e garante criação/desligamento/destruição reprodutível em 1 comando (`create_ecs = true/false` e `terraform destroy`).
 
 ---
 
@@ -66,14 +66,15 @@ Esta seção mapeia tecnologias equivalentes de mercado para cada etapa do pipel
 * **Justificativa da escolha atual:** o `XGBRegressor` (`hist`) escalou sobre `27,07M` linhas de treino em ambiente local, superou o benchmark de *Bagging* (`RandomForestRegressor`: $R^2 = 0{,}33780$ vs. $0{,}33606$) com inferência `~35%` mais rápida (`81,15 ms / 10k` amostras) e possui integração nativa exata com `TreeSHAP`.
 
 ### 2.4 Camada de *Serving*, Nuvem e Observabilidade (`Etapa 2`)
-* **Implementação atual:** API **FastAPI** + **Pydantic v2** (`extra="forbid"`), empacotada em **Docker *multi-stage*** (`515 MB` Content Size) com CI/CD via **GitHub Actions** mirando **Amazon ECR + AWS App Runner**.
+* **Implementação atual:** API **FastAPI** + **Pydantic v2** (`extra="forbid"`), empacotada em **Docker *multi-stage*** (`515 MB` Content Size) com CI/CD via **GitHub Actions** mirando **Amazon ECR + AWS ECS Express Mode** (Fargate + ALB gerenciado com URL HTTPS nativa, adotado em substituição ao AWS App Runner após restrição/descontinuação de criação de novos serviços na conta).
 * **Alternativas de empacotamento e runtime de inferência:**
   * **ONNX (`ONNX Runtime`):** converte o modelo treinado para formato interoperável independente da biblioteca de treino (`xgboost`/`scikit-learn`), otimizando latência de inferência.
   * **BentoML:** framework especializado em empacotamento de modelos de ML, facilitando *adaptive batching* e padronização de contêineres OCI para múltiplos modelos.
 * **Alternativas de hospedagem na AWS:**
+  * **AWS App Runner:** originalmente cogitado pela simplicidade PaaS, mas inviabilizado na conta AWS (`InvalidRequestException: Account 703671922740 can't create new App Runner services`), motivando a migração para o **AWS ECS Express Mode**.
   * **AWS Lambda + API Gateway:** modelo *serverless* puro com cobrança estrita por requisição (*scale-to-zero* real), excelente para FinOps em tráfego esporádico, exigindo atenção ao *cold start* e ao limite de tamanho de imagem/camadas.
-  * **Amazon ECS (Fargate) ou Amazon EKS (Kubernetes):** recomendados apenas se o sistema evoluir para dezenas de microserviços ou exigir políticas avançadas de rede/malha de serviço, evitando o *overengineering* para uma API única de `1,727 MB`.
-  * **Amazon SageMaker Endpoints:** plataforma gerenciada fim-a-fim da AWS para ML, porém com custo fixo por hora consideravelmente superior ao App Runner para cargas acadêmicas ou de baixo tráfego.
+  * **Amazon ECS clássico (sem Express Mode) ou Amazon EKS (Kubernetes):** exigiriam configuração manual de ALB, *target groups*, rede VPC ou *control plane* completo — complexidade desnecessária que o **ECS Express Mode** elimina em um único recurso (`aws_ecs_express_gateway_service`).
+  * **Amazon SageMaker Endpoints:** plataforma gerenciada fim-a-fim da AWS para ML, porém com custo fixo por hora consideravelmente superior ao **ECS Express Mode** sob demanda (`create_ecs = true/false`) para cargas acadêmicas ou de baixo tráfego.
 * **Alternativas de qualidade de código e monitoramento em produção (pós-deploy):**
   * **Qualidade estática no CI (`quality-gate-ci`):** inclusão de **`ruff`** (*linter*/formatador) e **`mypy`** (checagem estática de tipos) em [`src/api/`](../src/api/) e [`tests/`](../tests/).
   * **Observabilidade e *Drift Monitoring*:** **Evidently AI + Prometheus/Grafana** (ou métricas estruturadas no **AWS CloudWatch**) registrando distribuição das requisições recebidas por `/predict` para detectar **Data Drift** (mudança do perfil socioeconômico de entrada), **Prediction Drift** e latência P95/P99.
@@ -88,8 +89,8 @@ Para elevar o rigor de produção perante a banca do MBA — eliminando a depend
 * **Critério rigoroso (NIST):** *Hybrid Cloud* exige a integração orquestrada entre uma **Nuvem Privada corporativa** (*datacenter on-premises*) e uma **Nuvem Pública**. Uma estação de trabalho pessoal (WSL2 + Docker Compose) não configura Nuvem Privada.
 * **Classificação técnica adotada — Arquitetura Desacoplada por Planos (*Decoupled Training & Serving Planes* / *Local-to-Cloud MLOps*):**
   1. **Plano Offline / Governança (Workstation Containerizada + Storage em Nuvem):** `PostgreSQL` + `MLflow Tracking Server` + `DVC` executam em containers sob demanda durante os experimentos e treinamentos, persistindo os dados `.parquet` e os artefatos de modelos diretamente no **Amazon S3** (eliminando `sqlite:///mlflow.db` e `./mlruns` locais).
-  2. **Plano Online / *Serving* em Produção (Nuvem Pública AWS via Terraform):** **Amazon S3**, **Amazon ECR**, **IAM/OIDC** e **AWS App Runner** são provisionados via **Terraform (`infra/`)**. A API FastAPI em produção opera de forma **100% independente** da estação local.
-  3. **Plano de Observabilidade (Cenário 1 — `Prometheus + Grafana` via `docker-compose`):** a API FastAPI expõe `/metrics` (em ambiente local e em produção no App Runner), sendo monitorada por containers **Prometheus + Grafana** para validação em *staging* local e *scrape* remoto durante demonstração ao vivo.
+  2. **Plano Online / *Serving* em Produção (Nuvem Pública AWS via Terraform):** **Amazon S3**, **Amazon ECR**, **IAM/OIDC** e **AWS ECS Express Mode** são provisionados via **Terraform (`infra/`)** com chave FinOps `create_ecs = true/false`. A API FastAPI em produção opera de forma **100% independente** da estação local.
+  3. **Plano de Observabilidade (Cenário 1 — `Prometheus + Grafana` via `docker-compose`):** a API FastAPI expõe `/metrics` (em ambiente local e em produção no **ECS Express Mode**), sendo monitorada por containers **Prometheus + Grafana** para validação em *staging* local e *scrape* remoto via HTTPS durante demonstração ao vivo.
      * *Limitação transparente para a banca:* como o Prometheus local coleta métricas apenas enquanto a estação está ativa, em produção corporativa contínua (24/7) a coleta migraria para **Amazon Managed Service for Prometheus (AMP) + Amazon Managed Grafana (AMG)** ou instância dedicada na VPC da AWS.
 
 ### 3.2 Impacto Exato nos Notebooks e no Repositório
@@ -104,7 +105,7 @@ Para elevar o rigor de produção perante a banca do MBA — eliminando a depend
 | [`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb) | **Sim (único)** | Atualizar `Bloco 1.5` (Célula 2) para ler `MLFLOW_TRACKING_URI` remoto (PostgreSQL + S3) via variável de ambiente, atualizar o diagrama da Célula 3 / textos das células `0`, `1`, `18`, `19` e reexecutar o treino para registrar runs e modelo no servidor remoto. |
 | **API & Testes (`src/api/`, `tests/`, `requirements-api.txt`)** | **Sim** | Instrumentar `/metrics` no FastAPI (`src/api/main.py`: latência, requisições, bloqueios `HTTP 422` anti-leakage e métricas de distribuição das predições `TARGET_M4`) e cobrir `/metrics` nos testes automatizados. |
 | **Containerização & Observabilidade (`docker-compose.yml`, `monitoring/`)** | **Sim** | Orquestrar serviços `postgres`, `mlflow`, `prometheus` e `grafana` (com *scrape config* e dashboard JSON provisionado). |
-| **IaC & Dados (`infra/`, `.dvc/`, `.github/workflows/deploy.yml`)** | **Sim** | Criar módulo **Terraform** (`S3`, `ECR`, `IAM/OIDC`, `App Runner`) com `apply`/`destroy` FinOps, configurar remoto **DVC** no S3 e ajustar o job `deploy-aws` se necessário. |
+| **IaC & Dados (`infra/`, `.dvc/`, `.github/workflows/deploy.yml`)** | **Sim** | Criar módulo **Terraform** (`S3`, `ECR`, `IAM/OIDC`, **ECS Express Mode**) com `create_ecs`/`destroy` FinOps, configurar remoto **DVC** no S3 e ajustar o job `deploy-aws` para `ecs:UpdateExpressGatewayService`. |
 
 ---
 
@@ -112,7 +113,7 @@ Para elevar o rigor de produção perante a banca do MBA — eliminando a depend
 
 1. **Execução do Pacote Definido (`Opção A + Cenário 1`):**
    * **Fase 1 (Observabilidade na API):** instrumentar `/metrics` em [`src/api/main.py`](../src/api/main.py), atualizar testes e configurar `Prometheus + Grafana` no `docker-compose.yml`.
-   * **Fase 2 (IaC & Dados em Nuvem):** criar módulo **Terraform** (`infra/`) para `S3 + ECR + IAM/OIDC + App Runner` e inicializar **DVC** apontando para o bucket S3.
+   * **Fase 2 (IaC & Dados em Nuvem):** criar módulo **Terraform** (`infra/`) para `S3 + ECR + IAM/OIDC + ECS Express Mode` e inicializar **DVC** apontando para o bucket S3.
    * **Fase 3 (MLflow Remoto e Reexecução):** subir `PostgreSQL + MLflow Tracking Server` apontando artefatos para o S3, ajustar [`notebooks/06_treinamento_modelo.ipynb`](../notebooks/06_treinamento_modelo.ipynb) e reexecutar o registro oficial dos experimentos e modelo campeão.
    * **Fase 4 (Qualidade CI):** adicionar `ruff` e `mypy` ao job `quality-gate-ci` em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 2. **Evoluções Futuras Pós-TCC (Fora do Escopo Imediato):**

@@ -49,7 +49,7 @@ with st.sidebar:
     api_url = st.text_input(
         "URL base da API FastAPI",
         value=DEFAULT_API_URL,
-        help="Local: http://localhost:8000 | Nuvem: URL HTTPS do AWS App Runner.",
+        help="Local: http://localhost:8000 | Nuvem: URL HTTPS do AWS ECS Express Mode.",
     )
     timeout_s = st.number_input(
         "Timeout HTTP (segundos)",

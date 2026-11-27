@@ -81,7 +81,7 @@ Unificar a narrativa das **3 Grandes Etapas** em uma estrutura de alto impacto d
 8. **Etapa 1 (Cap. 06) — Treinamento Escalável e Governança MLflow:** `XGBRegressor` vs. `RandomForest`, Holdout `7,52M` ($R^2 = 0,33780$, $\text{RMSE} = 57,74$ pts) e Validação Out-of-Time Cega 2023 ($R^2 = 0,31842$) (`notebook06_estabilidade_temporal_r2_rmse.png`).
 9. **Etapa 1 (Cap. 06) — Explicabilidade Matemática com SHAP:** Decomposição do impacto de `RENDA_PER_CAPITA` (`41,11%`), `Q024` (`22,74%`) e `Q002` (`16,58%`) (`notebook06_shap_beeswarm_100k.png`).
 10. **Etapa 2 (Cap. 07) — Produtização em Microserviço FastAPI & Contratos Pydantic v2:** Defesa ativa contra *Data Leakage* (`HTTP 422` para `NU_ANO`) e paridade bit-a-bit (`25/25 PASSED`).
-11. **Etapa 2 (Cap. 07) — Containerização Multi-Stage FinOps e CI/CD GitHub Actions:** Redução de `>4,5 GB` para **`515 MB` OCI**, latência de `6,49 ms` e esteira `.github/workflows/deploy.yml` para Amazon ECR / AWS App Runner.
+11. **Etapa 2 (Cap. 07) — Containerização Multi-Stage FinOps e CI/CD GitHub Actions:** Redução de `>4,5 GB` para **`515 MB` OCI**, latência de `6,49 ms` e esteira `.github/workflows/deploy.yml` para Amazon ECR / **AWS ECS Express Mode**.
 12. **Etapa 3 (Cap. 08) — Orquestração Autônoma com Apache Airflow (2024/2025):** Topologia dos 4 estágios e detecção ao vivo de drift semântico em 2024/2025 (`Q006 -> Q007` e `Q024 -> Q021`).
 13. **Etapa 3 (Cap. 08) — Descoberta Científica em 2024 (Bipartição LGPD & Circuit Breaker):** Como o Gatekeeper OOT impediu *Data Poisoning* ao detectar `positional_match_rate = 0,0055` ($R^2 = -0,1917$) + Juiz MLflow Champion vs. Challenger.
 14. **Etapa 3 (Cap. 08) — Inferência em Lote e Estabilidade Populacional (2024 e 2025):** Escoragem em lote e auditoria de *Data Drift* com $\text{PSI} < 0,10$ em todas as 6 variáveis (`ESTAVEL`).
@@ -119,17 +119,16 @@ Caso o Saulo queira mostrar o sistema funcionando ao vivo durante a banca (ou gr
    ```
 
 ### Fase Pós-Slides 2: Deploy Pontual na AWS para o Dia da Defesa (Opcional & FinOps)
-Conforme alinhado na Diretriz 1 do projeto, o provisionamento na AWS foi deixado para a véspera/dia da apresentação final para evitar custos ociosos. Se o Saulo desejar ativar o endpoint público na AWS para a banca testar ao vivo:
-1. **Ativação (Véspera da Defesa):**
-   * Configurar as credenciais `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY` nos *GitHub Actions Secrets* do repositório;
-   * Criar o repositório `enem-target-m4-api` no Amazon ECR (`us-east-1`);
-   * Disparar o workflow [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) (via `git push origin main` ou botão *Run workflow* na aba Actions) para publicar a imagem de `515 MB` e iniciar o serviço no **AWS App Runner**.
+Conforme alinhado na Diretriz 1 do projeto, o provisionamento ativo na AWS foi mantido desligado fora das janelas de teste/banca para evitar custos contínuos. Se o Saulo desejar ativar o endpoint público no **AWS ECS Express Mode** para a banca testar ao vivo:
+1. **Ativação (Véspera/Dia da Defesa — veja [docs/como-testar.md](como-testar.md)):**
+   * Subir o serviço com `terraform -chdir=infra apply -var="create_ecs=true"` (após publicar a imagem no Amazon ECR `enem-target-m4-api`);
+   * Opcionalmente configurar `AWS_ROLE_TO_ASSUME` e `AWS_ECS_SERVICE_ARN` nos *GitHub Actions Secrets* para disparar atualizações pelo workflow [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 2. **Desligamento Imediato Pós-Defesa (Checklist de Teardown FinOps):**
-   * Assim que a banca encerrar a avaliação, deletar o serviço no AWS App Runner e a imagem no Amazon ECR para garantir **custo zero** após a apresentação:
+   * Assim que a banca encerrar a avaliação, desligar o cluster ECS + ALB (mantendo S3/ECR) ou destruir 100% da infraestrutura para **custo zero** após a apresentação:
      ```bash
-     aws apprunner list-services --region us-east-1
-     aws apprunner delete-service --service-arn <ARN_DO_SERVICO> --region us-east-1
-     aws ecr delete-repository --repository-name enem-target-m4-api --force --region us-east-1
+     terraform -chdir=infra apply -var="create_ecs=false"
+     # Ou encerramento definitivo total (apaga também S3 e ECR):
+     terraform -chdir=infra destroy
      ```
 
 ### Fase Pós-Slides 3: Simulação de Sabatina da Banca (*Mock Defense / Grill-Me*)
